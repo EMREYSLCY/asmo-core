@@ -10,6 +10,7 @@ load_dotenv()
 ARC_RPC_URL = os.getenv("ARC_RPC_URL")
 w3 = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL))
 TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+ARC_PRICE_USD = 1.25
 
 connected_clients = set()
 
@@ -47,6 +48,7 @@ async def scan_block(block_number):
                     "type": "NATIVE",
                     "asset": "ARC",
                     "amount": actual_value,
+                    "price_usd": ARC_PRICE_USD,
                     "tx_hash": tx.hash.hex()
                 })
 
@@ -74,6 +76,7 @@ async def scan_block(block_number):
                                 "type": "TOKEN",
                                 "asset": contract_address,
                                 "amount": "Unknown (Raw)",
+                                "price_usd": 0.0,
                                 "tx_hash": tx_hash_str
                             })
                     except Exception:
@@ -91,7 +94,7 @@ async def main():
     last_scanned_block = await check_network_status()
     if not last_scanned_block: return
 
-    async with websockets.serve(ws_handler, "localhost", 8765):
+    async with websockets.serve(ws_handler, "0.0.0.0", 8765):
         print("🌉 WebSocket Bridge Active on Port 8765")
         print("🔄 Initiating Dual Radar...")
         
