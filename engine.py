@@ -2,10 +2,21 @@ import os
 import json
 import asyncio
 import websockets
+import logging
 from dotenv import load_dotenv
 from web3 import AsyncWeb3, AsyncHTTPProvider
 
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("asmo.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("ASMO")
 
 ARC_RPC_URL = os.getenv("ARC_RPC_URL")
 w3 = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL))
@@ -15,13 +26,13 @@ ARC_PRICE_USD = 1.25
 connected_clients = set()
 
 async def ws_handler(websocket):
-    print("🟢 UI Dashboard Connected to Engine!")
+    logger.info("🟢 UI Dashboard Connected to Engine!")
     connected_clients.add(websocket)
     try:
         await websocket.wait_closed()
     finally:
         connected_clients.remove(websocket)
-        print("🔴 UI Dashboard Disconnected.")
+        logger.info("🔴 UI Dashboard Disconnected.")
 
 async def broadcast_alert(data):
     if connected_clients:
@@ -31,19 +42,20 @@ async def broadcast_alert(data):
 async def fetch_receipt(tx_hash):
     try:
         return await w3.eth.get_transaction_receipt(tx_hash)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching receipt for TX {tx_hash.hex()}: {e}")
         return None
 
 async def scan_block(block_number):
     try:
         block = await w3.eth.get_block(block_number, full_transactions=True)
         tx_count = len(block.transactions)
-        print(f"📡 Scanning Block: {block_number} | Transactions: {tx_count}")
+        logger.info(f"📡 Scanning Block: {block_number} | Transactions: {tx_count}")
         
         for tx in block.transactions:
             if tx.value > 0:
                 actual_value = float(w3.from_wei(tx.value, 'ether'))
-                print(f"💎 NATIVE TRANSFER! Amount: {actual_value:.4f} | TX: {tx.hash.hex()}")
+                logger.info(f"💎 NATIVE TRANSFER! Amount: {actual_value:.4f} | TX: {tx.hash.hex()}")
                 await broadcast_alert({
                     "type": "NATIVE",
                     "asset": "ARC",
@@ -71,7 +83,7 @@ async def scan_block(block_number):
                         if amount > 0:
                             tx_hash_str = receipt.transactionHash.hex()
                             contract_address = log.address
-                            print(f"🚨 TOKEN DETECTED! Token: {contract_address} | TX: {tx_hash_str}")
+                            logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | TX: {tx_hash_str}")
                             await broadcast_alert({
                                 "type": "TOKEN",
                                 "asset": contract_address,
@@ -79,24 +91,30 @@ async def scan_block(block_number):
                                 "price_usd": 0.0,
                                 "tx_hash": tx_hash_str
                             })
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f"Error parsing token log for TX {receipt.transactionHash.hex()}: {e}")
                         continue
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error(f"Fatal error scanning block {block_number}: {e}", exc_info=True)
 
 async def check_network_status():
-    if await w3.is_connected():
-        return await w3.eth.block_number
+    try:
+        if await w3.is_connected():
+            return await w3.eth.block_number
+    except Exception as e:
+        logger.error(f"RPC Connection Error: {e}")
     return None
 
 async def main():
-    print("Initializing A.S.M.O. Boot Sequence...")
+    logger.info("Initializing A.S.M.O. Boot Sequence...")
     last_scanned_block = await check_network_status()
-    if not last_scanned_block: return
+    if not last_scanned_block:
+        logger.error("Failed to connect to ARC RPC. Exiting...")
+        return
 
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
-        print("🌉 WebSocket Bridge Active on Port 8765")
-        print("🔄 Initiating Dual Radar...")
+        logger.info("🌉 WebSocket Bridge Active on Port 8765")
+        logger.info("🔄 Initiating Dual Radar...")
         
         while True:
             try:
@@ -107,7 +125,8 @@ async def main():
                         last_scanned_block = block_to_scan
                 else:
                     await asyncio.sleep(2)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Connection lost or RPC rate limit hit. Retrying in 5 seconds... Details: {e}")
                 await asyncio.sleep(5)
 
 if __name__ == "__main__":
