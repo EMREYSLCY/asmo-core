@@ -23,6 +23,9 @@ w3 = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL))
 TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 ARC_PRICE_USD = 1.25
 
+ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]')
+TOKEN_CACHE = {}
+
 connected_clients = set()
 
 async def ws_handler(websocket):
@@ -38,6 +41,20 @@ async def broadcast_alert(data):
     if connected_clients:
         message = json.dumps(data)
         await asyncio.gather(*(client.send(message) for client in connected_clients), return_exceptions=True)
+
+async def get_token_decimals(contract_address):
+    if contract_address in TOKEN_CACHE:
+        return TOKEN_CACHE[contract_address]
+    
+    try:
+        contract_address_checksum = w3.to_checksum_address(contract_address)
+        contract = w3.eth.contract(address=contract_address_checksum, abi=ERC20_ABI)
+        decimals = await contract.functions.decimals().call()
+        TOKEN_CACHE[contract_address] = decimals
+        return decimals
+    except Exception as e:
+        logger.warning(f"Could not fetch decimals for {contract_address}: {e}")
+        return 18
 
 async def fetch_receipt(tx_hash):
     try:
@@ -79,15 +96,19 @@ async def scan_block(block_number):
             for log in receipt.logs:
                 if len(log.topics) > 0 and log.topics[0].hex() == TRANSFER_SIG:
                     try:
-                        amount = int(log.data.hex(), 16)
-                        if amount > 0:
+                        raw_amount = int(log.data.hex(), 16)
+                        if raw_amount > 0:
                             tx_hash_str = receipt.transactionHash.hex()
                             contract_address = log.address
-                            logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | TX: {tx_hash_str}")
+                            
+                            decimals = await get_token_decimals(contract_address)
+                            actual_token_amount = raw_amount / (10 ** decimals)
+                            
+                            logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | Amount: {actual_token_amount:.4f}")
                             await broadcast_alert({
                                 "type": "TOKEN",
                                 "asset": contract_address,
-                                "amount": "Unknown (Raw)",
+                                "amount": actual_token_amount,
                                 "price_usd": 0.0,
                                 "tx_hash": tx_hash_str
                             })
