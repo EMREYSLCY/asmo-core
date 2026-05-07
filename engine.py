@@ -3,6 +3,7 @@ import json
 import asyncio
 import websockets
 import logging
+import aiosqlite
 from dotenv import load_dotenv
 from web3 import AsyncWeb3, AsyncHTTPProvider
 
@@ -27,6 +28,37 @@ ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint
 TOKEN_CACHE = {}
 
 connected_clients = set()
+
+async def init_db():
+    async with aiosqlite.connect("asmo.db") as db:
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS transfers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tx_hash TEXT NOT NULL,
+                block_number INTEGER NOT NULL,
+                type TEXT NOT NULL,
+                asset TEXT NOT NULL,
+                amount REAL NOT NULL,
+                price_usd REAL NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        await db.commit()
+        logger.info("💾 Database initialized successfully.")
+
+async def save_transfer(tx_data, block_number):
+    try:
+        async with aiosqlite.connect("asmo.db") as db:
+            await db.execute(
+                """INSERT INTO transfers 
+                   (tx_hash, block_number, type, asset, amount, price_usd) 
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (tx_data["tx_hash"], block_number, tx_data["type"], 
+                 tx_data["asset"], tx_data["amount"], tx_data["price_usd"])
+            )
+            await db.commit()
+    except Exception as e:
+        logger.error(f"Failed to save transfer to DB: {e}")
 
 async def ws_handler(websocket):
     logger.info("🟢 UI Dashboard Connected to Engine!")
@@ -73,13 +105,16 @@ async def scan_block(block_number):
             if tx.value > 0:
                 actual_value = float(w3.from_wei(tx.value, 'ether'))
                 logger.info(f"💎 NATIVE TRANSFER! Amount: {actual_value:.4f} | TX: {tx.hash.hex()}")
-                await broadcast_alert({
+                
+                tx_data = {
                     "type": "NATIVE",
                     "asset": "ARC",
                     "amount": actual_value,
                     "price_usd": ARC_PRICE_USD,
                     "tx_hash": tx.hash.hex()
-                })
+                }
+                await broadcast_alert(tx_data)
+                await save_transfer(tx_data, block_number)
 
         tasks = [fetch_receipt(tx.hash) for tx in block.transactions]
         receipts = []
@@ -105,13 +140,16 @@ async def scan_block(block_number):
                             actual_token_amount = raw_amount / (10 ** decimals)
                             
                             logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | Amount: {actual_token_amount:.4f}")
-                            await broadcast_alert({
+                            
+                            tx_data = {
                                 "type": "TOKEN",
                                 "asset": contract_address,
                                 "amount": actual_token_amount,
                                 "price_usd": 0.0,
                                 "tx_hash": tx_hash_str
-                            })
+                            }
+                            await broadcast_alert(tx_data)
+                            await save_transfer(tx_data, block_number)
                     except Exception as e:
                         logger.error(f"Error parsing token log for TX {receipt.transactionHash.hex()}: {e}")
                         continue
@@ -128,6 +166,9 @@ async def check_network_status():
 
 async def main():
     logger.info("Initializing A.S.M.O. Boot Sequence...")
+    
+    await init_db() 
+    
     last_scanned_block = await check_network_status()
     if not last_scanned_block:
         logger.error("Failed to connect to ARC RPC. Exiting...")
