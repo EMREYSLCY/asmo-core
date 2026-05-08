@@ -60,9 +60,35 @@ async def save_transfer(tx_data, block_number):
     except Exception as e:
         logger.error(f"Failed to save transfer to DB: {e}")
 
+# --- TARİHÇİ MODÜLÜ ---
+async def send_history_to_client(websocket):
+    try:
+        async with aiosqlite.connect("asmo.db") as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute("SELECT * FROM transfers ORDER BY id DESC LIMIT 50")
+            rows = await cursor.fetchall()
+            
+            for row in reversed(rows):
+                time_str = row["timestamp"].split(" ")[1] if row["timestamp"] else None
+                tx_data = {
+                    "time": time_str,
+                    "type": row["type"],
+                    "asset": row["asset"],
+                    "amount": row["amount"],
+                    "price_usd": row["price_usd"],
+                    "tx_hash": row["tx_hash"]
+                }
+                await websocket.send(json.dumps(tx_data))
+    except Exception as e:
+        logger.error(f"Error sending history to client: {e}")
+
 async def ws_handler(websocket):
     logger.info("🟢 UI Dashboard Connected to Engine!")
     connected_clients.add(websocket)
+    
+    # Yeni bir sekme bağlandığı an, hemen geçmiş verileri gönder!
+    await send_history_to_client(websocket)
+    
     try:
         await websocket.wait_closed()
     finally:
