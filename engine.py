@@ -60,7 +60,6 @@ async def save_transfer(tx_data, block_number):
     except Exception as e:
         logger.error(f"Failed to save transfer to DB: {e}")
 
-# --- TARİHÇİ MODÜLÜ ---
 async def send_history_to_client(websocket):
     try:
         async with aiosqlite.connect("asmo.db") as db:
@@ -70,13 +69,18 @@ async def send_history_to_client(websocket):
             
             for row in reversed(rows):
                 time_str = row["timestamp"].split(" ")[1] if row["timestamp"] else None
+                amt = row["amount"]
+                prc = row["price_usd"]
+                flag = "WHALE" if (amt * prc >= 10000 or (prc == 0.0 and amt >= 50000)) else "STANDARD"
+                
                 tx_data = {
                     "time": time_str,
                     "type": row["type"],
                     "asset": row["asset"],
-                    "amount": row["amount"],
-                    "price_usd": row["price_usd"],
-                    "tx_hash": row["tx_hash"]
+                    "amount": amt,
+                    "price_usd": prc,
+                    "tx_hash": row["tx_hash"],
+                    "flag": flag
                 }
                 await websocket.send(json.dumps(tx_data))
     except Exception as e:
@@ -85,10 +89,7 @@ async def send_history_to_client(websocket):
 async def ws_handler(websocket):
     logger.info("🟢 UI Dashboard Connected to Engine!")
     connected_clients.add(websocket)
-    
-    # Yeni bir sekme bağlandığı an, hemen geçmiş verileri gönder!
     await send_history_to_client(websocket)
-    
     try:
         await websocket.wait_closed()
     finally:
@@ -132,12 +133,14 @@ async def scan_block(block_number):
                 actual_value = float(w3.from_wei(tx.value, 'ether'))
                 logger.info(f"💎 NATIVE TRANSFER! Amount: {actual_value:.4f} | TX: {tx.hash.hex()}")
                 
+                flag = "WHALE" if (actual_value * ARC_PRICE_USD >= 10000) else "STANDARD"
                 tx_data = {
                     "type": "NATIVE",
                     "asset": "ARC",
                     "amount": actual_value,
                     "price_usd": ARC_PRICE_USD,
-                    "tx_hash": tx.hash.hex()
+                    "tx_hash": tx.hash.hex(),
+                    "flag": flag
                 }
                 await broadcast_alert(tx_data)
                 await save_transfer(tx_data, block_number)
@@ -167,12 +170,14 @@ async def scan_block(block_number):
                             
                             logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | Amount: {actual_token_amount:.4f}")
                             
+                            flag = "WHALE" if actual_token_amount >= 50000 else "STANDARD"
                             tx_data = {
                                 "type": "TOKEN",
                                 "asset": contract_address,
                                 "amount": actual_token_amount,
                                 "price_usd": 0.0,
-                                "tx_hash": tx_hash_str
+                                "tx_hash": tx_hash_str,
+                                "flag": flag
                             }
                             await broadcast_alert(tx_data)
                             await save_transfer(tx_data, block_number)
@@ -192,9 +197,7 @@ async def check_network_status():
 
 async def main():
     logger.info("Initializing A.S.M.O. Boot Sequence...")
-    
     await init_db() 
-    
     last_scanned_block = await check_network_status()
     if not last_scanned_block:
         logger.error("Failed to connect to ARC RPC. Exiting...")
