@@ -4,6 +4,7 @@ import asyncio
 import websockets
 import logging
 import aiosqlite
+import urllib.request
 from dotenv import load_dotenv
 from web3 import AsyncWeb3, AsyncHTTPProvider
 
@@ -22,10 +23,13 @@ logger = logging.getLogger("ASMO")
 ARC_RPC_URL = os.getenv("ARC_RPC_URL")
 w3 = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL))
 TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
-ARC_PRICE_USD = 1.25
 
 ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]')
 TOKEN_CACHE = {}
+PRICE_CACHE = {
+    "ARC": 1.25,
+    "DEFAULT_TOKEN": 2.50 
+}
 
 connected_clients = set()
 
@@ -59,6 +63,27 @@ async def save_transfer(tx_data, block_number):
             await db.commit()
     except Exception as e:
         logger.error(f"Failed to save transfer to DB: {e}")
+
+async def update_price_oracle():
+    while True:
+        try:
+            url = "https://api.coingecko.com/api/v3/simple/price?ids=arbitrum,ethereum&vs_currencies=usd"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            
+            loop = asyncio.get_running_loop()
+            resp = await loop.run_in_executor(None, urllib.request.urlopen, req)
+            data = json.loads(resp.read().decode('utf-8'))
+            
+            if "arbitrum" in data:
+                PRICE_CACHE["ARC"] = float(data["arbitrum"]["usd"])
+            if "ethereum" in data:
+                PRICE_CACHE["DEFAULT_TOKEN"] = float(data["ethereum"]["usd"]) * 0.001 
+                
+            logger.info(f"📈 Oracle Feed Updated | ARC: ${PRICE_CACHE['ARC']} | Tokens Base: ${PRICE_CACHE['DEFAULT_TOKEN']}")
+        except Exception as e:
+            logger.warning(f"Oracle API sync skipped (Rate limit or network issue), using cached prices. Details: {e}")
+        
+        await asyncio.sleep(180)
 
 async def send_history_to_client(websocket):
     try:
@@ -131,14 +156,16 @@ async def scan_block(block_number):
         for tx in block.transactions:
             if tx.value > 0:
                 actual_value = float(w3.from_wei(tx.value, 'ether'))
+                current_price = PRICE_CACHE["ARC"]
+                
                 logger.info(f"💎 NATIVE TRANSFER! Amount: {actual_value:.4f} | TX: {tx.hash.hex()}")
                 
-                flag = "WHALE" if (actual_value * ARC_PRICE_USD >= 10000) else "STANDARD"
+                flag = "WHALE" if (actual_value * current_price >= 10000) else "STANDARD"
                 tx_data = {
                     "type": "NATIVE",
                     "asset": "ARC",
                     "amount": actual_value,
-                    "price_usd": ARC_PRICE_USD,
+                    "price_usd": current_price,
                     "tx_hash": tx.hash.hex(),
                     "flag": flag
                 }
@@ -167,15 +194,18 @@ async def scan_block(block_number):
                             
                             decimals = await get_token_decimals(contract_address)
                             actual_token_amount = raw_amount / (10 ** decimals)
+                            current_token_price = PRICE_CACHE["DEFAULT_TOKEN"]
                             
                             logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | Amount: {actual_token_amount:.4f}")
                             
-                            flag = "WHALE" if actual_token_amount >= 50000 else "STANDARD"
+                            total_usd_value = actual_token_amount * current_token_price
+                            flag = "WHALE" if (total_usd_value >= 10000 or actual_token_amount >= 50000) else "STANDARD"
+                            
                             tx_data = {
                                 "type": "TOKEN",
                                 "asset": contract_address,
                                 "amount": actual_token_amount,
-                                "price_usd": 0.0,
+                                "price_usd": current_token_price,
                                 "tx_hash": tx_hash_str,
                                 "flag": flag
                             }
@@ -198,10 +228,13 @@ async def check_network_status():
 async def main():
     logger.info("Initializing A.S.M.O. Boot Sequence...")
     await init_db() 
+    
     last_scanned_block = await check_network_status()
     if not last_scanned_block:
         logger.error("Failed to connect to ARC RPC. Exiting...")
         return
+
+    asyncio.create_task(update_price_oracle())
 
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
         logger.info("🌉 WebSocket Bridge Active on Port 8765")
