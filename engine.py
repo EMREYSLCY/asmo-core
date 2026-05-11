@@ -44,21 +44,29 @@ async def init_db():
                 asset TEXT NOT NULL,
                 amount REAL NOT NULL,
                 price_usd REAL NOT NULL,
+                from_addr TEXT NOT NULL DEFAULT '0x0000000000000000000000000000000000000000',
+                to_addr TEXT NOT NULL DEFAULT '0x0000000000000000000000000000000000000000',
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        try:
+            await db.execute("ALTER TABLE transfers ADD COLUMN from_addr TEXT NOT NULL DEFAULT '0x0000000000000000000000000000000000000000'")
+            await db.execute("ALTER TABLE transfers ADD COLUMN to_addr TEXT NOT NULL DEFAULT '0x0000000000000000000000000000000000000000'")
+        except Exception:
+            pass
         await db.commit()
-        logger.info("💾 Database initialized successfully.")
+        logger.info("💾 Database verified with wallet intelligence layer.")
 
 async def save_transfer(tx_data, block_number):
     try:
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd) 
-                   VALUES (?, ?, ?, ?, ?, ?)""",
+                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (tx_data["tx_hash"], block_number, tx_data["type"], 
-                 tx_data["asset"], tx_data["amount"], tx_data["price_usd"])
+                 tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
+                 tx_data["from_addr"], tx_data["to_addr"])
             )
             await db.commit()
     except Exception as e:
@@ -81,7 +89,7 @@ async def update_price_oracle():
                 
             logger.info(f"📈 Oracle Feed Updated | ARC: ${PRICE_CACHE['ARC']} | Tokens Base: ${PRICE_CACHE['DEFAULT_TOKEN']}")
         except Exception as e:
-            logger.warning(f"Oracle API sync skipped (Rate limit or network issue), using cached prices. Details: {e}")
+            logger.warning(f"Oracle API sync skipped, using cached prices. Details: {e}")
         
         await asyncio.sleep(180)
 
@@ -105,6 +113,8 @@ async def send_history_to_client(websocket):
                     "amount": amt,
                     "price_usd": prc,
                     "tx_hash": row["tx_hash"],
+                    "from_addr": row["from_addr"],
+                    "to_addr": row["to_addr"],
                     "flag": flag
                 }
                 await websocket.send(json.dumps(tx_data))
@@ -158,7 +168,10 @@ async def scan_block(block_number):
                 actual_value = float(w3.from_wei(tx.value, 'ether'))
                 current_price = PRICE_CACHE["ARC"]
                 
-                logger.info(f"💎 NATIVE TRANSFER! Amount: {actual_value:.4f} | TX: {tx.hash.hex()}")
+                from_addr = tx["from"] if tx.get("from") else "0x0000000000000000000000000000000000000000"
+                to_addr = tx["to"] if tx.get("to") else "0x0000000000000000000000000000000000000000"
+                
+                logger.info(f"💎 NATIVE TRANSFER! Amount: {actual_value:.4f} | From: {from_addr[:8]}... -> To: {to_addr[:8]}...")
                 
                 flag = "WHALE" if (actual_value * current_price >= 10000) else "STANDARD"
                 tx_data = {
@@ -167,6 +180,8 @@ async def scan_block(block_number):
                     "amount": actual_value,
                     "price_usd": current_price,
                     "tx_hash": tx.hash.hex(),
+                    "from_addr": from_addr,
+                    "to_addr": to_addr,
                     "flag": flag
                 }
                 await broadcast_alert(tx_data)
@@ -196,7 +211,10 @@ async def scan_block(block_number):
                             actual_token_amount = raw_amount / (10 ** decimals)
                             current_token_price = PRICE_CACHE["DEFAULT_TOKEN"]
                             
-                            logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | Amount: {actual_token_amount:.4f}")
+                            from_addr = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else "0x0000000000000000000000000000000000000000"
+                            to_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else "0x0000000000000000000000000000000000000000"
+                            
+                            logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | Amount: {actual_token_amount:.4f} | From: {from_addr[:8]}...")
                             
                             total_usd_value = actual_token_amount * current_token_price
                             flag = "WHALE" if (total_usd_value >= 10000 or actual_token_amount >= 50000) else "STANDARD"
@@ -207,6 +225,8 @@ async def scan_block(block_number):
                                 "amount": actual_token_amount,
                                 "price_usd": current_token_price,
                                 "tx_hash": tx_hash_str,
+                                "from_addr": from_addr,
+                                "to_addr": to_addr,
                                 "flag": flag
                             }
                             await broadcast_alert(tx_data)
