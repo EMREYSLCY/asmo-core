@@ -24,6 +24,9 @@ ARC_RPC_URL = os.getenv("ARC_RPC_URL")
 w3 = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL))
 TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
+ERC8004_REGISTER_SIG = "0x" + w3.keccak(text="AgentRegistered(bytes32,address,string)").hex()
+ERC8183_WORKFLOW_SIG = "0x" + w3.keccak(text="WorkflowFunded(bytes32,address,address,uint256)").hex()
+
 ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]')
 TOKEN_CACHE = {}
 PRICE_CACHE = {
@@ -55,7 +58,7 @@ async def init_db():
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with wallet intelligence layer.")
+        logger.info("💾 Database verified with wallet & AI Agent intelligence layers.")
 
 async def save_transfer(tx_data, block_number):
     try:
@@ -104,7 +107,12 @@ async def send_history_to_client(websocket):
                 time_str = row["timestamp"].split(" ")[1] if row["timestamp"] else None
                 amt = row["amount"]
                 prc = row["price_usd"]
-                flag = "WHALE" if (amt * prc >= 10000 or (prc == 0.0 and amt >= 50000)) else "STANDARD"
+                
+                flag = "STANDARD"
+                if row["type"] == "AI_AGENT":
+                    flag = "AGENT_FLOW"
+                elif (amt * prc >= 10000 or (prc == 0.0 and amt >= 50000)):
+                    flag = "WHALE"
                 
                 tx_data = {
                     "time": time_str,
@@ -199,14 +207,64 @@ async def scan_block(block_number):
             
         for receipt in receipts:
             if not receipt: continue
+            tx_hash_str = receipt.transactionHash.hex()
+            
             for log in receipt.logs:
-                if len(log.topics) > 0 and log.topics[0].hex() == TRANSFER_SIG:
+                if not log.topics: continue
+                topic0 = log.topics[0].hex()
+                
+                if topic0 == ERC8004_REGISTER_SIG:
+                    try:
+                        agent_id = log.topics[1].hex()
+                        owner_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
+                        logger.info(f"🤖 ERC-8004 AGENT REGISTERED! ID: {agent_id[:10]}... Owner: {owner_addr[:8]}...")
+                        
+                        tx_data = {
+                            "type": "AI_AGENT",
+                            "asset": "ERC-8004 Registration",
+                            "amount": 1.0,
+                            "price_usd": 0.0,
+                            "tx_hash": tx_hash_str,
+                            "from_addr": owner_addr,
+                            "to_addr": log.address,
+                            "flag": "AGENT_FLOW"
+                        }
+                        await broadcast_alert(tx_data)
+                        await save_transfer(tx_data, block_number)
+                    except Exception as e:
+                        logger.error(f"Error parsing ERC-8004 log: {e}")
+                        
+                elif topic0 == ERC8183_WORKFLOW_SIG:
+                    try:
+                        workflow_id = log.topics[1].hex()
+                        funder = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
+                        agent = "0x" + log.topics[3].hex()[26:] if len(log.topics) > 3 else log.address
+                        
+                        funded_amount = int(log.data.hex(), 16)
+                        actual_amt = float(w3.from_wei(funded_amount, 'ether'))
+                        
+                        logger.info(f"🧠 ERC-8183 WORKFLOW FUNDED! Agent: {agent[:8]}... Amount: {actual_amt:.4f} ARC")
+                        
+                        tx_data = {
+                            "type": "AI_AGENT",
+                            "asset": "ERC-8183 Task Flow",
+                            "amount": actual_amt,
+                            "price_usd": PRICE_CACHE["ARC"],
+                            "tx_hash": tx_hash_str,
+                            "from_addr": funder,
+                            "to_addr": agent,
+                            "flag": "AGENT_FLOW"
+                        }
+                        await broadcast_alert(tx_data)
+                        await save_transfer(tx_data, block_number)
+                    except Exception as e:
+                        logger.error(f"Error parsing ERC-8183 log: {e}")
+                        
+                elif topic0 == TRANSFER_SIG:
                     try:
                         raw_amount = int(log.data.hex(), 16)
                         if raw_amount > 0:
-                            tx_hash_str = receipt.transactionHash.hex()
                             contract_address = log.address
-                            
                             decimals = await get_token_decimals(contract_address)
                             actual_token_amount = raw_amount / (10 ** decimals)
                             current_token_price = PRICE_CACHE["DEFAULT_TOKEN"]
@@ -214,7 +272,7 @@ async def scan_block(block_number):
                             from_addr = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else "0x0000000000000000000000000000000000000000"
                             to_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else "0x0000000000000000000000000000000000000000"
                             
-                            logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | Amount: {actual_token_amount:.4f} | From: {from_addr[:8]}...")
+                            logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | Amount: {actual_token_amount:.4f}")
                             
                             total_usd_value = actual_token_amount * current_token_price
                             flag = "WHALE" if (total_usd_value >= 10000 or actual_token_amount >= 50000) else "STANDARD"
@@ -232,7 +290,7 @@ async def scan_block(block_number):
                             await broadcast_alert(tx_data)
                             await save_transfer(tx_data, block_number)
                     except Exception as e:
-                        logger.error(f"Error parsing token log for TX {receipt.transactionHash.hex()}: {e}")
+                        logger.error(f"Error parsing token log for TX {tx_hash_str}: {e}")
                         continue
     except Exception as e:
         logger.error(f"Fatal error scanning block {block_number}: {e}", exc_info=True)
@@ -258,7 +316,7 @@ async def main():
 
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
         logger.info("🌉 WebSocket Bridge Active on Port 8765")
-        logger.info("🔄 Initiating Dual Radar...")
+        logger.info("🔄 Initiating Dual Radar with Agentic AI Extension...")
         
         while True:
             try:
