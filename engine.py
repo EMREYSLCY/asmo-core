@@ -22,10 +22,14 @@ logger = logging.getLogger("ASMO")
 
 ARC_RPC_URL = os.getenv("ARC_RPC_URL")
 w3 = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL))
-TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
+TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 ERC8004_REGISTER_SIG = "0x" + w3.keccak(text="AgentRegistered(bytes32,address,string)").hex()
 ERC8183_WORKFLOW_SIG = "0x" + w3.keccak(text="WorkflowFunded(bytes32,address,address,uint256)").hex()
+
+CHORDSWAP_SWAP_SIG = "0x" + w3.keccak(text="Swap(address,uint256,uint256,uint256,uint256,address)").hex()
+CHORDSWAP_MINT_SIG = "0x" + w3.keccak(text="Mint(address,uint256,uint256)").hex()
+CHORDSWAP_BURN_SIG = "0x" + w3.keccak(text="Burn(address,uint256,uint256,address)").hex()
 
 ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]')
 TOKEN_CACHE = {}
@@ -58,7 +62,7 @@ async def init_db():
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with wallet & AI Agent intelligence layers.")
+        logger.info("💾 Database verified with unified DEX & Agent intelligence layer.")
 
 async def save_transfer(tx_data, block_number):
     try:
@@ -111,6 +115,8 @@ async def send_history_to_client(websocket):
                 flag = "STANDARD"
                 if row["type"] == "AI_AGENT":
                     flag = "AGENT_FLOW"
+                elif row["type"] in ["DEX_SWAP", "DEX_LIQUIDITY"]:
+                    flag = "DEX_ACTIVITY"
                 elif (amt * prc >= 10000 or (prc == 0.0 and amt >= 50000)):
                     flag = "WHALE"
                 
@@ -175,11 +181,8 @@ async def scan_block(block_number):
             if tx.value > 0:
                 actual_value = float(w3.from_wei(tx.value, 'ether'))
                 current_price = PRICE_CACHE["ARC"]
-                
                 from_addr = tx["from"] if tx.get("from") else "0x0000000000000000000000000000000000000000"
                 to_addr = tx["to"] if tx.get("to") else "0x0000000000000000000000000000000000000000"
-                
-                logger.info(f"💎 NATIVE TRANSFER! Amount: {actual_value:.4f} | From: {from_addr[:8]}... -> To: {to_addr[:8]}...")
                 
                 flag = "WHALE" if (actual_value * current_price >= 10000) else "STANDARD"
                 tx_data = {
@@ -208,12 +211,61 @@ async def scan_block(block_number):
         for receipt in receipts:
             if not receipt: continue
             tx_hash_str = receipt.transactionHash.hex()
+            dex_processed = False
             
             for log in receipt.logs:
                 if not log.topics: continue
                 topic0 = log.topics[0].hex()
                 
-                if topic0 == ERC8004_REGISTER_SIG:
+                if topic0 == CHORDSWAP_SWAP_SIG and not dex_processed:
+                    try:
+                        pool_addr = log.address
+                        sender = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
+                        to_receiver = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
+                        
+                        logger.info(f"🦄 CHORDSWAP SWAP DETECTED! Pool: {pool_addr[:8]}... Trader: {sender[:8]}...")
+                        
+                        tx_data = {
+                            "type": "DEX_SWAP",
+                            "asset": f"Pool: {pool_addr[:8]}...",
+                            "amount": 1.0, 
+                            "price_usd": PRICE_CACHE["DEFAULT_TOKEN"],
+                            "tx_hash": tx_hash_str,
+                            "from_addr": sender,
+                            "to_addr": pool_addr,
+                            "flag": "DEX_ACTIVITY"
+                        }
+                        await broadcast_alert(tx_data)
+                        await save_transfer(tx_data, block_number)
+                        dex_processed = True
+                    except Exception as e:
+                        logger.error(f"Error parsing Chordswap Swap log: {e}")
+                        
+                elif topic0 in [CHORDSWAP_MINT_SIG, CHORDSWAP_BURN_SIG] and not dex_processed:
+                    try:
+                        pool_addr = log.address
+                        provider = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
+                        action = "ADD_LIQUIDITY" if topic0 == CHORDSWAP_MINT_SIG else "REMOVE_LIQUIDITY"
+                        
+                        logger.info(f"🌊 CHORDSWAP LIQUIDITY EVENT! Action: {action} Pool: {pool_addr[:8]}...")
+                        
+                        tx_data = {
+                            "type": "DEX_LIQUIDITY",
+                            "asset": f"LP: {pool_addr[:8]}...",
+                            "amount": 1.0,
+                            "price_usd": PRICE_CACHE["DEFAULT_TOKEN"] * 2,
+                            "tx_hash": tx_hash_str,
+                            "from_addr": provider,
+                            "to_addr": pool_addr,
+                            "flag": "DEX_ACTIVITY"
+                        }
+                        await broadcast_alert(tx_data)
+                        await save_transfer(tx_data, block_number)
+                        dex_processed = True
+                    except Exception as e:
+                        logger.error(f"Error parsing Chordswap Liquidity log: {e}")
+                        
+                elif topic0 == ERC8004_REGISTER_SIG:
                     try:
                         agent_id = log.topics[1].hex()
                         owner_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
@@ -239,7 +291,6 @@ async def scan_block(block_number):
                         workflow_id = log.topics[1].hex()
                         funder = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
                         agent = "0x" + log.topics[3].hex()[26:] if len(log.topics) > 3 else log.address
-                        
                         funded_amount = int(log.data.hex(), 16)
                         actual_amt = float(w3.from_wei(funded_amount, 'ether'))
                         
@@ -260,7 +311,7 @@ async def scan_block(block_number):
                     except Exception as e:
                         logger.error(f"Error parsing ERC-8183 log: {e}")
                         
-                elif topic0 == TRANSFER_SIG:
+                elif topic0 == TRANSFER_SIG and not dex_processed:
                     try:
                         raw_amount = int(log.data.hex(), 16)
                         if raw_amount > 0:
@@ -271,8 +322,6 @@ async def scan_block(block_number):
                             
                             from_addr = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else "0x0000000000000000000000000000000000000000"
                             to_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else "0x0000000000000000000000000000000000000000"
-                            
-                            logger.info(f"🚨 TOKEN DETECTED! Token: {contract_address} | Amount: {actual_token_amount:.4f}")
                             
                             total_usd_value = actual_token_amount * current_token_price
                             flag = "WHALE" if (total_usd_value >= 10000 or actual_token_amount >= 50000) else "STANDARD"
@@ -316,7 +365,7 @@ async def main():
 
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
         logger.info("🌉 WebSocket Bridge Active on Port 8765")
-        logger.info("🔄 Initiating Dual Radar with Agentic AI Extension...")
+        logger.info("🔄 Initiating Omniscience Radar (Native + Agentic AI + Chordswap DEX)...")
         
         while True:
             try:
