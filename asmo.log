@@ -18847,3 +18847,440 @@ websockets.exceptions.InvalidUpgrade: missing Connection header
 2026-05-12 16:10:42,536 [INFO] 🔴 UI Dashboard Disconnected.
 2026-05-12 16:10:42,537 [INFO] 🔴 UI Dashboard Disconnected.
 2026-05-12 16:10:42,538 [INFO] server closed
+2026-05-13 18:56:49,605 [INFO] Initializing A.S.M.O. Boot Sequence...
+2026-05-13 18:56:49,706 [INFO] 💾 Database verified with EVM Trace & Execution Depth metrics.
+2026-05-13 18:56:49,831 [INFO] server listening on 0.0.0.0:8765
+2026-05-13 18:56:49,831 [INFO] 🌉 WebSocket Bridge Active on Port 8765
+2026-05-13 18:56:49,831 [INFO] 🔄 Initiating EVM Trace & Execution Depth Matrix Radar...
+2026-05-13 18:56:50,038 [INFO] 📈 Oracle Feed Updated | ARC: $0.133204 | Tokens Base: $2.26033
+2026-05-13 18:56:51,937 [INFO] 📡 Scanning Block: 42041132 | Transactions: 17
+2026-05-13 18:56:52,490 [INFO] 📡 Scanning Block: 42041133 | Transactions: 14
+2026-05-13 18:56:52,798 [INFO] 📡 Scanning Block: 42041134 | Transactions: 14
+2026-05-13 18:56:53,102 [INFO] 📡 Scanning Block: 42041135 | Transactions: 10
+2026-05-13 18:56:53,444 [INFO] 📡 Scanning Block: 42041136 | Transactions: 18
+2026-05-13 18:56:54,017 [INFO] 📡 Scanning Block: 42041137 | Transactions: 9
+2026-05-13 18:56:54,311 [INFO] 📡 Scanning Block: 42041138 | Transactions: 18
+2026-05-13 18:56:54,915 [INFO] 📡 Scanning Block: 42041139 | Transactions: 16
+2026-05-13 18:56:55,466 [INFO] 📡 Scanning Block: 42041140 | Transactions: 17
+2026-05-13 18:56:56,020 [INFO] 📡 Scanning Block: 42041141 | Transactions: 13
+2026-05-13 18:56:56,360 [INFO] 📡 Scanning Block: 42041142 | Transactions: 25
+2026-05-13 18:56:56,942 [INFO] 📡 Scanning Block: 42041143 | Transactions: 11
+2026-05-13 18:56:57,235 [INFO] 📡 Scanning Block: 42041144 | Transactions: 11
+2026-05-13 18:56:57,585 [INFO] 📡 Scanning Block: 42041145 | Transactions: 21
+2026-05-13 18:56:58,147 [INFO] 📡 Scanning Block: 42041146 | Transactions: 5
+2026-05-13 18:56:58,470 [INFO] 📡 Scanning Block: 42041147 | Transactions: 16
+2026-05-13 18:56:59,038 [INFO] 📡 Scanning Block: 42041148 | Transactions: 14
+2026-05-13 18:56:59,415 [INFO] 📡 Scanning Block: 42041149 | Transactions: 9
+2026-05-13 18:56:59,722 [INFO] 📡 Scanning Block: 42041150 | Transactions: 18
+2026-05-13 18:57:00,315 [INFO] 📡 Scanning Block: 42041151 | Transactions: 22
+2026-05-13 18:57:00,896 [INFO] 📡 Scanning Block: 42041152 | Transactions: 10
+2026-05-13 18:57:01,227 [INFO] 📡 Scanning Block: 42041153 | Transactions: 23
+2026-05-13 18:57:01,818 [INFO] 📡 Scanning Block: 42041154 | Transactions: 12
+2026-05-13 18:57:02,140 [INFO] 📡 Scanning Block: 42041155 | Transactions: 9
+2026-05-13 18:57:02,494 [INFO] 📡 Scanning Block: 42041156 | Transactions: 10
+2026-05-13 18:57:04,287 [INFO] connection rejected (426 Upgrade Required)
+2026-05-13 18:57:04,290 [ERROR] opening handshake failed
+Traceback (most recent call last):
+  File "/usr/local/python/3.12.1/lib/python3.12/site-packages/websockets/asyncio/server.py", line 356, in conn_handler
+    await connection.handshake(
+  File "/usr/local/python/3.12.1/lib/python3.12/site-packages/websockets/asyncio/server.py", line 207, in handshake
+    raise self.protocol.handshake_exc
+  File "/usr/local/python/3.12.1/lib/python3.12/site-packages/websockets/server.py", line 138, in accept
+    ) = self.process_request(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python/3.12.1/lib/python3.12/site-packages/websockets/server.py", line 233, in process_request
+    raise InvalidUpgrade(
+websockets.exceptions.InvalidUpgrade: missing Connection header
+2026-05-13 18:57:04,883 [INFO] 📡 Scanning Block: 42041157 | Transactions: 25
+2026-05-13 18:57:05,052 [INFO] connection rejected (426 Upgrade Required)
+2026-05-13 18:57:05,056 [ERROR] opening handshake failed
+Traceback (most recent call last):
+  File "/usr/local/python/3.12.1/lib/python3.12/site-packages/websockets/asyncio/server.py", line 356, in conn_handler
+    await connection.handshake(
+  File "/usr/local/python/3.12.1/lib/python3.12/site-packages/websockets/asyncio/server.py", line 207, in handshake
+    raise self.protocol.handshake_exc
+  File "/usr/local/python/3.12.1/lib/python3.12/site-packages/websockets/server.py", line 138, in accept
+    ) = self.process_request(request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python/3.12.1/lib/python3.12/site-packages/websockets/server.py", line 233, in process_request
+    raise InvalidUpgrade(
+websockets.exceptions.InvalidUpgrade: missing Connection header
+2026-05-13 18:57:05,478 [INFO] 📡 Scanning Block: 42041158 | Transactions: 18
+2026-05-13 18:57:06,032 [INFO] 📡 Scanning Block: 42041159 | Transactions: 14
+2026-05-13 18:57:06,348 [INFO] 📡 Scanning Block: 42041160 | Transactions: 25
+2026-05-13 18:57:06,944 [INFO] 📡 Scanning Block: 42041161 | Transactions: 10
+2026-05-13 18:57:07,235 [INFO] 📡 Scanning Block: 42041162 | Transactions: 14
+2026-05-13 18:57:07,552 [INFO] 📡 Scanning Block: 42041163 | Transactions: 9
+2026-05-13 18:57:07,841 [INFO] 📡 Scanning Block: 42041164 | Transactions: 8
+2026-05-13 18:57:08,146 [INFO] 📡 Scanning Block: 42041165 | Transactions: 12
+2026-05-13 18:57:08,480 [INFO] 📡 Scanning Block: 42041166 | Transactions: 15
+2026-05-13 18:57:08,787 [INFO] 📡 Scanning Block: 42041167 | Transactions: 2
+2026-05-13 18:57:09,111 [INFO] 📡 Scanning Block: 42041168 | Transactions: 18
+2026-05-13 18:57:09,657 [INFO] 📡 Scanning Block: 42041169 | Transactions: 10
+2026-05-13 18:57:09,978 [INFO] 📡 Scanning Block: 42041170 | Transactions: 15
+2026-05-13 18:57:10,294 [INFO] 📡 Scanning Block: 42041171 | Transactions: 5
+2026-05-13 18:57:12,655 [INFO] 📡 Scanning Block: 42041172 | Transactions: 25
+2026-05-13 18:57:13,224 [INFO] 📡 Scanning Block: 42041173 | Transactions: 8
+2026-05-13 18:57:13,518 [INFO] 📡 Scanning Block: 42041174 | Transactions: 14
+2026-05-13 18:57:13,817 [INFO] 📡 Scanning Block: 42041175 | Transactions: 22
+2026-05-13 18:57:14,424 [INFO] 📡 Scanning Block: 42041176 | Transactions: 7
+2026-05-13 18:57:14,715 [INFO] 📡 Scanning Block: 42041177 | Transactions: 14
+2026-05-13 18:57:15,016 [INFO] 📡 Scanning Block: 42041178 | Transactions: 17
+2026-05-13 18:57:15,586 [INFO] 📡 Scanning Block: 42041179 | Transactions: 9
+2026-05-13 18:57:15,916 [INFO] 📡 Scanning Block: 42041180 | Transactions: 11
+2026-05-13 18:57:16,204 [INFO] 📡 Scanning Block: 42041181 | Transactions: 21
+2026-05-13 18:57:16,794 [INFO] 📡 Scanning Block: 42041182 | Transactions: 13
+2026-05-13 18:57:17,132 [INFO] 📡 Scanning Block: 42041183 | Transactions: 13
+2026-05-13 18:57:17,445 [INFO] 📡 Scanning Block: 42041184 | Transactions: 14
+2026-05-13 18:57:17,789 [INFO] 📡 Scanning Block: 42041185 | Transactions: 11
+2026-05-13 18:57:18,084 [INFO] 📡 Scanning Block: 42041186 | Transactions: 4
+2026-05-13 18:57:18,390 [INFO] 📡 Scanning Block: 42041187 | Transactions: 18
+2026-05-13 18:57:19,023 [INFO] 📡 Scanning Block: 42041188 | Transactions: 15
+2026-05-13 18:57:19,361 [INFO] 📡 Scanning Block: 42041189 | Transactions: 9
+2026-05-13 18:57:21,747 [INFO] 📡 Scanning Block: 42041190 | Transactions: 21
+2026-05-13 18:57:22,330 [INFO] 📡 Scanning Block: 42041191 | Transactions: 13
+2026-05-13 18:57:22,663 [INFO] 📡 Scanning Block: 42041192 | Transactions: 11
+2026-05-13 18:57:22,961 [INFO] 📡 Scanning Block: 42041193 | Transactions: 14
+2026-05-13 18:57:23,278 [INFO] 📡 Scanning Block: 42041194 | Transactions: 5
+2026-05-13 18:57:23,586 [INFO] 📡 Scanning Block: 42041195 | Transactions: 17
+2026-05-13 18:57:24,155 [INFO] 📡 Scanning Block: 42041196 | Transactions: 20
+2026-05-13 18:57:24,720 [INFO] 📡 Scanning Block: 42041197 | Transactions: 8
+2026-05-13 18:57:25,071 [INFO] 📡 Scanning Block: 42041198 | Transactions: 18
+2026-05-13 18:57:25,624 [INFO] 📡 Scanning Block: 42041199 | Transactions: 13
+2026-05-13 18:57:25,926 [INFO] 📡 Scanning Block: 42041200 | Transactions: 21
+2026-05-13 18:57:26,524 [INFO] 📡 Scanning Block: 42041201 | Transactions: 10
+2026-05-13 18:57:26,829 [INFO] 📡 Scanning Block: 42041202 | Transactions: 25
+2026-05-13 18:57:27,384 [INFO] 📡 Scanning Block: 42041203 | Transactions: 16
+2026-05-13 18:57:27,979 [INFO] 📡 Scanning Block: 42041204 | Transactions: 11
+2026-05-13 18:57:28,274 [INFO] 📡 Scanning Block: 42041205 | Transactions: 12
+2026-05-13 18:57:28,589 [INFO] 📡 Scanning Block: 42041206 | Transactions: 9
+2026-05-13 18:57:28,917 [INFO] 📡 Scanning Block: 42041207 | Transactions: 18
+2026-05-13 18:57:29,465 [INFO] 📡 Scanning Block: 42041208 | Transactions: 11
+2026-05-13 18:57:29,823 [INFO] 📡 Scanning Block: 42041209 | Transactions: 8
+2026-05-13 18:57:30,152 [INFO] 📡 Scanning Block: 42041210 | Transactions: 15
+2026-05-13 18:57:30,486 [INFO] 📡 Scanning Block: 42041211 | Transactions: 17
+2026-05-13 18:57:31,082 [INFO] 📡 Scanning Block: 42041212 | Transactions: 7
+2026-05-13 18:57:33,466 [INFO] 📡 Scanning Block: 42041213 | Transactions: 22
+2026-05-13 18:57:34,058 [INFO] 📡 Scanning Block: 42041214 | Transactions: 16
+2026-05-13 18:57:34,605 [INFO] 📡 Scanning Block: 42041215 | Transactions: 11
+2026-05-13 18:57:34,897 [INFO] 📡 Scanning Block: 42041216 | Transactions: 9
+2026-05-13 18:57:35,220 [INFO] 📡 Scanning Block: 42041217 | Transactions: 16
+2026-05-13 18:57:35,764 [INFO] 📡 Scanning Block: 42041218 | Transactions: 18
+2026-05-13 18:57:36,312 [INFO] 📡 Scanning Block: 42041219 | Transactions: 13
+2026-05-13 18:57:36,645 [INFO] 📡 Scanning Block: 42041220 | Transactions: 15
+2026-05-13 18:57:36,961 [INFO] 📡 Scanning Block: 42041221 | Transactions: 8
+2026-05-13 18:57:37,256 [INFO] 📡 Scanning Block: 42041222 | Transactions: 18
+2026-05-13 18:57:37,824 [INFO] 📡 Scanning Block: 42041223 | Transactions: 13
+2026-05-13 18:57:38,160 [INFO] 📡 Scanning Block: 42041224 | Transactions: 9
+2026-05-13 18:57:38,475 [INFO] 📡 Scanning Block: 42041225 | Transactions: 13
+2026-05-13 18:57:38,791 [INFO] 📡 Scanning Block: 42041226 | Transactions: 23
+2026-05-13 18:57:39,401 [INFO] 📡 Scanning Block: 42041227 | Transactions: 8
+2026-05-13 18:57:39,684 [INFO] 📡 Scanning Block: 42041228 | Transactions: 24
+2026-05-13 18:57:40,302 [INFO] 📡 Scanning Block: 42041229 | Transactions: 11
+2026-05-13 18:57:40,597 [INFO] 📡 Scanning Block: 42041230 | Transactions: 14
+2026-05-13 18:57:40,933 [INFO] 📡 Scanning Block: 42041231 | Transactions: 15
+2026-05-13 18:57:41,275 [INFO] 📡 Scanning Block: 42041232 | Transactions: 13
+2026-05-13 18:57:43,666 [INFO] 📡 Scanning Block: 42041233 | Transactions: 7
+2026-05-13 18:57:43,974 [INFO] 📡 Scanning Block: 42041234 | Transactions: 13
+2026-05-13 18:57:44,282 [INFO] 📡 Scanning Block: 42041235 | Transactions: 23
+2026-05-13 18:57:44,828 [INFO] 📡 Scanning Block: 42041236 | Transactions: 4
+2026-05-13 18:57:45,105 [INFO] 📡 Scanning Block: 42041237 | Transactions: 7
+2026-05-13 18:57:45,433 [INFO] 📡 Scanning Block: 42041238 | Transactions: 20
+2026-05-13 18:57:46,009 [INFO] 📡 Scanning Block: 42041239 | Transactions: 7
+2026-05-13 18:57:46,318 [INFO] 📡 Scanning Block: 42041240 | Transactions: 9
+2026-05-13 18:57:46,649 [INFO] 📡 Scanning Block: 42041241 | Transactions: 20
+2026-05-13 18:57:47,205 [INFO] 📡 Scanning Block: 42041242 | Transactions: 9
+2026-05-13 18:57:47,530 [INFO] 📡 Scanning Block: 42041243 | Transactions: 19
+2026-05-13 18:57:48,115 [INFO] 📡 Scanning Block: 42041244 | Transactions: 16
+2026-05-13 18:57:48,747 [INFO] 📡 Scanning Block: 42041245 | Transactions: 13
+2026-05-13 18:57:49,060 [INFO] 📡 Scanning Block: 42041246 | Transactions: 6
+2026-05-13 18:57:49,394 [INFO] 📡 Scanning Block: 42041247 | Transactions: 25
+2026-05-13 18:57:50,000 [INFO] 📡 Scanning Block: 42041248 | Transactions: 9
+2026-05-13 18:57:50,292 [INFO] 📡 Scanning Block: 42041249 | Transactions: 12
+2026-05-13 18:57:50,645 [INFO] 📡 Scanning Block: 42041250 | Transactions: 19
+2026-05-13 18:57:51,225 [INFO] 📡 Scanning Block: 42041251 | Transactions: 9
+2026-05-13 18:57:51,582 [INFO] 📡 Scanning Block: 42041252 | Transactions: 14
+2026-05-13 18:57:51,949 [INFO] 📡 Scanning Block: 42041253 | Transactions: 9
+2026-05-13 18:57:52,287 [INFO] 📡 Scanning Block: 42041254 | Transactions: 3
+2026-05-13 18:57:54,650 [INFO] 📡 Scanning Block: 42041255 | Transactions: 14
+2026-05-13 18:57:54,973 [INFO] 📡 Scanning Block: 42041256 | Transactions: 19
+2026-05-13 18:57:55,546 [INFO] 📡 Scanning Block: 42041257 | Transactions: 9
+2026-05-13 18:57:55,852 [INFO] 📡 Scanning Block: 42041258 | Transactions: 21
+2026-05-13 18:57:56,452 [INFO] 📡 Scanning Block: 42041259 | Transactions: 25
+2026-05-13 18:57:57,041 [INFO] 📡 Scanning Block: 42041260 | Transactions: 10
+2026-05-13 18:57:57,333 [INFO] 📡 Scanning Block: 42041261 | Transactions: 5
+2026-05-13 18:57:57,635 [INFO] 📡 Scanning Block: 42041262 | Transactions: 17
+2026-05-13 18:57:58,193 [INFO] 📡 Scanning Block: 42041263 | Transactions: 11
+2026-05-13 18:57:58,494 [INFO] 📡 Scanning Block: 42041264 | Transactions: 12
+2026-05-13 18:57:58,841 [INFO] 📡 Scanning Block: 42041265 | Transactions: 18
+2026-05-13 18:57:59,404 [INFO] 📡 Scanning Block: 42041266 | Transactions: 5
+2026-05-13 18:57:59,714 [INFO] 📡 Scanning Block: 42041267 | Transactions: 16
+2026-05-13 18:58:00,260 [INFO] 📡 Scanning Block: 42041268 | Transactions: 17
+2026-05-13 18:58:00,852 [INFO] 📡 Scanning Block: 42041269 | Transactions: 4
+2026-05-13 18:58:01,141 [INFO] 📡 Scanning Block: 42041270 | Transactions: 8
+2026-05-13 18:58:01,464 [INFO] 📡 Scanning Block: 42041271 | Transactions: 22
+2026-05-13 18:58:02,043 [INFO] 📡 Scanning Block: 42041272 | Transactions: 5
+2026-05-13 18:58:02,367 [INFO] 📡 Scanning Block: 42041273 | Transactions: 16
+2026-05-13 18:58:02,953 [INFO] 📡 Scanning Block: 42041274 | Transactions: 20
+2026-05-13 18:58:03,518 [INFO] 📡 Scanning Block: 42041275 | Transactions: 8
+2026-05-13 18:58:03,818 [INFO] 📡 Scanning Block: 42041276 | Transactions: 10
+2026-05-13 18:58:06,215 [INFO] 📡 Scanning Block: 42041277 | Transactions: 27
+2026-05-13 18:58:06,786 [INFO] 📡 Scanning Block: 42041278 | Transactions: 11
+2026-05-13 18:58:07,086 [INFO] 📡 Scanning Block: 42041279 | Transactions: 13
+2026-05-13 18:58:07,387 [INFO] 📡 Scanning Block: 42041280 | Transactions: 26
+2026-05-13 18:58:07,955 [INFO] 📡 Scanning Block: 42041281 | Transactions: 4
+2026-05-13 18:58:08,262 [INFO] 📡 Scanning Block: 42041282 | Transactions: 17
+2026-05-13 18:58:08,808 [INFO] 📡 Scanning Block: 42041283 | Transactions: 11
+2026-05-13 18:58:09,129 [INFO] 📡 Scanning Block: 42041284 | Transactions: 11
+2026-05-13 18:58:09,431 [INFO] 📡 Scanning Block: 42041285 | Transactions: 17
+2026-05-13 18:58:10,037 [INFO] 📡 Scanning Block: 42041286 | Transactions: 15
+2026-05-13 18:58:10,332 [INFO] 📡 Scanning Block: 42041287 | Transactions: 13
+2026-05-13 18:58:10,626 [INFO] 📡 Scanning Block: 42041288 | Transactions: 7
+2026-05-13 18:58:10,972 [INFO] 📡 Scanning Block: 42041289 | Transactions: 18
+2026-05-13 18:58:11,518 [INFO] 📡 Scanning Block: 42041290 | Transactions: 15
+2026-05-13 18:58:11,846 [INFO] 📡 Scanning Block: 42041291 | Transactions: 10
+2026-05-13 18:58:12,166 [INFO] 📡 Scanning Block: 42041292 | Transactions: 24
+2026-05-13 18:58:12,788 [INFO] 📡 Scanning Block: 42041293 | Transactions: 9
+2026-05-13 18:58:13,106 [INFO] 📡 Scanning Block: 42041294 | Transactions: 9
+2026-05-13 18:58:15,484 [INFO] 📡 Scanning Block: 42041295 | Transactions: 28
+2026-05-13 18:58:16,057 [INFO] 📡 Scanning Block: 42041296 | Transactions: 11
+2026-05-13 18:58:16,357 [INFO] 📡 Scanning Block: 42041297 | Transactions: 20
+2026-05-13 18:58:16,947 [INFO] 📡 Scanning Block: 42041298 | Transactions: 19
+2026-05-13 18:58:17,516 [INFO] 📡 Scanning Block: 42041299 | Transactions: 4
+2026-05-13 18:58:17,855 [INFO] 📡 Scanning Block: 42041300 | Transactions: 24
+2026-05-13 18:58:18,444 [INFO] 📡 Scanning Block: 42041301 | Transactions: 26
+2026-05-13 18:58:19,019 [INFO] 📡 Scanning Block: 42041302 | Transactions: 6
+2026-05-13 18:58:19,318 [INFO] 📡 Scanning Block: 42041303 | Transactions: 17
+2026-05-13 18:58:19,870 [INFO] 📡 Scanning Block: 42041304 | Transactions: 17
+2026-05-13 18:58:20,440 [INFO] 📡 Scanning Block: 42041305 | Transactions: 12
+2026-05-13 18:58:20,738 [INFO] 📡 Scanning Block: 42041306 | Transactions: 7
+2026-05-13 18:58:21,049 [INFO] 📡 Scanning Block: 42041307 | Transactions: 24
+2026-05-13 18:58:21,626 [INFO] 📡 Scanning Block: 42041308 | Transactions: 12
+2026-05-13 18:58:21,932 [INFO] 📡 Scanning Block: 42041309 | Transactions: 15
+2026-05-13 18:58:22,285 [INFO] 📡 Scanning Block: 42041310 | Transactions: 31
+2026-05-13 18:58:23,092 [INFO] 📡 Scanning Block: 42041311 | Transactions: 8
+2026-05-13 18:58:23,397 [INFO] 📡 Scanning Block: 42041312 | Transactions: 15
+2026-05-13 18:58:23,747 [INFO] 📡 Scanning Block: 42041313 | Transactions: 14
+2026-05-13 18:58:24,058 [INFO] 📡 Scanning Block: 42041314 | Transactions: 4
+2026-05-13 18:58:24,341 [INFO] 📡 Scanning Block: 42041315 | Transactions: 11
+2026-05-13 18:58:24,680 [INFO] 📡 Scanning Block: 42041316 | Transactions: 28
+2026-05-13 18:58:25,266 [INFO] 📡 Scanning Block: 42041317 | Transactions: 4
+2026-05-13 18:58:25,585 [INFO] 📡 Scanning Block: 42041318 | Transactions: 18
+2026-05-13 18:58:26,123 [INFO] 📡 Scanning Block: 42041319 | Transactions: 14
+2026-05-13 18:58:26,492 [INFO] 📡 Scanning Block: 42041320 | Transactions: 16
+2026-05-13 18:58:27,044 [INFO] 📡 Scanning Block: 42041321 | Transactions: 9
+2026-05-13 18:58:27,373 [INFO] 📡 Scanning Block: 42041322 | Transactions: 27
+2026-05-13 18:58:28,001 [INFO] 📡 Scanning Block: 42041323 | Transactions: 9
+2026-05-13 18:58:28,302 [INFO] 📡 Scanning Block: 42041324 | Transactions: 23
+2026-05-13 18:58:28,889 [INFO] 📡 Scanning Block: 42041325 | Transactions: 21
+2026-05-13 18:58:29,493 [INFO] 📡 Scanning Block: 42041326 | Transactions: 6
+2026-05-13 18:58:29,844 [INFO] 📡 Scanning Block: 42041327 | Transactions: 21
+2026-05-13 18:58:30,436 [INFO] 📡 Scanning Block: 42041328 | Transactions: 16
+2026-05-13 18:58:31,012 [INFO] 📡 Scanning Block: 42041329 | Transactions: 6
+2026-05-13 18:58:31,291 [INFO] 📡 Scanning Block: 42041330 | Transactions: 12
+2026-05-13 18:58:33,717 [INFO] 📡 Scanning Block: 42041331 | Transactions: 26
+2026-05-13 18:58:34,301 [INFO] 📡 Scanning Block: 42041332 | Transactions: 10
+2026-05-13 18:58:34,602 [INFO] 📡 Scanning Block: 42041333 | Transactions: 13
+2026-05-13 18:58:34,927 [INFO] 📡 Scanning Block: 42041334 | Transactions: 15
+2026-05-13 18:58:35,273 [INFO] 📡 Scanning Block: 42041335 | Transactions: 19
+2026-05-13 18:58:35,877 [INFO] 📡 Scanning Block: 42041336 | Transactions: 16
+2026-05-13 18:58:36,415 [INFO] 📡 Scanning Block: 42041337 | Transactions: 10
+2026-05-13 18:58:36,712 [INFO] 📡 Scanning Block: 42041338 | Transactions: 11
+2026-05-13 18:58:37,028 [INFO] 📡 Scanning Block: 42041339 | Transactions: 16
+2026-05-13 18:58:37,632 [INFO] 📡 Scanning Block: 42041340 | Transactions: 20
+2026-05-13 18:58:38,185 [INFO] 📡 Scanning Block: 42041341 | Transactions: 9
+2026-05-13 18:58:38,474 [INFO] 📡 Scanning Block: 42041342 | Transactions: 16
+2026-05-13 18:58:39,033 [INFO] 📡 Scanning Block: 42041343 | Transactions: 15
+2026-05-13 18:58:39,364 [INFO] 📡 Scanning Block: 42041344 | Transactions: 8
+2026-05-13 18:58:39,647 [INFO] 📡 Scanning Block: 42041345 | Transactions: 16
+2026-05-13 18:58:40,271 [INFO] 📡 Scanning Block: 42041346 | Transactions: 19
+2026-05-13 18:58:40,822 [INFO] 📡 Scanning Block: 42041347 | Transactions: 9
+2026-05-13 18:58:41,119 [INFO] 📡 Scanning Block: 42041348 | Transactions: 20
+2026-05-13 18:58:41,733 [INFO] 📡 Scanning Block: 42041349 | Transactions: 13
+2026-05-13 18:58:42,049 [INFO] 📡 Scanning Block: 42041350 | Transactions: 11
+2026-05-13 18:58:42,347 [INFO] 📡 Scanning Block: 42041351 | Transactions: 13
+2026-05-13 18:58:42,683 [INFO] 📡 Scanning Block: 42041352 | Transactions: 19
+2026-05-13 18:58:43,262 [INFO] 📡 Scanning Block: 42041353 | Transactions: 13
+2026-05-13 18:58:43,568 [INFO] 📡 Scanning Block: 42041354 | Transactions: 11
+2026-05-13 18:58:45,952 [INFO] 📡 Scanning Block: 42041355 | Transactions: 28
+2026-05-13 18:58:46,535 [INFO] 📡 Scanning Block: 42041356 | Transactions: 8
+2026-05-13 18:58:46,829 [INFO] 📡 Scanning Block: 42041357 | Transactions: 17
+2026-05-13 18:58:47,375 [INFO] 📡 Scanning Block: 42041358 | Transactions: 11
+2026-05-13 18:58:47,697 [INFO] 📡 Scanning Block: 42041359 | Transactions: 1
+2026-05-13 18:58:48,021 [INFO] 📡 Scanning Block: 42041360 | Transactions: 16
+2026-05-13 18:58:48,563 [INFO] 📡 Scanning Block: 42041361 | Transactions: 23
+2026-05-13 18:58:49,120 [INFO] 📡 Scanning Block: 42041362 | Transactions: 8
+2026-05-13 18:58:49,416 [INFO] 📡 Scanning Block: 42041363 | Transactions: 22
+2026-05-13 18:58:50,047 [INFO] 📡 Scanning Block: 42041364 | Transactions: 12
+2026-05-13 18:58:50,352 [INFO] 📡 Scanning Block: 42041365 | Transactions: 9
+2026-05-13 18:58:50,649 [INFO] 📡 Scanning Block: 42041366 | Transactions: 12
+2026-05-13 18:58:50,953 [INFO] 📡 Scanning Block: 42041367 | Transactions: 22
+2026-05-13 18:58:51,568 [INFO] 📡 Scanning Block: 42041368 | Transactions: 17
+2026-05-13 18:58:52,140 [INFO] 📡 Scanning Block: 42041369 | Transactions: 15
+2026-05-13 18:58:52,479 [INFO] 📡 Scanning Block: 42041370 | Transactions: 24
+2026-05-13 18:58:53,077 [INFO] 📡 Scanning Block: 42041371 | Transactions: 9
+2026-05-13 18:58:53,395 [INFO] 📡 Scanning Block: 42041372 | Transactions: 21
+2026-05-13 18:58:53,958 [INFO] 📡 Scanning Block: 42041373 | Transactions: 17
+2026-05-13 18:58:54,499 [INFO] 📡 Scanning Block: 42041374 | Transactions: 5
+2026-05-13 18:58:54,810 [INFO] 📡 Scanning Block: 42041375 | Transactions: 18
+2026-05-13 18:58:55,374 [INFO] 📡 Scanning Block: 42041376 | Transactions: 20
+2026-05-13 18:58:55,938 [INFO] 📡 Scanning Block: 42041377 | Transactions: 4
+2026-05-13 18:58:56,256 [INFO] 📡 Scanning Block: 42041378 | Transactions: 27
+2026-05-13 18:58:56,819 [INFO] 📡 Scanning Block: 42041379 | Transactions: 15
+2026-05-13 18:58:57,152 [INFO] 📡 Scanning Block: 42041380 | Transactions: 13
+2026-05-13 18:58:57,477 [INFO] 📡 Scanning Block: 42041381 | Transactions: 7
+2026-05-13 18:58:57,820 [INFO] 📡 Scanning Block: 42041382 | Transactions: 25
+2026-05-13 18:58:58,418 [INFO] 📡 Scanning Block: 42041383 | Transactions: 16
+2026-05-13 18:58:58,981 [INFO] 📡 Scanning Block: 42041384 | Transactions: 13
+2026-05-13 18:59:01,360 [INFO] 📡 Scanning Block: 42041385 | Transactions: 18
+2026-05-13 18:59:01,928 [INFO] 📡 Scanning Block: 42041386 | Transactions: 11
+2026-05-13 18:59:02,227 [INFO] 📡 Scanning Block: 42041387 | Transactions: 15
+2026-05-13 18:59:02,538 [INFO] 📡 Scanning Block: 42041388 | Transactions: 17
+2026-05-13 18:59:03,098 [INFO] 📡 Scanning Block: 42041389 | Transactions: 7
+2026-05-13 18:59:03,447 [INFO] 📡 Scanning Block: 42041390 | Transactions: 17
+2026-05-13 18:59:04,021 [INFO] 📡 Scanning Block: 42041391 | Transactions: 17
+2026-05-13 18:59:04,579 [INFO] 📡 Scanning Block: 42041392 | Transactions: 9
+2026-05-13 18:59:04,863 [INFO] 📡 Scanning Block: 42041393 | Transactions: 12
+2026-05-13 18:59:05,187 [INFO] 📡 Scanning Block: 42041394 | Transactions: 9
+2026-05-13 18:59:05,495 [INFO] 📡 Scanning Block: 42041395 | Transactions: 19
+2026-05-13 18:59:05,508 [INFO] connection open
+2026-05-13 18:59:05,508 [INFO] 🟢 UI Dashboard Connected to Engine!
+2026-05-13 18:59:06,089 [INFO] 📡 Scanning Block: 42041396 | Transactions: 6
+2026-05-13 18:59:06,409 [INFO] 📡 Scanning Block: 42041397 | Transactions: 27
+2026-05-13 18:59:07,008 [INFO] 📡 Scanning Block: 42041398 | Transactions: 15
+2026-05-13 18:59:07,348 [INFO] 📡 Scanning Block: 42041399 | Transactions: 14
+2026-05-13 18:59:07,694 [INFO] 📡 Scanning Block: 42041400 | Transactions: 27
+2026-05-13 18:59:08,260 [INFO] 📡 Scanning Block: 42041401 | Transactions: 13
+2026-05-13 18:59:08,600 [INFO] 📡 Scanning Block: 42041402 | Transactions: 22
+2026-05-13 18:59:09,172 [INFO] 📡 Scanning Block: 42041403 | Transactions: 17
+2026-05-13 18:59:09,639 [INFO] connection open
+2026-05-13 18:59:09,640 [INFO] 🟢 UI Dashboard Connected to Engine!
+2026-05-13 18:59:09,793 [INFO] 📡 Scanning Block: 42041404 | Transactions: 14
+2026-05-13 18:59:10,122 [INFO] 📡 Scanning Block: 42041405 | Transactions: 17
+2026-05-13 18:59:10,715 [INFO] 📡 Scanning Block: 42041406 | Transactions: 18
+2026-05-13 18:59:11,314 [INFO] 📡 Scanning Block: 42041407 | Transactions: 9
+2026-05-13 18:59:11,612 [INFO] 📡 Scanning Block: 42041408 | Transactions: 23
+2026-05-13 18:59:12,219 [INFO] 📡 Scanning Block: 42041409 | Transactions: 19
+2026-05-13 18:59:12,789 [INFO] 📡 Scanning Block: 42041410 | Transactions: 15
+2026-05-13 18:59:13,116 [INFO] 📡 Scanning Block: 42041411 | Transactions: 18
+2026-05-13 18:59:13,702 [INFO] 📡 Scanning Block: 42041412 | Transactions: 21
+2026-05-13 18:59:14,298 [INFO] 📡 Scanning Block: 42041413 | Transactions: 15
+2026-05-13 18:59:14,612 [INFO] 📡 Scanning Block: 42041414 | Transactions: 10
+2026-05-13 18:59:14,932 [INFO] 📡 Scanning Block: 42041415 | Transactions: 17
+2026-05-13 18:59:15,473 [INFO] 📡 Scanning Block: 42041416 | Transactions: 10
+2026-05-13 18:59:15,820 [INFO] 📡 Scanning Block: 42041417 | Transactions: 20
+2026-05-13 18:59:16,425 [INFO] 📡 Scanning Block: 42041418 | Transactions: 10
+2026-05-13 18:59:16,726 [INFO] 📡 Scanning Block: 42041419 | Transactions: 13
+2026-05-13 18:59:17,117 [INFO] 📡 Scanning Block: 42041420 | Transactions: 19
+2026-05-13 18:59:17,709 [INFO] 📡 Scanning Block: 42041421 | Transactions: 14
+2026-05-13 18:59:18,016 [INFO] 📡 Scanning Block: 42041422 | Transactions: 10
+2026-05-13 18:59:20,390 [INFO] 📡 Scanning Block: 42041423 | Transactions: 22
+2026-05-13 18:59:20,955 [INFO] 📡 Scanning Block: 42041424 | Transactions: 11
+2026-05-13 18:59:21,255 [INFO] 📡 Scanning Block: 42041425 | Transactions: 16
+2026-05-13 18:59:21,813 [INFO] 📡 Scanning Block: 42041426 | Transactions: 12
+2026-05-13 18:59:22,180 [INFO] 📡 Scanning Block: 42041427 | Transactions: 18
+2026-05-13 18:59:22,754 [INFO] 📡 Scanning Block: 42041428 | Transactions: 11
+2026-05-13 18:59:23,062 [INFO] 📡 Scanning Block: 42041429 | Transactions: 16
+2026-05-13 18:59:23,660 [INFO] 📡 Scanning Block: 42041430 | Transactions: 32
+2026-05-13 18:59:24,482 [INFO] 📡 Scanning Block: 42041431 | Transactions: 10
+2026-05-13 18:59:24,787 [INFO] 📡 Scanning Block: 42041432 | Transactions: 14
+2026-05-13 18:59:25,100 [INFO] 📡 Scanning Block: 42041433 | Transactions: 16
+2026-05-13 18:59:25,679 [INFO] 📡 Scanning Block: 42041434 | Transactions: 15
+2026-05-13 18:59:25,998 [INFO] 📡 Scanning Block: 42041435 | Transactions: 17
+2026-05-13 18:59:26,546 [INFO] 📡 Scanning Block: 42041436 | Transactions: 14
+2026-05-13 18:59:26,865 [INFO] 📡 Scanning Block: 42041437 | Transactions: 20
+2026-05-13 18:59:27,493 [INFO] 📡 Scanning Block: 42041438 | Transactions: 25
+2026-05-13 18:59:28,064 [INFO] 📡 Scanning Block: 42041439 | Transactions: 17
+2026-05-13 18:59:28,639 [INFO] 📡 Scanning Block: 42041440 | Transactions: 20
+2026-05-13 18:59:29,212 [INFO] 📡 Scanning Block: 42041441 | Transactions: 15
+2026-05-13 18:59:29,551 [INFO] 📡 Scanning Block: 42041442 | Transactions: 17
+2026-05-13 18:59:30,090 [INFO] 📡 Scanning Block: 42041443 | Transactions: 19
+2026-05-13 18:59:30,657 [INFO] 📡 Scanning Block: 42041444 | Transactions: 18
+2026-05-13 18:59:31,274 [INFO] 📡 Scanning Block: 42041445 | Transactions: 20
+2026-05-13 18:59:31,827 [INFO] 📡 Scanning Block: 42041446 | Transactions: 14
+2026-05-13 18:59:32,131 [INFO] 📡 Scanning Block: 42041447 | Transactions: 21
+2026-05-13 18:59:32,693 [INFO] 📡 Scanning Block: 42041448 | Transactions: 12
+2026-05-13 18:59:33,039 [INFO] 📡 Scanning Block: 42041449 | Transactions: 17
+2026-05-13 18:59:33,607 [INFO] 📡 Scanning Block: 42041450 | Transactions: 19
+2026-05-13 18:59:34,169 [INFO] 📡 Scanning Block: 42041451 | Transactions: 31
+2026-05-13 18:59:35,035 [INFO] 📡 Scanning Block: 42041452 | Transactions: 13
+2026-05-13 18:59:35,352 [INFO] 📡 Scanning Block: 42041453 | Transactions: 24
+2026-05-13 18:59:35,951 [INFO] 📡 Scanning Block: 42041454 | Transactions: 14
+2026-05-13 18:59:36,286 [INFO] 📡 Scanning Block: 42041455 | Transactions: 19
+2026-05-13 18:59:36,884 [INFO] 📡 Scanning Block: 42041456 | Transactions: 11
+2026-05-13 18:59:37,211 [INFO] 📡 Scanning Block: 42041457 | Transactions: 23
+2026-05-13 18:59:37,770 [INFO] 📡 Scanning Block: 42041458 | Transactions: 12
+2026-05-13 18:59:38,075 [INFO] 📡 Scanning Block: 42041459 | Transactions: 12
+2026-05-13 18:59:38,411 [INFO] 📡 Scanning Block: 42041460 | Transactions: 25
+2026-05-13 18:59:38,972 [INFO] 📡 Scanning Block: 42041461 | Transactions: 14
+2026-05-13 18:59:39,274 [INFO] 📡 Scanning Block: 42041462 | Transactions: 15
+2026-05-13 18:59:39,615 [INFO] 📡 Scanning Block: 42041463 | Transactions: 20
+2026-05-13 18:59:40,184 [INFO] 📡 Scanning Block: 42041464 | Transactions: 18
+2026-05-13 18:59:40,759 [INFO] 📡 Scanning Block: 42041465 | Transactions: 17
+2026-05-13 18:59:41,330 [INFO] 📡 Scanning Block: 42041466 | Transactions: 25
+2026-05-13 18:59:41,906 [INFO] 📡 Scanning Block: 42041467 | Transactions: 15
+2026-05-13 18:59:42,271 [INFO] 📡 Scanning Block: 42041468 | Transactions: 19
+2026-05-13 18:59:42,832 [INFO] 📡 Scanning Block: 42041469 | Transactions: 17
+2026-05-13 18:59:43,458 [INFO] 📡 Scanning Block: 42041470 | Transactions: 17
+2026-05-13 18:59:44,014 [INFO] 📡 Scanning Block: 42041471 | Transactions: 14
+2026-05-13 18:59:44,355 [INFO] 📡 Scanning Block: 42041472 | Transactions: 18
+2026-05-13 18:59:44,905 [INFO] 📡 Scanning Block: 42041473 | Transactions: 19
+2026-05-13 18:59:45,497 [INFO] 📡 Scanning Block: 42041474 | Transactions: 16
+2026-05-13 18:59:46,072 [INFO] 📡 Scanning Block: 42041475 | Transactions: 20
+2026-05-13 18:59:46,668 [INFO] 📡 Scanning Block: 42041476 | Transactions: 13
+2026-05-13 18:59:47,127 [INFO] 📡 Scanning Block: 42041477 | Transactions: 15
+2026-05-13 18:59:47,436 [INFO] 📡 Scanning Block: 42041478 | Transactions: 21
+2026-05-13 18:59:47,982 [INFO] 📡 Scanning Block: 42041479 | Transactions: 4
+2026-05-13 18:59:48,327 [INFO] 📡 Scanning Block: 42041480 | Transactions: 15
+2026-05-13 18:59:48,627 [INFO] 📡 Scanning Block: 42041481 | Transactions: 30
+2026-05-13 18:59:49,263 [INFO] 📡 Scanning Block: 42041482 | Transactions: 14
+2026-05-13 18:59:49,587 [INFO] 📡 Scanning Block: 42041483 | Transactions: 19
+2026-05-13 18:59:50,189 [INFO] 📈 Oracle Feed Updated | ARC: $0.133183 | Tokens Base: $2.25974
+2026-05-13 18:59:50,201 [INFO] 📡 Scanning Block: 42041484 | Transactions: 18
+2026-05-13 18:59:50,779 [INFO] 📡 Scanning Block: 42041485 | Transactions: 12
+2026-05-13 18:59:51,164 [INFO] 📡 Scanning Block: 42041486 | Transactions: 8
+2026-05-13 18:59:51,494 [INFO] 📡 Scanning Block: 42041487 | Transactions: 23
+2026-05-13 18:59:52,114 [INFO] 📡 Scanning Block: 42041488 | Transactions: 13
+2026-05-13 18:59:52,476 [INFO] 📡 Scanning Block: 42041489 | Transactions: 13
+2026-05-13 18:59:52,834 [INFO] 📡 Scanning Block: 42041490 | Transactions: 13
+2026-05-13 18:59:53,193 [INFO] 📡 Scanning Block: 42041491 | Transactions: 12
+2026-05-13 18:59:55,585 [INFO] 📡 Scanning Block: 42041492 | Transactions: 12
+2026-05-13 18:59:55,883 [INFO] 📡 Scanning Block: 42041493 | Transactions: 24
+2026-05-13 18:59:56,446 [INFO] 📡 Scanning Block: 42041494 | Transactions: 7
+2026-05-13 18:59:56,766 [INFO] 📡 Scanning Block: 42041495 | Transactions: 19
+2026-05-13 18:59:57,403 [INFO] 📡 Scanning Block: 42041496 | Transactions: 25
+2026-05-13 18:59:57,971 [INFO] 📡 Scanning Block: 42041497 | Transactions: 8
+2026-05-13 18:59:58,268 [INFO] 📡 Scanning Block: 42041498 | Transactions: 31
+2026-05-13 18:59:59,114 [INFO] 📡 Scanning Block: 42041499 | Transactions: 10
+2026-05-13 18:59:59,447 [INFO] 📡 Scanning Block: 42041500 | Transactions: 13
+2026-05-13 18:59:59,747 [INFO] 📡 Scanning Block: 42041501 | Transactions: 10
+2026-05-13 19:00:00,049 [INFO] 📡 Scanning Block: 42041502 | Transactions: 21
+2026-05-13 19:00:00,623 [INFO] 📡 Scanning Block: 42041503 | Transactions: 17
+2026-05-13 19:00:01,243 [INFO] 📡 Scanning Block: 42041504 | Transactions: 14
+2026-05-13 19:00:01,580 [INFO] 📡 Scanning Block: 42041505 | Transactions: 15
+2026-05-13 19:00:01,895 [INFO] 📡 Scanning Block: 42041506 | Transactions: 12
+2026-05-13 19:00:02,236 [INFO] 📡 Scanning Block: 42041507 | Transactions: 14
+2026-05-13 19:00:02,546 [INFO] 📡 Scanning Block: 42041508 | Transactions: 16
+2026-05-13 19:00:03,078 [INFO] 📡 Scanning Block: 42041509 | Transactions: 1
+2026-05-13 19:00:03,400 [INFO] 📡 Scanning Block: 42041510 | Transactions: 21
+2026-05-13 19:00:03,937 [INFO] 📡 Scanning Block: 42041511 | Transactions: 26
+2026-05-13 19:00:04,562 [INFO] 📡 Scanning Block: 42041512 | Transactions: 16
+2026-05-13 19:00:05,115 [INFO] 📡 Scanning Block: 42041513 | Transactions: 15
+2026-05-13 19:00:05,473 [INFO] 📡 Scanning Block: 42041514 | Transactions: 18
+2026-05-13 19:00:06,041 [INFO] 📡 Scanning Block: 42041515 | Transactions: 12
+2026-05-13 19:00:06,408 [INFO] 📡 Scanning Block: 42041516 | Transactions: 13
+2026-05-13 19:00:06,770 [INFO] 📡 Scanning Block: 42041517 | Transactions: 15
+2026-05-13 19:00:07,111 [INFO] 📡 Scanning Block: 42041518 | Transactions: 23
+2026-05-13 19:00:07,748 [INFO] 📡 Scanning Block: 42041519 | Transactions: 10
+2026-05-13 19:00:10,127 [INFO] 📡 Scanning Block: 42041520 | Transactions: 24
+2026-05-13 19:00:10,770 [INFO] 📡 Scanning Block: 42041521 | Transactions: 11
+2026-05-13 19:00:11,079 [INFO] 📡 Scanning Block: 42041522 | Transactions: 11
+2026-05-13 19:00:11,419 [INFO] 📡 Scanning Block: 42041523 | Transactions: 17
+2026-05-13 19:00:11,997 [INFO] 📡 Scanning Block: 42041524 | Transactions: 10
+2026-05-13 19:00:12,326 [INFO] 📡 Scanning Block: 42041525 | Transactions: 21
+2026-05-13 19:00:12,892 [INFO] 📡 Scanning Block: 42041526 | Transactions: 18
+2026-05-13 19:00:13,451 [INFO] 📡 Scanning Block: 42041527 | Transactions: 15
+2026-05-13 19:00:13,739 [INFO] server closing
+2026-05-13 19:00:13,828 [INFO] 🔴 UI Dashboard Disconnected.
+2026-05-13 19:00:13,829 [INFO] 🔴 UI Dashboard Disconnected.
+2026-05-13 19:00:13,829 [INFO] server closed

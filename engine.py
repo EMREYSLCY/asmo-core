@@ -53,27 +53,30 @@ async def init_db():
                 price_usd REAL NOT NULL,
                 from_addr TEXT NOT NULL DEFAULT '0x0000000000000000000000000000000000000000',
                 to_addr TEXT NOT NULL DEFAULT '0x0000000000000000000000000000000000000000',
+                gas_used INTEGER NOT NULL DEFAULT 0,
+                execution_depth INTEGER NOT NULL DEFAULT 1,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
         try:
-            await db.execute("ALTER TABLE transfers ADD COLUMN from_addr TEXT NOT NULL DEFAULT '0x0000000000000000000000000000000000000000'")
-            await db.execute("ALTER TABLE transfers ADD COLUMN to_addr TEXT NOT NULL DEFAULT '0x0000000000000000000000000000000000000000'")
+            await db.execute("ALTER TABLE transfers ADD COLUMN gas_used INTEGER NOT NULL DEFAULT 0")
+            await db.execute("ALTER TABLE transfers ADD COLUMN execution_depth INTEGER NOT NULL DEFAULT 1")
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with unified DEX & Agent intelligence layer.")
+        logger.info("💾 Database verified with EVM Trace & Execution Depth metrics.")
 
 async def save_transfer(tx_data, block_number):
     try:
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (tx_data["tx_hash"], block_number, tx_data["type"], 
                  tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
-                 tx_data["from_addr"], tx_data["to_addr"])
+                 tx_data["from_addr"], tx_data["to_addr"],
+                 tx_data.get("gas_used", 0), tx_data.get("execution_depth", 1))
             )
             await db.commit()
     except Exception as e:
@@ -129,6 +132,8 @@ async def send_history_to_client(websocket):
                     "tx_hash": row["tx_hash"],
                     "from_addr": row["from_addr"],
                     "to_addr": row["to_addr"],
+                    "gas_used": row["gas_used"],
+                    "execution_depth": row["execution_depth"],
                     "flag": flag
                 }
                 await websocket.send(json.dumps(tx_data))
@@ -171,13 +176,44 @@ async def fetch_receipt(tx_hash):
         logger.error(f"Error fetching receipt for TX {tx_hash.hex()}: {e}")
         return None
 
+def simulate_execution_trace(receipt):
+    gas = receipt.gasUsed if receipt else 21000
+    log_count = len(receipt.logs) if receipt else 0
+    
+    if log_count > 5 or gas > 250000:
+        depth = 4 
+    elif log_count > 2 or gas > 100000:
+        depth = 3 
+    elif log_count > 0 or gas > 50000:
+        depth = 2 
+    else:
+        depth = 1 
+        
+    return gas, depth
+
 async def scan_block(block_number):
     try:
         block = await w3.eth.get_block(block_number, full_transactions=True)
         tx_count = len(block.transactions)
         logger.info(f"📡 Scanning Block: {block_number} | Transactions: {tx_count}")
         
+        tasks = [fetch_receipt(tx.hash) for tx in block.transactions]
+        receipts = []
+        chunk_size = 15
+        
+        for i in range(0, len(tasks), chunk_size):
+            chunk = tasks[i:i + chunk_size]
+            chunk_results = await asyncio.gather(*chunk)
+            receipts.extend(chunk_results)
+            await asyncio.sleep(0.2)
+            
+        receipt_map = {r.transactionHash.hex(): r for r in receipts if r}
+        
         for tx in block.transactions:
+            tx_hash_str = tx.hash.hex()
+            receipt = receipt_map.get(tx_hash_str)
+            gas_used, exec_depth = simulate_execution_trace(receipt)
+            
             if tx.value > 0:
                 actual_value = float(w3.from_wei(tx.value, 'ether'))
                 current_price = PRICE_CACHE["ARC"]
@@ -190,27 +226,20 @@ async def scan_block(block_number):
                     "asset": "ARC",
                     "amount": actual_value,
                     "price_usd": current_price,
-                    "tx_hash": tx.hash.hex(),
+                    "tx_hash": tx_hash_str,
                     "from_addr": from_addr,
                     "to_addr": to_addr,
+                    "gas_used": gas_used,
+                    "execution_depth": exec_depth,
                     "flag": flag
                 }
                 await broadcast_alert(tx_data)
                 await save_transfer(tx_data, block_number)
 
-        tasks = [fetch_receipt(tx.hash) for tx in block.transactions]
-        receipts = []
-        chunk_size = 15
-        
-        for i in range(0, len(tasks), chunk_size):
-            chunk = tasks[i:i + chunk_size]
-            chunk_results = await asyncio.gather(*chunk)
-            receipts.extend(chunk_results)
-            await asyncio.sleep(0.2)
-            
         for receipt in receipts:
             if not receipt: continue
             tx_hash_str = receipt.transactionHash.hex()
+            gas_used, exec_depth = simulate_execution_trace(receipt)
             dex_processed = False
             
             for log in receipt.logs:
@@ -221,9 +250,8 @@ async def scan_block(block_number):
                     try:
                         pool_addr = log.address
                         sender = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
-                        to_receiver = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
                         
-                        logger.info(f"🦄 CHORDSWAP SWAP DETECTED! Pool: {pool_addr[:8]}... Trader: {sender[:8]}...")
+                        logger.info(f"🦄 CHORDSWAP SWAP DETECTED! Pool: {pool_addr[:8]}... [Depth: L{exec_depth}]")
                         
                         tx_data = {
                             "type": "DEX_SWAP",
@@ -233,6 +261,8 @@ async def scan_block(block_number):
                             "tx_hash": tx_hash_str,
                             "from_addr": sender,
                             "to_addr": pool_addr,
+                            "gas_used": gas_used,
+                            "execution_depth": exec_depth,
                             "flag": "DEX_ACTIVITY"
                         }
                         await broadcast_alert(tx_data)
@@ -257,6 +287,8 @@ async def scan_block(block_number):
                             "tx_hash": tx_hash_str,
                             "from_addr": provider,
                             "to_addr": pool_addr,
+                            "gas_used": gas_used,
+                            "execution_depth": exec_depth,
                             "flag": "DEX_ACTIVITY"
                         }
                         await broadcast_alert(tx_data)
@@ -269,7 +301,7 @@ async def scan_block(block_number):
                     try:
                         agent_id = log.topics[1].hex()
                         owner_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
-                        logger.info(f"🤖 ERC-8004 AGENT REGISTERED! ID: {agent_id[:10]}... Owner: {owner_addr[:8]}...")
+                        logger.info(f"🤖 ERC-8004 AGENT REGISTERED! ID: {agent_id[:10]}... [Depth: L{exec_depth}]")
                         
                         tx_data = {
                             "type": "AI_AGENT",
@@ -279,6 +311,8 @@ async def scan_block(block_number):
                             "tx_hash": tx_hash_str,
                             "from_addr": owner_addr,
                             "to_addr": log.address,
+                            "gas_used": gas_used,
+                            "execution_depth": exec_depth,
                             "flag": "AGENT_FLOW"
                         }
                         await broadcast_alert(tx_data)
@@ -304,6 +338,8 @@ async def scan_block(block_number):
                             "tx_hash": tx_hash_str,
                             "from_addr": funder,
                             "to_addr": agent,
+                            "gas_used": gas_used,
+                            "execution_depth": exec_depth,
                             "flag": "AGENT_FLOW"
                         }
                         await broadcast_alert(tx_data)
@@ -334,6 +370,8 @@ async def scan_block(block_number):
                                 "tx_hash": tx_hash_str,
                                 "from_addr": from_addr,
                                 "to_addr": to_addr,
+                                "gas_used": gas_used,
+                                "execution_depth": exec_depth,
                                 "flag": flag
                             }
                             await broadcast_alert(tx_data)
@@ -365,7 +403,7 @@ async def main():
 
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
         logger.info("🌉 WebSocket Bridge Active on Port 8765")
-        logger.info("🔄 Initiating Omniscience Radar (Native + Agentic AI + Chordswap DEX)...")
+        logger.info("🔄 Initiating EVM Trace & Execution Depth Matrix Radar...")
         
         while True:
             try:
