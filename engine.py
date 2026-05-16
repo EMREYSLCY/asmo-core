@@ -41,6 +41,8 @@ PRICE_CACHE = {
 connected_clients = set()
 seen_pending_txs = set()
 
+WALLET_MEMORY = {}
+
 async def init_db():
     async with aiosqlite.connect("asmo.db") as db:
         await db.execute("""
@@ -56,28 +58,55 @@ async def init_db():
                 to_addr TEXT NOT NULL DEFAULT '0x0000000000000000000000000000000000000000',
                 gas_used INTEGER NOT NULL DEFAULT 0,
                 execution_depth INTEGER NOT NULL DEFAULT 1,
+                pnl REAL NOT NULL DEFAULT 0.0,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
         try:
             await db.execute("ALTER TABLE transfers ADD COLUMN gas_used INTEGER NOT NULL DEFAULT 0")
             await db.execute("ALTER TABLE transfers ADD COLUMN execution_depth INTEGER NOT NULL DEFAULT 1")
+            await db.execute("ALTER TABLE transfers ADD COLUMN pnl REAL NOT NULL DEFAULT 0.0")
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with EVM Trace & Mempool support.")
+        logger.info("💾 Database verified with P&L Profiling Intelligence.")
+
+def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
+    realized_pnl = 0.0
+    
+    if to_addr not in WALLET_MEMORY:
+        WALLET_MEMORY[to_addr] = {}
+    if asset not in WALLET_MEMORY[to_addr]:
+        WALLET_MEMORY[to_addr][asset] = {"balance": 0.0, "avg_cost": current_price}
+        
+    old_bal = WALLET_MEMORY[to_addr][asset]["balance"]
+    old_cost = WALLET_MEMORY[to_addr][asset]["avg_cost"]
+    new_bal = old_bal + amount
+    if new_bal > 0:
+        WALLET_MEMORY[to_addr][asset]["avg_cost"] = ((old_bal * old_cost) + (amount * current_price)) / new_bal
+    WALLET_MEMORY[to_addr][asset]["balance"] = new_bal
+
+    if from_addr in WALLET_MEMORY and asset in WALLET_MEMORY[from_addr]:
+        seller_bal = WALLET_MEMORY[from_addr][asset]["balance"]
+        seller_cost = WALLET_MEMORY[from_addr][asset]["avg_cost"]
+        
+        if seller_bal > 0:
+            realized_pnl = amount * (current_price - seller_cost)
+            WALLET_MEMORY[from_addr][asset]["balance"] = max(0.0, seller_bal - amount)
+            
+    return realized_pnl
 
 async def save_transfer(tx_data, block_number):
     try:
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (tx_data["tx_hash"], block_number, tx_data["type"], 
                  tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
                  tx_data["from_addr"], tx_data["to_addr"],
-                 tx_data.get("gas_used", 0), tx_data.get("execution_depth", 1))
+                 tx_data.get("gas_used", 0), tx_data.get("execution_depth", 1), tx_data.get("pnl", 0.0))
             )
             await db.commit()
     except Exception as e:
@@ -131,6 +160,7 @@ async def send_history_to_client(websocket):
                     "to_addr": row["to_addr"],
                     "gas_used": row["gas_used"],
                     "execution_depth": row["execution_depth"],
+                    "pnl": row["pnl"],
                     "flag": flag,
                     "status": "CONFIRMED"
                 }
@@ -212,6 +242,7 @@ async def scan_mempool():
                                 "to_addr": to_addr,
                                 "gas_used": 0,
                                 "execution_depth": 0,
+                                "pnl": 0.0,
                                 "flag": "PENDING_WHALE",
                                 "status": "PENDING"
                             }
@@ -249,6 +280,8 @@ async def scan_block(block_number):
                 from_addr = tx["from"] if tx.get("from") else "0x0000000000000000000000000000000000000000"
                 to_addr = tx["to"] if tx.get("to") else "0x0000000000000000000000000000000000000000"
                 
+                realized_pnl = calculate_and_update_pnl(from_addr, to_addr, "ARC", actual_value, current_price)
+                
                 flag = "WHALE" if (actual_value * current_price >= 10000) else "STANDARD"
                 tx_data = {
                     "type": "NATIVE",
@@ -260,6 +293,7 @@ async def scan_block(block_number):
                     "to_addr": to_addr,
                     "gas_used": gas_used,
                     "execution_depth": exec_depth,
+                    "pnl": realized_pnl,
                     "flag": flag,
                     "status": "CONFIRMED"
                 }
@@ -280,16 +314,20 @@ async def scan_block(block_number):
                     try:
                         pool_addr = log.address
                         sender = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
+                        current_price = PRICE_CACHE["DEFAULT_TOKEN"]
+                        realized_pnl = calculate_and_update_pnl(sender, pool_addr, f"Pool:{pool_addr[:8]}", 1.0, current_price)
+                        
                         tx_data = {
                             "type": "DEX_SWAP",
                             "asset": f"Pool: {pool_addr[:8]}...",
                             "amount": 1.0, 
-                            "price_usd": PRICE_CACHE["DEFAULT_TOKEN"],
+                            "price_usd": current_price,
                             "tx_hash": tx_hash_str,
                             "from_addr": sender,
                             "to_addr": pool_addr,
                             "gas_used": gas_used,
                             "execution_depth": exec_depth,
+                            "pnl": realized_pnl,
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -312,6 +350,7 @@ async def scan_block(block_number):
                             "to_addr": pool_addr,
                             "gas_used": gas_used,
                             "execution_depth": exec_depth,
+                            "pnl": 0.0,
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -333,6 +372,7 @@ async def scan_block(block_number):
                             "to_addr": log.address,
                             "gas_used": gas_used,
                             "execution_depth": exec_depth,
+                            "pnl": 0.0,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -355,6 +395,7 @@ async def scan_block(block_number):
                             "to_addr": agent,
                             "gas_used": gas_used,
                             "execution_depth": exec_depth,
+                            "pnl": 0.0,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -372,6 +413,9 @@ async def scan_block(block_number):
                             current_token_price = PRICE_CACHE["DEFAULT_TOKEN"]
                             from_addr = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else "0x00"
                             to_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else "0x00"
+                            
+                            realized_pnl = calculate_and_update_pnl(from_addr, to_addr, contract_address, actual_token_amount, current_token_price)
+                            
                             flag = "WHALE" if (actual_token_amount * current_token_price >= 10000 or actual_token_amount >= 50000) else "STANDARD"
                             tx_data = {
                                 "type": "TOKEN",
@@ -383,6 +427,7 @@ async def scan_block(block_number):
                                 "to_addr": to_addr,
                                 "gas_used": gas_used,
                                 "execution_depth": exec_depth,
+                                "pnl": realized_pnl,
                                 "flag": flag,
                                 "status": "CONFIRMED"
                             }
