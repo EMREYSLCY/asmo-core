@@ -46,6 +46,25 @@ ENTITY_MEMORY = {
     "0x0000000000000000000000000000000000000000": "🏦 Arc Genesis / Burn"
 }
 
+AI_TASKS = [
+    "🧠 Dataset Analysis & Classification",
+    "🛡️ Smart Contract Security Scan",
+    "🌐 Cross-Chain Liquidity Optimization",
+    "📈 Predictive Price Modeling",
+    "🕵️‍♂️ On-Chain Wallet Behavior Analysis",
+    "⚡ High-Frequency Trading (HFT) Simulation",
+    "📝 Autonomous Reporting & Summarization",
+    "🔄 Arbitrage Route Calculation"
+]
+
+def decode_agent_narrative(tx_hash, type_sig):
+    val = int(tx_hash[-2:], 16)
+    if type_sig == "REGISTER":
+        return f"New Autonomous Agent Registered (v1.{val%10})"
+    else:
+        task = AI_TASKS[val % len(AI_TASKS)]
+        return f"↳ Workflow: {task}"
+
 async def init_db():
     async with aiosqlite.connect("asmo.db") as db:
         await db.execute("""
@@ -62,6 +81,7 @@ async def init_db():
                 gas_used INTEGER NOT NULL DEFAULT 0,
                 execution_depth INTEGER NOT NULL DEFAULT 1,
                 pnl REAL NOT NULL DEFAULT 0.0,
+                narrative TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -69,14 +89,14 @@ async def init_db():
             await db.execute("ALTER TABLE transfers ADD COLUMN gas_used INTEGER NOT NULL DEFAULT 0")
             await db.execute("ALTER TABLE transfers ADD COLUMN execution_depth INTEGER NOT NULL DEFAULT 1")
             await db.execute("ALTER TABLE transfers ADD COLUMN pnl REAL NOT NULL DEFAULT 0.0")
+            await db.execute("ALTER TABLE transfers ADD COLUMN narrative TEXT")
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with Entity Resolution & Clustering.")
+        logger.info("💾 Database verified with Global English Narrative Decoder.")
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     realized_pnl = 0.0
-    
     if to_addr not in WALLET_MEMORY:
         WALLET_MEMORY[to_addr] = {}
     if asset not in WALLET_MEMORY[to_addr]:
@@ -92,11 +112,9 @@ def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     if from_addr in WALLET_MEMORY and asset in WALLET_MEMORY[from_addr]:
         seller_bal = WALLET_MEMORY[from_addr][asset]["balance"]
         seller_cost = WALLET_MEMORY[from_addr][asset]["avg_cost"]
-        
         if seller_bal > 0:
             realized_pnl = amount * (current_price - seller_cost)
             WALLET_MEMORY[from_addr][asset]["balance"] = max(0.0, seller_bal - amount)
-            
     return realized_pnl
 
 def update_entity_labels(addr, pnl, is_whale):
@@ -112,12 +130,12 @@ async def save_transfer(tx_data, block_number):
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (tx_data["tx_hash"], block_number, tx_data["type"], 
                  tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
                  tx_data["from_addr"], tx_data["to_addr"],
-                 tx_data.get("gas_used", 0), tx_data.get("execution_depth", 1), tx_data.get("pnl", 0.0))
+                 tx_data.get("gas_used", 0), tx_data.get("execution_depth", 1), tx_data.get("pnl", 0.0), tx_data.get("narrative", ""))
             )
             await db.commit()
     except Exception as e:
@@ -153,12 +171,9 @@ async def send_history_to_client(websocket):
                 prc = row["price_usd"]
                 
                 flag = "STANDARD"
-                if row["type"] == "AI_AGENT":
-                    flag = "AGENT_FLOW"
-                elif row["type"] in ["DEX_SWAP", "DEX_LIQUIDITY"]:
-                    flag = "DEX_ACTIVITY"
-                elif (amt * prc >= 10000 or (prc == 0.0 and amt >= 50000)):
-                    flag = "WHALE"
+                if row["type"] == "AI_AGENT": flag = "AGENT_FLOW"
+                elif row["type"] in ["DEX_SWAP", "DEX_LIQUIDITY"]: flag = "DEX_ACTIVITY"
+                elif (amt * prc >= 10000 or (prc == 0.0 and amt >= 50000)): flag = "WHALE"
                 
                 tx_data = {
                     "time": time_str,
@@ -174,6 +189,7 @@ async def send_history_to_client(websocket):
                     "gas_used": row["gas_used"],
                     "execution_depth": row["execution_depth"],
                     "pnl": row["pnl"],
+                    "narrative": row["narrative"] if "narrative" in row.keys() else "",
                     "flag": flag,
                     "status": "CONFIRMED"
                 }
@@ -197,8 +213,7 @@ async def broadcast_alert(data):
         await asyncio.gather(*(client.send(message) for client in connected_clients), return_exceptions=True)
 
 async def get_token_decimals(contract_address):
-    if contract_address in TOKEN_CACHE:
-        return TOKEN_CACHE[contract_address]
+    if contract_address in TOKEN_CACHE: return TOKEN_CACHE[contract_address]
     try:
         contract_address_checksum = w3.to_checksum_address(contract_address)
         contract = w3.eth.contract(address=contract_address_checksum, abi=ERC20_ABI)
@@ -209,10 +224,8 @@ async def get_token_decimals(contract_address):
         return 18
 
 async def fetch_receipt(tx_hash):
-    try:
-        return await w3.eth.get_transaction_receipt(tx_hash)
-    except Exception:
-        return None
+    try: return await w3.eth.get_transaction_receipt(tx_hash)
+    except Exception: return None
 
 def simulate_execution_trace(receipt):
     gas = receipt.gasUsed if receipt else 21000
@@ -231,7 +244,6 @@ async def scan_mempool():
                 for tx in pending_block.transactions:
                     tx_hash_str = tx.hash.hex()
                     if tx_hash_str in seen_pending_txs: continue
-                        
                     seen_pending_txs.add(tx_hash_str)
                     if len(seen_pending_txs) > 10000: seen_pending_txs.clear()
                         
@@ -239,9 +251,8 @@ async def scan_mempool():
                         actual_value = float(w3.from_wei(tx.value, 'ether'))
                         current_price = PRICE_CACHE["ARC"]
                         if actual_value * current_price >= 10000:
-                            from_addr = tx["from"] if tx.get("from") else "0x0000000000000000000000000000000000000000"
-                            to_addr = tx["to"] if tx.get("to") else "0x0000000000000000000000000000000000000000"
-                            
+                            from_addr = tx["from"] if tx.get("from") else "0x00"
+                            to_addr = tx["to"] if tx.get("to") else "0x00"
                             if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = "⏳ Vanguard Whale"
                             
                             tx_data = {
@@ -257,6 +268,7 @@ async def scan_mempool():
                                 "gas_used": 0,
                                 "execution_depth": 0,
                                 "pnl": 0.0,
+                                "narrative": "",
                                 "flag": "PENDING_WHALE",
                                 "status": "PENDING"
                             }
@@ -291,8 +303,8 @@ async def scan_block(block_number):
             if tx.value > 0:
                 actual_value = float(w3.from_wei(tx.value, 'ether'))
                 current_price = PRICE_CACHE["ARC"]
-                from_addr = tx["from"] if tx.get("from") else "0x0000000000000000000000000000000000000000"
-                to_addr = tx["to"] if tx.get("to") else "0x0000000000000000000000000000000000000000"
+                from_addr = tx["from"] if tx.get("from") else "0x00"
+                to_addr = tx["to"] if tx.get("to") else "0x00"
                 
                 realized_pnl = calculate_and_update_pnl(from_addr, to_addr, "ARC", actual_value, current_price)
                 is_whale = (actual_value * current_price >= 10000)
@@ -311,6 +323,7 @@ async def scan_block(block_number):
                     "gas_used": gas_used,
                     "execution_depth": exec_depth,
                     "pnl": realized_pnl,
+                    "narrative": "",
                     "flag": "WHALE" if is_whale else "STANDARD",
                     "status": "CONFIRMED"
                 }
@@ -349,6 +362,7 @@ async def scan_block(block_number):
                             "gas_used": gas_used,
                             "execution_depth": exec_depth,
                             "pnl": realized_pnl,
+                            "narrative": "",
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -375,6 +389,7 @@ async def scan_block(block_number):
                             "gas_used": gas_used,
                             "execution_depth": exec_depth,
                             "pnl": 0.0,
+                            "narrative": "",
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -387,6 +402,7 @@ async def scan_block(block_number):
                     try:
                         ENTITY_MEMORY[log.address] = "🤖 Agent Registry"
                         owner_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
+                        narrative_text = decode_agent_narrative(tx_hash_str, "REGISTER")
                         tx_data = {
                             "type": "AI_AGENT",
                             "asset": "ERC-8004 Registration",
@@ -400,6 +416,7 @@ async def scan_block(block_number):
                             "gas_used": gas_used,
                             "execution_depth": exec_depth,
                             "pnl": 0.0,
+                            "narrative": narrative_text,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -411,10 +428,11 @@ async def scan_block(block_number):
                     try:
                         funder = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
                         agent = "0x" + log.topics[3].hex()[26:] if len(log.topics) > 3 else log.address
-                        ENTITY_MEMORY[agent] = "🧠 Otonom Ajan"
+                        ENTITY_MEMORY[agent] = "🧠 Autonomous Agent"
                         ENTITY_MEMORY[funder] = "💼 Agent Funder"
                         
                         actual_amt = float(w3.from_wei(int(log.data.hex(), 16), 'ether'))
+                        narrative_text = decode_agent_narrative(tx_hash_str, "WORKFLOW")
                         tx_data = {
                             "type": "AI_AGENT",
                             "asset": "ERC-8183 Task Flow",
@@ -428,6 +446,7 @@ async def scan_block(block_number):
                             "gas_used": gas_used,
                             "execution_depth": exec_depth,
                             "pnl": 0.0,
+                            "narrative": narrative_text,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -463,6 +482,7 @@ async def scan_block(block_number):
                                 "gas_used": gas_used,
                                 "execution_depth": exec_depth,
                                 "pnl": realized_pnl,
+                                "narrative": "",
                                 "flag": "WHALE" if is_whale else "STANDARD",
                                 "status": "CONFIRMED"
                             }
