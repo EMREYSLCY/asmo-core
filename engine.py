@@ -40,11 +40,14 @@ PRICE_CACHE = {
 
 connected_clients = set()
 seen_pending_txs = set()
-WALLET_MEMORY = {}
 
+WALLET_MEMORY = {}
 ENTITY_MEMORY = {
     "0x0000000000000000000000000000000000000000": "🏦 Arc Genesis / Burn"
 }
+
+CLUSTER_MAP = {}
+cluster_counter = 0
 
 AI_TASKS = [
     "🧠 Dataset Analysis & Classification",
@@ -68,16 +71,41 @@ def decode_agent_narrative(tx_hash, type_sig):
 def analyze_contract_security(addr):
     if addr in ENTITY_MEMORY and ("Genesis" in ENTITY_MEMORY[addr] or "Pool" in ENTITY_MEMORY[addr]):
         return 99, "✅ VERIFIED SAFE"
-    
     val = int(w3.keccak(text=addr).hex()[-4:], 16)
     score = (val % 100)
+    if score < 25: return score, "☢️ HIGH RISK (HONEYPOT)"
+    elif score < 50: return score, "⚠️ CAUTION (UNVERIFIED)"
+    else: return score + (100 - score) // 2, "✅ SAFE CONTRACT"
+
+def resolve_sybil_cluster(addr1, addr2):
+    global cluster_counter
+    e1 = ENTITY_MEMORY.get(addr1, "")
+    e2 = ENTITY_MEMORY.get(addr2, "")
     
-    if score < 25:
-        return score, "☢️ HIGH RISK (HONEYPOT)"
-    elif score < 50:
-        return score, "⚠️ CAUTION (UNVERIFIED)"
-    else:
-        return score + (100 - score) // 2, "✅ SAFE CONTRACT"
+    if "Pool" in e1 or "Pool" in e2 or "Genesis" in e1 or "Genesis" in e2:
+        return None 
+
+    c1 = CLUSTER_MAP.get(addr1)
+    c2 = CLUSTER_MAP.get(addr2)
+    
+    if c1 is None and c2 is None:
+        cluster_counter += 1
+        new_c = f"🔗 Sybil Ring #{cluster_counter}"
+        CLUSTER_MAP[addr1] = new_c
+        CLUSTER_MAP[addr2] = new_c
+        return new_c
+    elif c1 and not c2:
+        CLUSTER_MAP[addr2] = c1
+        return c1
+    elif c2 and not c1:
+        CLUSTER_MAP[addr1] = c2
+        return c2
+    elif c1 and c2 and c1 != c2:
+        for k, v in CLUSTER_MAP.items():
+            if v == c2:
+                CLUSTER_MAP[k] = c1
+        return c1
+    return c1
 
 async def init_db():
     async with aiosqlite.connect("asmo.db") as db:
@@ -98,20 +126,16 @@ async def init_db():
                 narrative TEXT,
                 sec_score INTEGER NOT NULL DEFAULT 99,
                 sec_label TEXT NOT NULL DEFAULT '✅ VERIFIED SAFE',
+                cluster TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
         try:
-            await db.execute("ALTER TABLE transfers ADD COLUMN gas_used INTEGER NOT NULL DEFAULT 0")
-            await db.execute("ALTER TABLE transfers ADD COLUMN execution_depth INTEGER NOT NULL DEFAULT 1")
-            await db.execute("ALTER TABLE transfers ADD COLUMN pnl REAL NOT NULL DEFAULT 0.0")
-            await db.execute("ALTER TABLE transfers ADD COLUMN narrative TEXT")
-            await db.execute("ALTER TABLE transfers ADD COLUMN sec_score INTEGER NOT NULL DEFAULT 99")
-            await db.execute("ALTER TABLE transfers ADD COLUMN sec_label TEXT NOT NULL DEFAULT '✅ VERIFIED SAFE'")
+            await db.execute("ALTER TABLE transfers ADD COLUMN cluster TEXT")
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with Smart Contract Security Scanner.")
+        logger.info("💾 Database verified with Wallet Clustering Matrix.")
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     realized_pnl = 0.0
@@ -136,26 +160,23 @@ def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     return realized_pnl
 
 def update_entity_labels(addr, pnl, is_whale):
-    if pnl > 1000:
-        ENTITY_MEMORY[addr] = "🐋 Smart Whale"
-    elif pnl < -500:
-        ENTITY_MEMORY[addr] = "💥 Rekt Wallet"
-    elif is_whale and addr not in ENTITY_MEMORY:
-        ENTITY_MEMORY[addr] = "🐋 Unknown Whale"
+    if pnl > 1000: ENTITY_MEMORY[addr] = "🐋 Smart Whale"
+    elif pnl < -500: ENTITY_MEMORY[addr] = "💥 Rekt Wallet"
+    elif is_whale and addr not in ENTITY_MEMORY: ENTITY_MEMORY[addr] = "🐋 Unknown Whale"
 
 async def save_transfer(tx_data, block_number):
     try:
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (tx_data["tx_hash"], block_number, tx_data["type"], 
                  tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
                  tx_data["from_addr"], tx_data["to_addr"],
                  tx_data.get("gas_used", 0), tx_data.get("execution_depth", 1), 
                  tx_data.get("pnl", 0.0), tx_data.get("narrative", ""),
-                 tx_data.get("sec_score", 99), tx_data.get("sec_label", "✅ VERIFIED SAFE"))
+                 tx_data.get("sec_score", 99), tx_data.get("sec_label", "✅ VERIFIED SAFE"), tx_data.get("cluster", ""))
             )
             await db.commit()
     except Exception as e:
@@ -212,6 +233,7 @@ async def send_history_to_client(websocket):
                     "narrative": row["narrative"] if "narrative" in row.keys() else "",
                     "sec_score": row["sec_score"] if "sec_score" in row.keys() else 99,
                     "sec_label": row["sec_label"] if "sec_label" in row.keys() else "✅ VERIFIED SAFE",
+                    "cluster": row["cluster"] if "cluster" in row.keys() else "",
                     "flag": flag,
                     "status": "CONFIRMED"
                 }
@@ -242,8 +264,7 @@ async def get_token_decimals(contract_address):
         decimals = await contract.functions.decimals().call()
         TOKEN_CACHE[contract_address] = decimals
         return decimals
-    except Exception:
-        return 18
+    except Exception: return 18
 
 async def fetch_receipt(tx_hash):
     try: return await w3.eth.get_transaction_receipt(tx_hash)
@@ -293,6 +314,7 @@ async def scan_mempool():
                                 "narrative": "",
                                 "sec_score": 99,
                                 "sec_label": "✅ VERIFIED SAFE",
+                                "cluster": "",
                                 "flag": "PENDING_WHALE",
                                 "status": "PENDING"
                             }
@@ -333,6 +355,7 @@ async def scan_block(block_number):
                 realized_pnl = calculate_and_update_pnl(from_addr, to_addr, "ARC", actual_value, current_price)
                 is_whale = (actual_value * current_price >= 10000)
                 update_entity_labels(from_addr, realized_pnl, is_whale)
+                sybil_cluster = resolve_sybil_cluster(from_addr, to_addr)
                 
                 tx_data = {
                     "type": "NATIVE",
@@ -350,6 +373,7 @@ async def scan_block(block_number):
                     "narrative": "",
                     "sec_score": 99,
                     "sec_label": "✅ VERIFIED SAFE",
+                    "cluster": sybil_cluster,
                     "flag": "WHALE" if is_whale else "STANDARD",
                     "status": "CONFIRMED"
                 }
@@ -391,6 +415,7 @@ async def scan_block(block_number):
                             "narrative": "",
                             "sec_score": 99,
                             "sec_label": "✅ VERIFIED SAFE",
+                            "cluster": "",
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -420,6 +445,7 @@ async def scan_block(block_number):
                             "narrative": "",
                             "sec_score": 99,
                             "sec_label": "✅ VERIFIED SAFE",
+                            "cluster": "",
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -450,6 +476,7 @@ async def scan_block(block_number):
                             "narrative": narrative_text,
                             "sec_score": score,
                             "sec_label": label,
+                            "cluster": "",
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -484,6 +511,7 @@ async def scan_block(block_number):
                             "narrative": narrative_text,
                             "sec_score": score,
                             "sec_label": label,
+                            "cluster": "",
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -505,7 +533,7 @@ async def scan_block(block_number):
                             realized_pnl = calculate_and_update_pnl(from_addr, to_addr, contract_address, actual_token_amount, current_token_price)
                             is_whale = (actual_token_amount * current_token_price >= 10000 or actual_token_amount >= 50000)
                             update_entity_labels(from_addr, realized_pnl, is_whale)
-                            
+                            sybil_cluster = resolve_sybil_cluster(from_addr, to_addr)
                             score, label = analyze_contract_security(contract_address)
                             
                             tx_data = {
@@ -524,6 +552,7 @@ async def scan_block(block_number):
                                 "narrative": "",
                                 "sec_score": score,
                                 "sec_label": label,
+                                "cluster": sybil_cluster,
                                 "flag": "WHALE" if is_whale else "STANDARD",
                                 "status": "CONFIRMED"
                             }
