@@ -26,13 +26,10 @@ w3 = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL))
 TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 ERC8004_REGISTER_SIG = "0x" + w3.keccak(text="AgentRegistered(bytes32,address,string)").hex()
 ERC8183_WORKFLOW_SIG = "0x" + w3.keccak(text="WorkflowFunded(bytes32,address,address,uint256)").hex()
-
 CHORDSWAP_SWAP_SIG = "0x" + w3.keccak(text="Swap(address,uint256,uint256,uint256,uint256,address)").hex()
 CHORDSWAP_MINT_SIG = "0x" + w3.keccak(text="Mint(address,uint256,uint256)").hex()
 CHORDSWAP_BURN_SIG = "0x" + w3.keccak(text="Burn(address,uint256,uint256,address)").hex()
-
 BRIDGE_OUT_SIG = "0x" + w3.keccak(text="BridgeOut(address,uint256,uint256)").hex()
-
 AAVE_SUPPLY_SIG = "0x" + w3.keccak(text="Supply(address,address,address,uint256,uint16)").hex()
 AAVE_BORROW_SIG = "0x" + w3.keccak(text="Borrow(address,address,address,uint256,uint8,uint256,uint16)").hex()
 AAVE_REPAY_SIG = "0x" + w3.keccak(text="Repay(address,address,address,uint256,bool)").hex()
@@ -47,13 +44,11 @@ PRICE_CACHE = {
 
 connected_clients = set()
 seen_pending_txs = set()
-
 WALLET_MEMORY = {}
 LENDING_MEMORY = {}
 ENTITY_MEMORY = {
     "0x0000000000000000000000000000000000000000": "🏦 Arc Genesis / Burn"
 }
-
 CLUSTER_MAP = {}
 cluster_counter = 0
 
@@ -89,13 +84,9 @@ def resolve_sybil_cluster(addr1, addr2):
     global cluster_counter
     e1 = ENTITY_MEMORY.get(addr1, "")
     e2 = ENTITY_MEMORY.get(addr2, "")
-    
-    if "Pool" in e1 or "Pool" in e2 or "Genesis" in e1 or "Genesis" in e2 or "Router" in e1 or "Router" in e2:
-        return None 
-
+    if "Pool" in e1 or "Pool" in e2 or "Genesis" in e1 or "Genesis" in e2 or "Router" in e1 or "Router" in e2: return None 
     c1 = CLUSTER_MAP.get(addr1)
     c2 = CLUSTER_MAP.get(addr2)
-    
     if c1 is None and c2 is None:
         cluster_counter += 1
         new_c = f"🔗 Sybil Ring #{cluster_counter}"
@@ -110,19 +101,23 @@ def resolve_sybil_cluster(addr1, addr2):
         return c2
     elif c1 and c2 and c1 != c2:
         for k, v in CLUSTER_MAP.items():
-            if v == c2:
-                CLUSTER_MAP[k] = c1
+            if v == c2: CLUSTER_MAP[k] = c1
         return c1
     return c1
 
 def calculate_health_factor(user_addr):
-    if user_addr not in LENDING_MEMORY:
-        return 99.0
+    if user_addr not in LENDING_MEMORY: return 99.0
     col = LENDING_MEMORY[user_addr]["collateral"]
     debt = LENDING_MEMORY[user_addr]["debt"]
     if debt == 0: return 99.0
     hf = (col * 0.8) / debt
     return round(hf, 2)
+
+def simulate_price_impact(usd_volume):
+    base_liquidity = 5000000.0 
+    if usd_volume <= 0: return 0.0
+    impact = (usd_volume / (base_liquidity + usd_volume)) * 100
+    return round(impact, 2)
 
 async def init_db():
     async with aiosqlite.connect("asmo.db") as db:
@@ -145,30 +140,27 @@ async def init_db():
                 sec_label TEXT NOT NULL DEFAULT '✅ VERIFIED SAFE',
                 cluster TEXT,
                 health_factor REAL NOT NULL DEFAULT 99.0,
+                price_impact REAL NOT NULL DEFAULT 0.0,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
         try:
-            await db.execute("ALTER TABLE transfers ADD COLUMN health_factor REAL NOT NULL DEFAULT 99.0")
+            await db.execute("ALTER TABLE transfers ADD COLUMN price_impact REAL NOT NULL DEFAULT 0.0")
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with AAVE Lending Sniper & Health Factor Matrix.")
+        logger.info("💾 Database verified with Predictive Market Impact Simulator.")
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     realized_pnl = 0.0
-    if to_addr not in WALLET_MEMORY:
-        WALLET_MEMORY[to_addr] = {}
-    if asset not in WALLET_MEMORY[to_addr]:
-        WALLET_MEMORY[to_addr][asset] = {"balance": 0.0, "avg_cost": current_price}
-        
+    if to_addr not in WALLET_MEMORY: WALLET_MEMORY[to_addr] = {}
+    if asset not in WALLET_MEMORY[to_addr]: WALLET_MEMORY[to_addr][asset] = {"balance": 0.0, "avg_cost": current_price}
     old_bal = WALLET_MEMORY[to_addr][asset]["balance"]
     old_cost = WALLET_MEMORY[to_addr][asset]["avg_cost"]
     new_bal = old_bal + amount
     if new_bal > 0:
         WALLET_MEMORY[to_addr][asset]["avg_cost"] = ((old_bal * old_cost) + (amount * current_price)) / new_bal
     WALLET_MEMORY[to_addr][asset]["balance"] = new_bal
-
     if from_addr in WALLET_MEMORY and asset in WALLET_MEMORY[from_addr]:
         seller_bal = WALLET_MEMORY[from_addr][asset]["balance"]
         seller_cost = WALLET_MEMORY[from_addr][asset]["avg_cost"]
@@ -187,15 +179,15 @@ async def save_transfer(tx_data, block_number):
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (tx_data["tx_hash"], block_number, tx_data["type"], 
                  tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
                  tx_data["from_addr"], tx_data["to_addr"],
                  tx_data.get("gas_used", 0), tx_data.get("execution_depth", 1), 
                  tx_data.get("pnl", 0.0), tx_data.get("narrative", ""),
                  tx_data.get("sec_score", 99), tx_data.get("sec_label", "✅ VERIFIED SAFE"), 
-                 tx_data.get("cluster", ""), tx_data.get("health_factor", 99.0))
+                 tx_data.get("cluster", ""), tx_data.get("health_factor", 99.0), tx_data.get("price_impact", 0.0))
             )
             await db.commit()
     except Exception as e:
@@ -209,11 +201,8 @@ async def update_price_oracle():
             loop = asyncio.get_running_loop()
             resp = await loop.run_in_executor(None, urllib.request.urlopen, req)
             data = json.loads(resp.read().decode('utf-8'))
-            
-            if "arbitrum" in data:
-                PRICE_CACHE["ARC"] = float(data["arbitrum"]["usd"])
-            if "ethereum" in data:
-                PRICE_CACHE["DEFAULT_TOKEN"] = float(data["ethereum"]["usd"]) * 0.001 
+            if "arbitrum" in data: PRICE_CACHE["ARC"] = float(data["arbitrum"]["usd"])
+            if "ethereum" in data: PRICE_CACHE["DEFAULT_TOKEN"] = float(data["ethereum"]["usd"]) * 0.001 
         except Exception:
             pass
         await asyncio.sleep(180)
@@ -224,19 +213,16 @@ async def send_history_to_client(websocket):
             db.row_factory = aiosqlite.Row
             cursor = await db.execute("SELECT * FROM transfers ORDER BY id DESC LIMIT 50")
             rows = await cursor.fetchall()
-            
             for row in reversed(rows):
                 time_str = row["timestamp"].split(" ")[1] if row["timestamp"] else None
                 amt = row["amount"]
                 prc = row["price_usd"]
-                
                 flag = "STANDARD"
                 if row["type"] == "AI_AGENT": flag = "AGENT_FLOW"
                 elif row["type"] in ["DEX_SWAP", "DEX_LIQUIDITY"]: flag = "DEX_ACTIVITY"
                 elif row["type"] == "CROSS_CHAIN": flag = "BRIDGE_ACTIVITY"
                 elif row["type"] == "LENDING": flag = "LENDING_ACTIVITY"
                 elif (amt * prc >= 10000 or (prc == 0.0 and amt >= 50000)): flag = "WHALE"
-                
                 tx_data = {
                     "time": time_str,
                     "type": row["type"],
@@ -256,6 +242,7 @@ async def send_history_to_client(websocket):
                     "sec_label": row["sec_label"] if "sec_label" in row.keys() else "✅ VERIFIED SAFE",
                     "cluster": row["cluster"] if "cluster" in row.keys() else "",
                     "health_factor": row["health_factor"] if "health_factor" in row.keys() else 99.0,
+                    "price_impact": row["price_impact"] if "price_impact" in row.keys() else 0.0,
                     "flag": flag,
                     "status": "CONFIRMED"
                 }
@@ -267,8 +254,7 @@ async def ws_handler(websocket):
     logger.info("🟢 UI Dashboard Connected to Engine!")
     connected_clients.add(websocket)
     await send_history_to_client(websocket)
-    try:
-        await websocket.wait_closed()
+    try: await websocket.wait_closed()
     finally:
         connected_clients.remove(websocket)
         logger.info("🔴 UI Dashboard Disconnected.")
@@ -315,10 +301,13 @@ async def scan_mempool():
                     if tx.value > 0:
                         actual_value = float(w3.from_wei(tx.value, 'ether'))
                         current_price = PRICE_CACHE["ARC"]
-                        if actual_value * current_price >= 10000:
+                        usd_volume = actual_value * current_price
+                        if usd_volume >= 10000:
                             from_addr = tx["from"] if tx.get("from") else "0x00"
                             to_addr = tx["to"] if tx.get("to") else "0x00"
                             if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = "⏳ Vanguard Whale"
+                            
+                            p_impact = simulate_price_impact(usd_volume)
                             
                             tx_data = {
                                 "type": "NATIVE",
@@ -338,6 +327,7 @@ async def scan_mempool():
                                 "sec_label": "✅ VERIFIED SAFE",
                                 "cluster": "",
                                 "health_factor": 99.0,
+                                "price_impact": p_impact,
                                 "flag": "PENDING_WHALE",
                                 "status": "PENDING"
                             }
@@ -372,13 +362,15 @@ async def scan_block(block_number):
             if tx.value > 0:
                 actual_value = float(w3.from_wei(tx.value, 'ether'))
                 current_price = PRICE_CACHE["ARC"]
+                usd_volume = actual_value * current_price
                 from_addr = tx["from"] if tx.get("from") else "0x00"
                 to_addr = tx["to"] if tx.get("to") else "0x00"
                 
                 realized_pnl = calculate_and_update_pnl(from_addr, to_addr, "ARC", actual_value, current_price)
-                is_whale = (actual_value * current_price >= 10000)
+                is_whale = (usd_volume >= 10000)
                 update_entity_labels(from_addr, realized_pnl, is_whale)
                 sybil_cluster = resolve_sybil_cluster(from_addr, to_addr)
+                p_impact = simulate_price_impact(usd_volume) if is_whale else 0.0
                 
                 tx_data = {
                     "type": "NATIVE",
@@ -398,6 +390,7 @@ async def scan_block(block_number):
                     "sec_label": "✅ VERIFIED SAFE",
                     "cluster": sybil_cluster,
                     "health_factor": calculate_health_factor(from_addr),
+                    "price_impact": p_impact,
                     "flag": "WHALE" if is_whale else "STANDARD",
                     "status": "CONFIRMED"
                 }
@@ -418,17 +411,12 @@ async def scan_block(block_number):
                     try:
                         ENTITY_MEMORY[log.address] = "🏦 AAVE V3 Pool"
                         user_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
-                        
                         raw_amount = int(log.data.hex()[:64], 16) if len(log.data.hex()) >= 64 else 0
                         actual_amt = (raw_amount / 1e18) if raw_amount > 0 else 1.0
                         usd_val = actual_amt * PRICE_CACHE["DEFAULT_TOKEN"]
-
-                        if user_addr not in LENDING_MEMORY:
-                            LENDING_MEMORY[user_addr] = {"collateral": 0.0, "debt": 0.0}
-
+                        if user_addr not in LENDING_MEMORY: LENDING_MEMORY[user_addr] = {"collateral": 0.0, "debt": 0.0}
                         narrative_text = ""
-                        hf_before = calculate_health_factor(user_addr)
-
+                        
                         if topic0 == AAVE_SUPPLY_SIG:
                             LENDING_MEMORY[user_addr]["collateral"] += usd_val
                             narrative_text = f"↳ Lending: Supplied ${usd_val:.2f} Collateral"
@@ -444,6 +432,7 @@ async def scan_block(block_number):
                             narrative_text = f"💀 LENDING: LIQUIDATION EXECUTED!"
 
                         hf_after = calculate_health_factor(user_addr)
+                        p_impact = simulate_price_impact(usd_val) if topic0 == AAVE_LIQ_SIG else 0.0
                         
                         tx_data = {
                             "type": "LENDING",
@@ -463,6 +452,7 @@ async def scan_block(block_number):
                             "sec_label": "✅ VERIFIED SAFE",
                             "cluster": "",
                             "health_factor": hf_after if topic0 != AAVE_LIQ_SIG else 0.0,
+                            "price_impact": p_impact,
                             "flag": "LENDING_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -478,6 +468,8 @@ async def scan_block(block_number):
                         bridger = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
                         narrative_text = "↳ Cross-Chain Exit: Routing Liquidity to Base"
                         score, label = analyze_contract_security(log.address)
+                        usd_val = 1.0 * (PRICE_CACHE["ARC"] * 5)
+                        p_impact = simulate_price_impact(usd_val)
                         
                         tx_data = {
                             "type": "CROSS_CHAIN",
@@ -497,6 +489,7 @@ async def scan_block(block_number):
                             "sec_label": label,
                             "cluster": "",
                             "health_factor": calculate_health_factor(bridger),
+                            "price_impact": p_impact,
                             "flag": "BRIDGE_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -513,6 +506,7 @@ async def scan_block(block_number):
                         current_price = PRICE_CACHE["DEFAULT_TOKEN"]
                         realized_pnl = calculate_and_update_pnl(sender, pool_addr, f"Pool:{pool_addr[:8]}", 1.0, current_price)
                         update_entity_labels(sender, realized_pnl, False)
+                        p_impact = simulate_price_impact(1.0 * current_price)
                         
                         tx_data = {
                             "type": "DEX_SWAP",
@@ -532,6 +526,7 @@ async def scan_block(block_number):
                             "sec_label": "✅ VERIFIED SAFE",
                             "cluster": "",
                             "health_factor": calculate_health_factor(sender),
+                            "price_impact": p_impact,
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -545,6 +540,7 @@ async def scan_block(block_number):
                         pool_addr = log.address
                         ENTITY_MEMORY[pool_addr] = "🌊 Liquidity Pool"
                         provider = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
+                        p_impact = simulate_price_impact(1.0 * (PRICE_CACHE["DEFAULT_TOKEN"] * 2))
                         tx_data = {
                             "type": "DEX_LIQUIDITY",
                             "asset": f"LP: {pool_addr[:8]}...",
@@ -563,6 +559,7 @@ async def scan_block(block_number):
                             "sec_label": "✅ VERIFIED SAFE",
                             "cluster": "",
                             "health_factor": calculate_health_factor(provider),
+                            "price_impact": p_impact,
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -595,6 +592,7 @@ async def scan_block(block_number):
                             "sec_label": label,
                             "cluster": "",
                             "health_factor": calculate_health_factor(owner_addr),
+                            "price_impact": 0.0,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -631,6 +629,7 @@ async def scan_block(block_number):
                             "sec_label": label,
                             "cluster": "",
                             "health_factor": calculate_health_factor(funder),
+                            "price_impact": 0.0,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -646,14 +645,16 @@ async def scan_block(block_number):
                             decimals = await get_token_decimals(contract_address)
                             actual_token_amount = raw_amount / (10 ** decimals)
                             current_token_price = PRICE_CACHE["DEFAULT_TOKEN"]
+                            usd_volume = actual_token_amount * current_token_price
                             from_addr = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else "0x00"
                             to_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else "0x00"
                             
                             realized_pnl = calculate_and_update_pnl(from_addr, to_addr, contract_address, actual_token_amount, current_token_price)
-                            is_whale = (actual_token_amount * current_token_price >= 10000 or actual_token_amount >= 50000)
+                            is_whale = (usd_volume >= 10000 or actual_token_amount >= 50000)
                             update_entity_labels(from_addr, realized_pnl, is_whale)
                             sybil_cluster = resolve_sybil_cluster(from_addr, to_addr)
                             score, label = analyze_contract_security(contract_address)
+                            p_impact = simulate_price_impact(usd_volume) if is_whale else 0.0
                             
                             tx_data = {
                                 "type": "TOKEN",
@@ -673,6 +674,7 @@ async def scan_block(block_number):
                                 "sec_label": label,
                                 "cluster": sybil_cluster,
                                 "health_factor": calculate_health_factor(from_addr),
+                                "price_impact": p_impact,
                                 "flag": "WHALE" if is_whale else "STANDARD",
                                 "status": "CONFIRMED"
                             }
