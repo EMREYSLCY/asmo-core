@@ -34553,3 +34553,986 @@ websockets.exceptions.InvalidUpgrade: missing Connection header
 2026-05-18 18:50:00,747 [INFO] 🔴 UI Dashboard Disconnected.
 2026-05-18 18:50:00,766 [INFO] 🔴 UI Dashboard Disconnected.
 2026-05-18 18:50:00,766 [INFO] server closed
+2026-05-18 18:53:44,012 [INFO] Initializing A.S.M.O. Boot Sequence...
+2026-05-18 18:53:44,017 [INFO] 💾 Database verified with Wallet Clustering Matrix.
+2026-05-18 18:53:44,128 [INFO] ⚡ Mempool Radar Activated: Hunting for Vanguard Signals...
+2026-05-18 18:53:44,129 [INFO] server listening on 0.0.0.0:8765
+2026-05-18 18:53:44,130 [INFO] 🌉 WebSocket Bridge Active on Port 8765
+2026-05-18 18:53:46,313 [INFO] 📡 Scanning Block: 42884945 | Transactions: 14
+2026-05-18 18:53:46,596 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:46,597 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:46,630 [INFO] 📡 Scanning Block: 42884946 | Transactions: 29
+2026-05-18 18:53:47,142 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,143 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,144 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,147 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,148 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,150 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,151 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,189 [INFO] 📡 Scanning Block: 42884947 | Transactions: 8
+2026-05-18 18:53:47,435 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,471 [INFO] 📡 Scanning Block: 42884948 | Transactions: 11
+2026-05-18 18:53:47,720 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,721 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,721 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,722 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,723 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:47,787 [INFO] 📡 Scanning Block: 42884949 | Transactions: 15
+2026-05-18 18:53:48,042 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:48,043 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:48,044 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:48,080 [INFO] 📡 Scanning Block: 42884950 | Transactions: 18
+2026-05-18 18:53:48,597 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:48,627 [INFO] 📡 Scanning Block: 42884951 | Transactions: 7
+2026-05-18 18:53:48,927 [INFO] 📡 Scanning Block: 42884952 | Transactions: 18
+2026-05-18 18:53:49,436 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:49,437 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:49,438 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:49,439 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:49,440 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:49,440 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:49,503 [INFO] 📡 Scanning Block: 42884953 | Transactions: 32
+2026-05-18 18:53:50,280 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:50,281 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:50,282 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:50,283 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:50,284 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:50,285 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:50,317 [INFO] 📡 Scanning Block: 42884954 | Transactions: 9
+2026-05-18 18:53:50,563 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:50,564 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:50,565 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:50,629 [INFO] 📡 Scanning Block: 42884955 | Transactions: 18
+2026-05-18 18:53:51,152 [INFO] 📡 Scanning Block: 42884956 | Transactions: 12
+2026-05-18 18:53:51,402 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:51,403 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:51,404 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:51,469 [INFO] 📡 Scanning Block: 42884957 | Transactions: 16
+2026-05-18 18:53:51,954 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:51,955 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:51,991 [INFO] 📡 Scanning Block: 42884958 | Transactions: 16
+2026-05-18 18:53:52,477 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:52,539 [INFO] 📡 Scanning Block: 42884959 | Transactions: 6
+2026-05-18 18:53:52,779 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:52,810 [INFO] 📡 Scanning Block: 42884960 | Transactions: 8
+2026-05-18 18:53:53,056 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:53,118 [INFO] 📡 Scanning Block: 42884961 | Transactions: 27
+2026-05-18 18:53:53,663 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:53,664 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:53,665 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:53,666 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:53,666 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:53,727 [INFO] 📡 Scanning Block: 42884962 | Transactions: 7
+2026-05-18 18:53:54,035 [INFO] 📡 Scanning Block: 42884963 | Transactions: 7
+2026-05-18 18:53:54,275 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:54,276 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:54,361 [INFO] 📡 Scanning Block: 42884964 | Transactions: 15
+2026-05-18 18:53:56,709 [INFO] 📡 Scanning Block: 42884965 | Transactions: 12
+2026-05-18 18:53:56,960 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:56,961 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:56,995 [INFO] 📡 Scanning Block: 42884966 | Transactions: 18
+2026-05-18 18:53:57,491 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:57,492 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:57,493 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:57,494 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:57,494 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:57,527 [INFO] 📡 Scanning Block: 42884967 | Transactions: 16
+2026-05-18 18:53:58,014 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:58,015 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:58,016 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:58,017 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:58,017 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:58,082 [INFO] 📡 Scanning Block: 42884968 | Transactions: 24
+2026-05-18 18:53:58,603 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:58,604 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:58,641 [INFO] 📡 Scanning Block: 42884969 | Transactions: 17
+2026-05-18 18:53:59,131 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:59,132 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:59,133 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:59,163 [INFO] 📡 Scanning Block: 42884970 | Transactions: 10
+2026-05-18 18:53:59,410 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:59,412 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:59,413 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:59,414 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:59,414 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:59,478 [INFO] 📡 Scanning Block: 42884971 | Transactions: 10
+2026-05-18 18:53:59,728 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:53:59,767 [INFO] 📡 Scanning Block: 42884972 | Transactions: 24
+2026-05-18 18:54:00,276 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,277 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,278 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,279 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,280 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,281 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,311 [INFO] 📡 Scanning Block: 42884973 | Transactions: 9
+2026-05-18 18:54:00,619 [INFO] 📡 Scanning Block: 42884974 | Transactions: 11
+2026-05-18 18:54:00,868 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,869 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,869 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,870 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,871 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,872 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:00,907 [INFO] 📡 Scanning Block: 42884975 | Transactions: 9
+2026-05-18 18:54:01,154 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:01,155 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:01,218 [INFO] 📡 Scanning Block: 42884976 | Transactions: 25
+2026-05-18 18:54:01,722 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:01,723 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:01,723 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:01,759 [INFO] 📡 Scanning Block: 42884977 | Transactions: 8
+2026-05-18 18:54:02,071 [INFO] 📡 Scanning Block: 42884978 | Transactions: 18
+2026-05-18 18:54:02,559 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:02,560 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:02,560 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:02,561 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:02,623 [INFO] 📡 Scanning Block: 42884979 | Transactions: 23
+2026-05-18 18:54:03,126 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,127 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,128 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,129 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,129 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,130 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,131 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,133 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,136 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,211 [INFO] 📡 Scanning Block: 42884980 | Transactions: 16
+2026-05-18 18:54:03,712 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,713 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,714 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,715 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,716 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,716 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,717 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:03,777 [INFO] 📡 Scanning Block: 42884981 | Transactions: 13
+2026-05-18 18:54:04,028 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:04,029 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:04,029 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:04,030 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:06,129 [INFO] 📡 Scanning Block: 42884982 | Transactions: 8
+2026-05-18 18:54:06,375 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:06,376 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:06,377 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:06,421 [INFO] 📡 Scanning Block: 42884983 | Transactions: 41
+2026-05-18 18:54:07,203 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,204 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,205 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,205 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,206 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,207 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,208 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,208 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,239 [INFO] 📡 Scanning Block: 42884984 | Transactions: 11
+2026-05-18 18:54:07,489 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,490 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,490 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,521 [INFO] 📡 Scanning Block: 42884985 | Transactions: 10
+2026-05-18 18:54:07,766 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:07,831 [INFO] 📡 Scanning Block: 42884986 | Transactions: 14
+2026-05-18 18:54:08,116 [INFO] 📡 Scanning Block: 42884987 | Transactions: 8
+2026-05-18 18:54:08,373 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:08,404 [INFO] 📡 Scanning Block: 42884988 | Transactions: 18
+2026-05-18 18:54:08,893 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:08,894 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:08,895 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:08,896 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:08,897 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:08,928 [INFO] 📡 Scanning Block: 42884989 | Transactions: 11
+2026-05-18 18:54:09,196 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:09,197 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:09,198 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:09,261 [INFO] 📡 Scanning Block: 42884990 | Transactions: 13
+2026-05-18 18:54:09,515 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:09,516 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:09,517 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:09,550 [INFO] 📡 Scanning Block: 42884991 | Transactions: 15
+2026-05-18 18:54:09,808 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:09,838 [INFO] 📡 Scanning Block: 42884992 | Transactions: 11
+2026-05-18 18:54:10,091 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:10,155 [INFO] 📡 Scanning Block: 42884993 | Transactions: 14
+2026-05-18 18:54:10,415 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:10,416 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:10,417 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:10,418 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:10,479 [INFO] 📡 Scanning Block: 42884994 | Transactions: 17
+2026-05-18 18:54:10,967 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:10,968 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:10,968 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:11,033 [INFO] 📡 Scanning Block: 42884995 | Transactions: 15
+2026-05-18 18:54:11,287 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:11,288 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:11,289 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:11,355 [INFO] 📡 Scanning Block: 42884996 | Transactions: 6
+2026-05-18 18:54:11,594 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:11,596 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:13,695 [INFO] 📡 Scanning Block: 42884997 | Transactions: 17
+2026-05-18 18:54:14,203 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:14,204 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:14,205 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:14,206 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:14,239 [INFO] 📡 Scanning Block: 42884998 | Transactions: 24
+2026-05-18 18:54:14,740 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:14,741 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:14,741 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:14,777 [INFO] 📡 Scanning Block: 42884999 | Transactions: 11
+2026-05-18 18:54:15,025 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:15,088 [INFO] 📡 Scanning Block: 42885000 | Transactions: 17
+2026-05-18 18:54:15,578 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:15,589 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:15,597 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:15,660 [INFO] 📡 Scanning Block: 42885001 | Transactions: 12
+2026-05-18 18:54:15,998 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:15,999 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:16,000 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:16,032 [INFO] 📡 Scanning Block: 42885002 | Transactions: 19
+2026-05-18 18:54:16,526 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:16,527 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:16,607 [INFO] 📡 Scanning Block: 42885003 | Transactions: 18
+2026-05-18 18:54:17,155 [INFO] 📡 Scanning Block: 42885004 | Transactions: 4
+2026-05-18 18:54:17,421 [INFO] 📡 Scanning Block: 42885005 | Transactions: 9
+2026-05-18 18:54:17,667 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:17,737 [INFO] 📡 Scanning Block: 42885006 | Transactions: 26
+2026-05-18 18:54:18,242 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:18,273 [INFO] 📡 Scanning Block: 42885007 | Transactions: 10
+2026-05-18 18:54:18,529 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:18,530 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:18,597 [INFO] 📡 Scanning Block: 42885008 | Transactions: 13
+2026-05-18 18:54:18,851 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:18,882 [INFO] 📡 Scanning Block: 42885009 | Transactions: 10
+2026-05-18 18:54:19,184 [INFO] 📡 Scanning Block: 42885010 | Transactions: 8
+2026-05-18 18:54:19,428 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:19,494 [INFO] 📡 Scanning Block: 42885011 | Transactions: 14
+2026-05-18 18:54:19,747 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:19,748 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:20,688 [INFO] connection open
+2026-05-18 18:54:20,688 [INFO] 🟢 UI Dashboard Connected to Engine!
+2026-05-18 18:54:20,692 [ERROR] Error sending history to client: No item with that key
+2026-05-18 18:54:21,842 [INFO] 📡 Scanning Block: 42885012 | Transactions: 9
+2026-05-18 18:54:22,055 [INFO] connection open
+2026-05-18 18:54:22,056 [INFO] 🟢 UI Dashboard Connected to Engine!
+2026-05-18 18:54:22,060 [ERROR] Error sending history to client: No item with that key
+2026-05-18 18:54:22,090 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:22,126 [INFO] 📡 Scanning Block: 42885013 | Transactions: 36
+2026-05-18 18:54:22,878 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:22,880 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:22,915 [INFO] 📡 Scanning Block: 42885014 | Transactions: 12
+2026-05-18 18:54:23,226 [INFO] 📡 Scanning Block: 42885015 | Transactions: 11
+2026-05-18 18:54:23,476 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:23,511 [INFO] 📡 Scanning Block: 42885016 | Transactions: 6
+2026-05-18 18:54:23,758 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:23,792 [INFO] 📡 Scanning Block: 42885017 | Transactions: 23
+2026-05-18 18:54:24,294 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:24,296 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:24,361 [INFO] 📡 Scanning Block: 42885018 | Transactions: 14
+2026-05-18 18:54:24,615 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:24,616 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:24,650 [INFO] 📡 Scanning Block: 42885019 | Transactions: 2
+2026-05-18 18:54:24,886 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:24,943 [INFO] 📡 Scanning Block: 42885020 | Transactions: 16
+2026-05-18 18:54:25,433 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:25,435 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:25,436 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:25,438 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:25,440 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:25,500 [INFO] 📡 Scanning Block: 42885021 | Transactions: 25
+2026-05-18 18:54:26,008 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,009 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,011 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,012 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,013 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,014 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,058 [INFO] 📡 Scanning Block: 42885022 | Transactions: 11
+2026-05-18 18:54:26,309 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,310 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,312 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,378 [INFO] 📡 Scanning Block: 42885023 | Transactions: 26
+2026-05-18 18:54:26,876 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,878 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,879 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,881 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:26,913 [INFO] 📡 Scanning Block: 42885024 | Transactions: 14
+2026-05-18 18:54:27,170 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:27,171 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:27,173 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:27,238 [INFO] 📡 Scanning Block: 42885025 | Transactions: 15
+2026-05-18 18:54:27,512 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:27,514 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:27,515 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:27,573 [INFO] 📡 Scanning Block: 42885026 | Transactions: 9
+2026-05-18 18:54:27,820 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:27,821 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:29,912 [INFO] 📡 Scanning Block: 42885027 | Transactions: 13
+2026-05-18 18:54:30,165 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,167 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,204 [INFO] 📡 Scanning Block: 42885028 | Transactions: 42
+2026-05-18 18:54:30,979 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,981 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,982 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,983 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,984 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,986 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,987 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,988 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,989 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,991 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:30,992 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:31,039 [INFO] 📡 Scanning Block: 42885029 | Transactions: 15
+2026-05-18 18:54:31,294 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:31,296 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:31,297 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:31,358 [INFO] 📡 Scanning Block: 42885030 | Transactions: 11
+2026-05-18 18:54:31,606 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:31,607 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:31,608 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:31,644 [INFO] 📡 Scanning Block: 42885031 | Transactions: 9
+2026-05-18 18:54:31,890 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:31,891 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:31,924 [INFO] 📡 Scanning Block: 42885032 | Transactions: 16
+2026-05-18 18:54:32,422 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:32,459 [INFO] 📡 Scanning Block: 42885033 | Transactions: 12
+2026-05-18 18:54:32,708 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:32,710 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:32,776 [INFO] 📡 Scanning Block: 42885034 | Transactions: 5
+2026-05-18 18:54:33,052 [INFO] 📡 Scanning Block: 42885035 | Transactions: 15
+2026-05-18 18:54:33,312 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:33,314 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:33,315 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:33,316 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:33,383 [INFO] 📡 Scanning Block: 42885036 | Transactions: 25
+2026-05-18 18:54:33,887 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:33,889 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:33,921 [INFO] 📡 Scanning Block: 42885037 | Transactions: 13
+2026-05-18 18:54:34,178 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:34,248 [INFO] 📡 Scanning Block: 42885038 | Transactions: 14
+2026-05-18 18:54:34,503 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:34,564 [INFO] 📡 Scanning Block: 42885039 | Transactions: 17
+2026-05-18 18:54:35,057 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:35,059 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:35,060 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:35,061 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:35,127 [INFO] 📡 Scanning Block: 42885040 | Transactions: 13
+2026-05-18 18:54:35,383 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:35,384 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:35,386 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:35,451 [INFO] 📡 Scanning Block: 42885041 | Transactions: 11
+2026-05-18 18:54:35,706 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:35,707 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:35,708 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:35,709 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:37,801 [INFO] 📡 Scanning Block: 42885042 | Transactions: 13
+2026-05-18 18:54:38,092 [INFO] 📡 Scanning Block: 42885043 | Transactions: 29
+2026-05-18 18:54:38,654 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:38,656 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:38,658 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:38,660 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:38,692 [INFO] 📡 Scanning Block: 42885044 | Transactions: 14
+2026-05-18 18:54:38,944 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:38,946 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:38,947 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:38,948 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:38,949 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:38,950 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:39,018 [INFO] 📡 Scanning Block: 42885045 | Transactions: 8
+2026-05-18 18:54:39,262 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:39,264 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:39,295 [INFO] 📡 Scanning Block: 42885046 | Transactions: 9
+2026-05-18 18:54:39,551 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:39,553 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:39,585 [INFO] 📡 Scanning Block: 42885047 | Transactions: 16
+2026-05-18 18:54:40,074 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:40,076 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:40,149 [INFO] 📡 Scanning Block: 42885048 | Transactions: 26
+2026-05-18 18:54:40,659 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:40,661 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:40,662 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:40,663 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:40,664 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:40,665 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:40,703 [INFO] 📡 Scanning Block: 42885049 | Transactions: 16
+2026-05-18 18:54:41,188 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:41,190 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:41,191 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:41,192 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:41,254 [INFO] 📡 Scanning Block: 42885050 | Transactions: 12
+2026-05-18 18:54:41,506 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:41,544 [INFO] 📡 Scanning Block: 42885051 | Transactions: 24
+2026-05-18 18:54:42,053 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:42,054 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:42,056 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:42,057 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:42,116 [INFO] 📡 Scanning Block: 42885052 | Transactions: 13
+2026-05-18 18:54:42,376 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:42,419 [INFO] 📡 Scanning Block: 42885053 | Transactions: 17
+2026-05-18 18:54:42,907 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:42,909 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:42,911 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:42,982 [INFO] 📡 Scanning Block: 42885054 | Transactions: 7
+2026-05-18 18:54:43,223 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:43,261 [INFO] 📡 Scanning Block: 42885055 | Transactions: 15
+2026-05-18 18:54:43,518 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:43,520 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:43,522 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:43,584 [INFO] 📡 Scanning Block: 42885056 | Transactions: 6
+2026-05-18 18:54:45,919 [INFO] 📡 Scanning Block: 42885057 | Transactions: 9
+2026-05-18 18:54:46,165 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:46,200 [INFO] 📡 Scanning Block: 42885058 | Transactions: 33
+2026-05-18 18:54:46,972 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:46,974 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:46,978 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:46,979 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:47,017 [INFO] 📡 Scanning Block: 42885059 | Transactions: 7
+2026-05-18 18:54:47,276 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:47,309 [INFO] 📡 Scanning Block: 42885060 | Transactions: 16
+2026-05-18 18:54:47,855 [INFO] 📡 Scanning Block: 42885061 | Transactions: 10
+2026-05-18 18:54:48,105 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:48,106 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:48,108 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:48,109 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:48,150 [INFO] 📡 Scanning Block: 42885062 | Transactions: 12
+2026-05-18 18:54:48,441 [INFO] 📡 Scanning Block: 42885063 | Transactions: 21
+2026-05-18 18:54:48,955 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:48,956 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:48,958 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:48,959 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:48,960 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:49,002 [INFO] 📡 Scanning Block: 42885064 | Transactions: 11
+2026-05-18 18:54:49,302 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:49,304 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:51,406 [INFO] 📡 Scanning Block: 42885065 | Transactions: 11
+2026-05-18 18:54:51,692 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:51,693 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:51,694 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:51,695 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:51,733 [INFO] 📡 Scanning Block: 42885066 | Transactions: 41
+2026-05-18 18:54:52,492 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:52,494 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:52,497 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:52,498 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:52,501 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:52,503 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:52,505 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:52,537 [INFO] 📡 Scanning Block: 42885067 | Transactions: 10
+2026-05-18 18:54:52,784 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:52,786 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:52,817 [INFO] 📡 Scanning Block: 42885068 | Transactions: 10
+2026-05-18 18:54:53,062 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:53,097 [INFO] 📡 Scanning Block: 42885069 | Transactions: 9
+2026-05-18 18:54:53,418 [INFO] 📡 Scanning Block: 42885070 | Transactions: 16
+2026-05-18 18:54:53,907 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:53,908 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:53,909 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:53,910 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:53,911 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:53,950 [INFO] 📡 Scanning Block: 42885071 | Transactions: 15
+2026-05-18 18:54:54,206 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:54,208 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:54,209 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:54,210 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:54,245 [INFO] 📡 Scanning Block: 42885072 | Transactions: 7
+2026-05-18 18:54:54,534 [INFO] 📡 Scanning Block: 42885073 | Transactions: 30
+2026-05-18 18:54:55,054 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:55,056 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:55,057 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:55,058 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:55,060 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:55,125 [INFO] 📡 Scanning Block: 42885074 | Transactions: 19
+2026-05-18 18:54:55,666 [INFO] 📡 Scanning Block: 42885075 | Transactions: 23
+2026-05-18 18:54:56,167 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,169 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,171 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,172 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,173 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,174 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,176 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,177 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,178 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,209 [INFO] 📡 Scanning Block: 42885076 | Transactions: 11
+2026-05-18 18:54:56,458 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,459 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,461 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:56,526 [INFO] 📡 Scanning Block: 42885077 | Transactions: 26
+2026-05-18 18:54:57,034 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:57,035 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:57,036 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:57,068 [INFO] 📡 Scanning Block: 42885078 | Transactions: 12
+2026-05-18 18:54:57,320 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:57,322 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:57,324 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:57,354 [INFO] 📡 Scanning Block: 42885079 | Transactions: 9
+2026-05-18 18:54:57,601 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:57,603 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:57,670 [INFO] 📡 Scanning Block: 42885080 | Transactions: 26
+2026-05-18 18:54:58,182 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,184 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,185 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,186 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,187 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,188 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,190 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,191 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,226 [INFO] 📡 Scanning Block: 42885081 | Transactions: 28
+2026-05-18 18:54:58,747 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,748 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,752 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,753 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,755 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:58,787 [INFO] 📡 Scanning Block: 42885082 | Transactions: 10
+2026-05-18 18:54:59,035 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:59,107 [INFO] 📡 Scanning Block: 42885083 | Transactions: 14
+2026-05-18 18:54:59,394 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:59,396 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:59,433 [INFO] 📡 Scanning Block: 42885084 | Transactions: 11
+2026-05-18 18:54:59,682 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:54:59,743 [INFO] 📡 Scanning Block: 42885085 | Transactions: 17
+2026-05-18 18:55:00,243 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:00,245 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:00,248 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:00,250 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:00,253 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:00,291 [INFO] 📡 Scanning Block: 42885086 | Transactions: 7
+2026-05-18 18:55:00,532 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:00,595 [INFO] 📡 Scanning Block: 42885087 | Transactions: 15
+2026-05-18 18:55:00,849 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:00,851 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:00,921 [INFO] 📡 Scanning Block: 42885088 | Transactions: 20
+2026-05-18 18:55:01,416 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:01,418 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:01,419 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:01,420 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:01,480 [INFO] 📡 Scanning Block: 42885089 | Transactions: 17
+2026-05-18 18:55:01,973 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:02,037 [INFO] 📡 Scanning Block: 42885090 | Transactions: 13
+2026-05-18 18:55:02,289 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:04,383 [INFO] 📡 Scanning Block: 42885091 | Transactions: 9
+2026-05-18 18:55:04,628 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:04,630 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:04,631 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:04,668 [INFO] 📡 Scanning Block: 42885092 | Transactions: 25
+2026-05-18 18:55:05,169 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:05,171 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:05,209 [INFO] 📡 Scanning Block: 42885093 | Transactions: 19
+2026-05-18 18:55:05,713 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:05,715 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:05,716 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:05,752 [INFO] 📡 Scanning Block: 42885094 | Transactions: 12
+2026-05-18 18:55:06,001 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:06,034 [INFO] 📡 Scanning Block: 42885095 | Transactions: 11
+2026-05-18 18:55:06,284 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:06,286 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:06,287 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:06,351 [INFO] 📡 Scanning Block: 42885096 | Transactions: 21
+2026-05-18 18:55:06,843 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:06,844 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:06,846 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:06,876 [INFO] 📡 Scanning Block: 42885097 | Transactions: 7
+2026-05-18 18:55:07,160 [INFO] 📡 Scanning Block: 42885098 | Transactions: 23
+2026-05-18 18:55:07,664 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:07,665 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:07,725 [INFO] 📡 Scanning Block: 42885099 | Transactions: 18
+2026-05-18 18:55:08,218 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:08,220 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:08,251 [INFO] 📡 Scanning Block: 42885100 | Transactions: 10
+2026-05-18 18:55:08,498 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:08,500 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:08,502 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:08,538 [INFO] 📡 Scanning Block: 42885101 | Transactions: 12
+2026-05-18 18:55:08,804 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:08,864 [INFO] 📡 Scanning Block: 42885102 | Transactions: 18
+2026-05-18 18:55:09,353 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:09,356 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:09,424 [INFO] 📡 Scanning Block: 42885103 | Transactions: 30
+2026-05-18 18:55:09,937 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:09,939 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:09,940 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:09,941 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:09,943 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:09,944 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:09,982 [INFO] 📡 Scanning Block: 42885104 | Transactions: 26
+2026-05-18 18:55:10,482 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:10,484 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:10,485 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:10,487 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:10,547 [INFO] 📡 Scanning Block: 42885105 | Transactions: 17
+2026-05-18 18:55:11,035 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:11,037 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:11,039 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:11,042 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:11,074 [INFO] 📡 Scanning Block: 42885106 | Transactions: 13
+2026-05-18 18:55:11,332 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:11,334 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:11,399 [INFO] 📡 Scanning Block: 42885107 | Transactions: 19
+2026-05-18 18:55:11,895 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:11,897 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:11,898 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:11,968 [INFO] 📡 Scanning Block: 42885108 | Transactions: 20
+2026-05-18 18:55:12,463 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:12,465 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:12,466 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:12,468 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:12,470 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:12,471 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:12,503 [INFO] 📡 Scanning Block: 42885109 | Transactions: 12
+2026-05-18 18:55:12,755 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:12,813 [INFO] 📡 Scanning Block: 42885110 | Transactions: 8
+2026-05-18 18:55:13,066 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:13,157 [INFO] 📡 Scanning Block: 42885111 | Transactions: 27
+2026-05-18 18:55:13,673 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:13,675 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:13,742 [INFO] 📡 Scanning Block: 42885112 | Transactions: 19
+2026-05-18 18:55:14,238 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:14,240 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:14,241 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:14,315 [INFO] 📡 Scanning Block: 42885113 | Transactions: 17
+2026-05-18 18:55:14,813 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:14,814 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:14,881 [INFO] 📡 Scanning Block: 42885114 | Transactions: 17
+2026-05-18 18:55:15,383 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:15,384 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:15,386 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:15,447 [INFO] 📡 Scanning Block: 42885115 | Transactions: 16
+2026-05-18 18:55:15,952 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:15,954 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:15,955 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:15,986 [INFO] 📡 Scanning Block: 42885116 | Transactions: 9
+2026-05-18 18:55:16,231 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:16,232 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:18,328 [INFO] 📡 Scanning Block: 42885117 | Transactions: 12
+2026-05-18 18:55:18,579 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:18,628 [INFO] 📡 Scanning Block: 42885118 | Transactions: 40
+2026-05-18 18:55:19,393 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:19,395 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:19,396 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:19,397 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:19,399 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:19,432 [INFO] 📡 Scanning Block: 42885119 | Transactions: 13
+2026-05-18 18:55:19,684 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:19,715 [INFO] 📡 Scanning Block: 42885120 | Transactions: 11
+2026-05-18 18:55:20,028 [INFO] 📡 Scanning Block: 42885121 | Transactions: 16
+2026-05-18 18:55:20,518 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:20,519 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:20,521 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:20,522 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:20,560 [INFO] 📡 Scanning Block: 42885122 | Transactions: 27
+2026-05-18 18:55:21,067 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:21,068 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:21,069 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:21,101 [INFO] 📡 Scanning Block: 42885123 | Transactions: 13
+2026-05-18 18:55:21,356 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:21,388 [INFO] 📡 Scanning Block: 42885124 | Transactions: 11
+2026-05-18 18:55:21,636 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:21,699 [INFO] 📡 Scanning Block: 42885125 | Transactions: 12
+2026-05-18 18:55:21,998 [INFO] 📡 Scanning Block: 42885126 | Transactions: 36
+2026-05-18 18:55:22,751 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:22,753 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:22,754 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:22,755 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:22,756 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:22,787 [INFO] 📡 Scanning Block: 42885127 | Transactions: 8
+2026-05-18 18:55:23,032 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:23,094 [INFO] 📡 Scanning Block: 42885128 | Transactions: 20
+2026-05-18 18:55:23,611 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:23,613 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:23,614 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:23,616 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:23,653 [INFO] 📡 Scanning Block: 42885129 | Transactions: 9
+2026-05-18 18:55:23,897 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:23,898 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:23,931 [INFO] 📡 Scanning Block: 42885130 | Transactions: 23
+2026-05-18 18:55:24,437 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:24,438 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:24,440 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:24,441 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:24,442 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:24,444 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:24,515 [INFO] 📡 Scanning Block: 42885131 | Transactions: 14
+2026-05-18 18:55:24,771 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:24,772 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:24,774 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:24,775 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:24,835 [INFO] 📡 Scanning Block: 42885132 | Transactions: 15
+2026-05-18 18:55:25,087 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,089 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,090 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,092 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,093 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,163 [INFO] 📡 Scanning Block: 42885133 | Transactions: 45
+2026-05-18 18:55:25,936 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,937 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,939 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,940 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,941 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,942 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,943 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,944 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,945 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,946 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,948 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:25,949 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:26,029 [INFO] 📡 Scanning Block: 42885134 | Transactions: 24
+2026-05-18 18:55:26,534 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:26,535 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:26,537 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:26,538 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:26,539 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:26,540 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:26,541 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:26,543 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:26,575 [INFO] 📡 Scanning Block: 42885135 | Transactions: 17
+2026-05-18 18:55:27,063 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:27,064 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:27,066 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:27,067 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:27,068 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:27,140 [INFO] 📡 Scanning Block: 42885136 | Transactions: 20
+2026-05-18 18:55:27,645 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:27,685 [INFO] 📡 Scanning Block: 42885137 | Transactions: 12
+2026-05-18 18:55:27,935 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:27,937 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:27,938 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:28,007 [INFO] 📡 Scanning Block: 42885138 | Transactions: 17
+2026-05-18 18:55:28,499 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:28,501 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:28,533 [INFO] 📡 Scanning Block: 42885139 | Transactions: 12
+2026-05-18 18:55:28,784 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:28,786 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:28,848 [INFO] 📡 Scanning Block: 42885140 | Transactions: 17
+2026-05-18 18:55:29,338 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:29,340 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:29,341 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:29,342 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:29,418 [INFO] 📡 Scanning Block: 42885141 | Transactions: 24
+2026-05-18 18:55:30,004 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,006 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,008 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,009 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,011 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,042 [INFO] 📡 Scanning Block: 42885142 | Transactions: 14
+2026-05-18 18:55:30,296 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,298 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,362 [INFO] 📡 Scanning Block: 42885143 | Transactions: 19
+2026-05-18 18:55:30,857 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,858 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,860 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,861 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:30,923 [INFO] 📡 Scanning Block: 42885144 | Transactions: 20
+2026-05-18 18:55:31,458 [INFO] 📡 Scanning Block: 42885145 | Transactions: 17
+2026-05-18 18:55:31,949 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:32,011 [INFO] 📡 Scanning Block: 42885146 | Transactions: 4
+2026-05-18 18:55:34,342 [INFO] 📡 Scanning Block: 42885147 | Transactions: 15
+2026-05-18 18:55:34,635 [INFO] 📡 Scanning Block: 42885148 | Transactions: 38
+2026-05-18 18:55:35,393 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,395 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,396 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,397 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,398 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,400 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,401 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,403 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,404 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,405 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,407 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,444 [INFO] 📡 Scanning Block: 42885149 | Transactions: 17
+2026-05-18 18:55:35,950 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,952 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,953 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:35,987 [INFO] 📡 Scanning Block: 42885150 | Transactions: 9
+2026-05-18 18:55:36,236 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:36,273 [INFO] 📡 Scanning Block: 42885151 | Transactions: 15
+2026-05-18 18:55:36,527 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:36,529 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:36,530 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:36,531 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:36,532 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:36,594 [INFO] 📡 Scanning Block: 42885152 | Transactions: 22
+2026-05-18 18:55:37,115 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:37,117 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:37,155 [INFO] 📡 Scanning Block: 42885153 | Transactions: 13
+2026-05-18 18:55:37,410 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:37,439 [INFO] 📡 Scanning Block: 42885154 | Transactions: 3
+2026-05-18 18:55:37,722 [INFO] 📡 Scanning Block: 42885155 | Transactions: 10
+2026-05-18 18:55:37,988 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:37,989 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:37,990 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:38,054 [INFO] 📡 Scanning Block: 42885156 | Transactions: 36
+2026-05-18 18:55:38,825 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:38,861 [INFO] 📡 Scanning Block: 42885157 | Transactions: 6
+2026-05-18 18:55:39,103 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:39,141 [INFO] 📡 Scanning Block: 42885158 | Transactions: 22
+2026-05-18 18:55:39,646 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:39,648 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:39,712 [INFO] 📡 Scanning Block: 42885159 | Transactions: 20
+2026-05-18 18:55:40,232 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:40,233 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:40,234 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:40,235 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:40,237 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:40,268 [INFO] 📡 Scanning Block: 42885160 | Transactions: 11
+2026-05-18 18:55:40,521 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:40,556 [INFO] 📡 Scanning Block: 42885161 | Transactions: 11
+2026-05-18 18:55:40,803 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:40,805 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:40,806 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:40,869 [INFO] 📡 Scanning Block: 42885162 | Transactions: 10
+2026-05-18 18:55:41,179 [INFO] 📡 Scanning Block: 42885163 | Transactions: 43
+2026-05-18 18:55:41,942 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:41,943 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:41,944 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:41,946 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:41,947 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:41,948 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:41,950 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:41,951 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:41,953 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:41,954 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:42,017 [INFO] 📡 Scanning Block: 42885164 | Transactions: 21
+2026-05-18 18:55:42,519 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:42,520 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:42,522 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:42,553 [INFO] 📡 Scanning Block: 42885165 | Transactions: 13
+2026-05-18 18:55:42,807 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:42,868 [INFO] 📡 Scanning Block: 42885166 | Transactions: 14
+2026-05-18 18:55:43,120 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:43,121 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:43,185 [INFO] 📡 Scanning Block: 42885167 | Transactions: 15
+2026-05-18 18:55:43,446 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:43,509 [INFO] 📡 Scanning Block: 42885168 | Transactions: 16
+2026-05-18 18:55:43,995 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:43,996 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:43,997 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:44,063 [INFO] 📡 Scanning Block: 42885169 | Transactions: 8
+2026-05-18 18:55:44,312 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:44,313 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:44,315 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:44,316 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:44,317 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:44,378 [INFO] 📡 Scanning Block: 42885170 | Transactions: 20
+2026-05-18 18:55:44,885 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:44,956 [INFO] 📡 Scanning Block: 42885171 | Transactions: 19
+2026-05-18 18:55:45,454 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:45,515 [INFO] 📡 Scanning Block: 42885172 | Transactions: 9
+2026-05-18 18:55:45,768 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:47,868 [INFO] 📡 Scanning Block: 42885173 | Transactions: 22
+2026-05-18 18:55:48,420 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:48,421 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:48,423 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:48,458 [INFO] 📡 Scanning Block: 42885174 | Transactions: 16
+2026-05-18 18:55:48,981 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:48,982 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:49,018 [INFO] 📡 Scanning Block: 42885175 | Transactions: 15
+2026-05-18 18:55:49,296 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:49,297 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:49,350 [INFO] 📡 Scanning Block: 42885176 | Transactions: 11
+2026-05-18 18:55:49,609 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:49,611 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:49,674 [INFO] 📡 Scanning Block: 42885177 | Transactions: 15
+2026-05-18 18:55:49,950 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:49,951 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:49,953 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:49,954 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:49,955 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:49,996 [INFO] 📡 Scanning Block: 42885178 | Transactions: 42
+2026-05-18 18:55:50,836 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:50,838 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:50,840 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:50,877 [INFO] 📡 Scanning Block: 42885179 | Transactions: 18
+2026-05-18 18:55:51,469 [INFO] 📡 Scanning Block: 42885180 | Transactions: 16
+2026-05-18 18:55:51,960 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:51,962 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:51,963 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:51,964 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:51,965 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:51,999 [INFO] 📡 Scanning Block: 42885181 | Transactions: 15
+2026-05-18 18:55:52,267 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:52,304 [INFO] 📡 Scanning Block: 42885182 | Transactions: 10
+2026-05-18 18:55:52,588 [INFO] 📡 Scanning Block: 42885183 | Transactions: 16
+2026-05-18 18:55:53,088 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:53,157 [INFO] 📡 Scanning Block: 42885184 | Transactions: 12
+2026-05-18 18:55:53,422 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:53,457 [INFO] 📡 Scanning Block: 42885185 | Transactions: 20
+2026-05-18 18:55:53,971 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:53,972 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:53,974 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:53,975 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:53,976 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:54,017 [INFO] 📡 Scanning Block: 42885186 | Transactions: 28
+2026-05-18 18:55:54,545 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:54,547 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:54,549 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:54,551 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:54,553 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:54,642 [INFO] 📡 Scanning Block: 42885187 | Transactions: 15
+2026-05-18 18:55:54,901 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:54,903 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:54,904 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:54,944 [INFO] 📡 Scanning Block: 42885188 | Transactions: 20
+2026-05-18 18:55:55,446 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:55,447 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:55,449 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:55,450 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:55,492 [INFO] 📡 Scanning Block: 42885189 | Transactions: 14
+2026-05-18 18:55:55,757 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:55,845 [INFO] 📡 Scanning Block: 42885190 | Transactions: 18
+2026-05-18 18:55:56,362 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:56,364 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:56,404 [INFO] 📡 Scanning Block: 42885191 | Transactions: 8
+2026-05-18 18:55:56,652 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:56,654 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:56,723 [INFO] 📡 Scanning Block: 42885192 | Transactions: 20
+2026-05-18 18:55:57,235 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:57,236 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:57,237 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:57,238 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:57,240 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:57,308 [INFO] 📡 Scanning Block: 42885193 | Transactions: 34
+2026-05-18 18:55:58,085 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:58,087 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:58,089 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:58,090 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:58,092 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:58,098 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:58,213 [INFO] 📡 Scanning Block: 42885194 | Transactions: 8
+2026-05-18 18:55:58,490 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:58,491 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:58,527 [INFO] 📡 Scanning Block: 42885195 | Transactions: 7
+2026-05-18 18:55:58,770 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:58,771 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:58,804 [INFO] 📡 Scanning Block: 42885196 | Transactions: 7
+2026-05-18 18:55:59,059 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:59,061 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:59,131 [INFO] 📡 Scanning Block: 42885197 | Transactions: 18
+2026-05-18 18:55:59,649 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:59,651 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:55:59,720 [INFO] 📡 Scanning Block: 42885198 | Transactions: 20
+2026-05-18 18:56:00,232 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:00,233 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:00,235 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:00,313 [INFO] 📡 Scanning Block: 42885199 | Transactions: 6
+2026-05-18 18:56:00,580 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:00,619 [INFO] 📡 Scanning Block: 42885200 | Transactions: 17
+2026-05-18 18:56:01,137 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:01,240 [INFO] 📡 Scanning Block: 42885201 | Transactions: 31
+2026-05-18 18:56:02,025 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:02,027 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:02,028 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:02,029 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:02,061 [INFO] 📡 Scanning Block: 42885202 | Transactions: 9
+2026-05-18 18:56:02,326 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:02,409 [INFO] 📡 Scanning Block: 42885203 | Transactions: 16
+2026-05-18 18:56:02,904 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:02,905 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:02,907 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:02,970 [INFO] 📡 Scanning Block: 42885204 | Transactions: 15
+2026-05-18 18:56:03,232 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:03,234 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:03,235 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:03,236 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:03,237 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:03,318 [INFO] 📡 Scanning Block: 42885205 | Transactions: 19
+2026-05-18 18:56:03,831 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:03,833 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:03,901 [INFO] 📡 Scanning Block: 42885206 | Transactions: 12
+2026-05-18 18:56:04,165 [ERROR] Failed to save transfer to DB: table transfers has no column named pnl
+2026-05-18 18:56:06,263 [INFO] 📡 Scanning Block: 42885207 | Transactions: 19
+2026-05-18 18:56:06,514 [INFO] server closing
+2026-05-18 18:56:06,612 [INFO] 🔴 UI Dashboard Disconnected.
+2026-05-18 18:56:06,639 [INFO] 🔴 UI Dashboard Disconnected.
+2026-05-18 18:56:06,640 [INFO] server closed

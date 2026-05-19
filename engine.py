@@ -31,6 +31,8 @@ CHORDSWAP_SWAP_SIG = "0x" + w3.keccak(text="Swap(address,uint256,uint256,uint256
 CHORDSWAP_MINT_SIG = "0x" + w3.keccak(text="Mint(address,uint256,uint256)").hex()
 CHORDSWAP_BURN_SIG = "0x" + w3.keccak(text="Burn(address,uint256,uint256,address)").hex()
 
+BRIDGE_OUT_SIG = "0x" + w3.keccak(text="BridgeOut(address,uint256,uint256)").hex()
+
 ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]')
 TOKEN_CACHE = {}
 PRICE_CACHE = {
@@ -69,7 +71,7 @@ def decode_agent_narrative(tx_hash, type_sig):
         return f"↳ Workflow: {task}"
 
 def analyze_contract_security(addr):
-    if addr in ENTITY_MEMORY and ("Genesis" in ENTITY_MEMORY[addr] or "Pool" in ENTITY_MEMORY[addr]):
+    if addr in ENTITY_MEMORY and ("Genesis" in ENTITY_MEMORY[addr] or "Pool" in ENTITY_MEMORY[addr] or "Router" in ENTITY_MEMORY[addr]):
         return 99, "✅ VERIFIED SAFE"
     val = int(w3.keccak(text=addr).hex()[-4:], 16)
     score = (val % 100)
@@ -82,7 +84,7 @@ def resolve_sybil_cluster(addr1, addr2):
     e1 = ENTITY_MEMORY.get(addr1, "")
     e2 = ENTITY_MEMORY.get(addr2, "")
     
-    if "Pool" in e1 or "Pool" in e2 or "Genesis" in e1 or "Genesis" in e2:
+    if "Pool" in e1 or "Pool" in e2 or "Genesis" in e1 or "Genesis" in e2 or "Router" in e1 or "Router" in e2:
         return None 
 
     c1 = CLUSTER_MAP.get(addr1)
@@ -135,7 +137,7 @@ async def init_db():
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with Wallet Clustering Matrix.")
+        logger.info("💾 Database verified with Cross-Chain Bridge Radar.")
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     realized_pnl = 0.0
@@ -214,6 +216,7 @@ async def send_history_to_client(websocket):
                 flag = "STANDARD"
                 if row["type"] == "AI_AGENT": flag = "AGENT_FLOW"
                 elif row["type"] in ["DEX_SWAP", "DEX_LIQUIDITY"]: flag = "DEX_ACTIVITY"
+                elif row["type"] == "CROSS_CHAIN": flag = "BRIDGE_ACTIVITY"
                 elif (amt * prc >= 10000 or (prc == 0.0 and amt >= 50000)): flag = "WHALE"
                 
                 tx_data = {
@@ -390,7 +393,39 @@ async def scan_block(block_number):
                 if not log.topics: continue
                 topic0 = log.topics[0].hex()
                 
-                if topic0 == CHORDSWAP_SWAP_SIG and not dex_processed:
+                if topic0 == BRIDGE_OUT_SIG and not dex_processed:
+                    try:
+                        ENTITY_MEMORY[log.address] = "🌉 Base Bridge Router"
+                        bridger = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
+                        narrative_text = "↳ Cross-Chain Exit: Routing Liquidity to Base"
+                        score, label = analyze_contract_security(log.address)
+                        
+                        tx_data = {
+                            "type": "CROSS_CHAIN",
+                            "asset": "Bridged Asset",
+                            "amount": 1.0, 
+                            "price_usd": PRICE_CACHE["ARC"] * 5, 
+                            "tx_hash": tx_hash_str,
+                            "from_addr": bridger,
+                            "to_addr": log.address,
+                            "from_label": ENTITY_MEMORY.get(bridger),
+                            "to_label": ENTITY_MEMORY.get(log.address),
+                            "gas_used": gas_used,
+                            "execution_depth": exec_depth,
+                            "pnl": 0.0,
+                            "narrative": narrative_text,
+                            "sec_score": score,
+                            "sec_label": label,
+                            "cluster": "",
+                            "flag": "BRIDGE_ACTIVITY",
+                            "status": "CONFIRMED"
+                        }
+                        await broadcast_alert(tx_data)
+                        await save_transfer(tx_data, block_number)
+                        dex_processed = True
+                    except Exception:
+                        pass
+                elif topic0 == CHORDSWAP_SWAP_SIG and not dex_processed:
                     try:
                         pool_addr = log.address
                         ENTITY_MEMORY[pool_addr] = "🦄 Chordswap Pool"
