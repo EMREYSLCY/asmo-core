@@ -33,6 +33,11 @@ CHORDSWAP_BURN_SIG = "0x" + w3.keccak(text="Burn(address,uint256,uint256,address
 
 BRIDGE_OUT_SIG = "0x" + w3.keccak(text="BridgeOut(address,uint256,uint256)").hex()
 
+AAVE_SUPPLY_SIG = "0x" + w3.keccak(text="Supply(address,address,address,uint256,uint16)").hex()
+AAVE_BORROW_SIG = "0x" + w3.keccak(text="Borrow(address,address,address,uint256,uint8,uint256,uint16)").hex()
+AAVE_REPAY_SIG = "0x" + w3.keccak(text="Repay(address,address,address,uint256,bool)").hex()
+AAVE_LIQ_SIG = "0x" + w3.keccak(text="LiquidationCall(address,address,address,uint256,uint256,address,bool)").hex()
+
 ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]')
 TOKEN_CACHE = {}
 PRICE_CACHE = {
@@ -44,6 +49,7 @@ connected_clients = set()
 seen_pending_txs = set()
 
 WALLET_MEMORY = {}
+LENDING_MEMORY = {}
 ENTITY_MEMORY = {
     "0x0000000000000000000000000000000000000000": "🏦 Arc Genesis / Burn"
 }
@@ -109,6 +115,15 @@ def resolve_sybil_cluster(addr1, addr2):
         return c1
     return c1
 
+def calculate_health_factor(user_addr):
+    if user_addr not in LENDING_MEMORY:
+        return 99.0
+    col = LENDING_MEMORY[user_addr]["collateral"]
+    debt = LENDING_MEMORY[user_addr]["debt"]
+    if debt == 0: return 99.0
+    hf = (col * 0.8) / debt
+    return round(hf, 2)
+
 async def init_db():
     async with aiosqlite.connect("asmo.db") as db:
         await db.execute("""
@@ -129,15 +144,16 @@ async def init_db():
                 sec_score INTEGER NOT NULL DEFAULT 99,
                 sec_label TEXT NOT NULL DEFAULT '✅ VERIFIED SAFE',
                 cluster TEXT,
+                health_factor REAL NOT NULL DEFAULT 99.0,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
         try:
-            await db.execute("ALTER TABLE transfers ADD COLUMN cluster TEXT")
+            await db.execute("ALTER TABLE transfers ADD COLUMN health_factor REAL NOT NULL DEFAULT 99.0")
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with Cross-Chain Bridge Radar.")
+        logger.info("💾 Database verified with AAVE Lending Sniper & Health Factor Matrix.")
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     realized_pnl = 0.0
@@ -171,14 +187,15 @@ async def save_transfer(tx_data, block_number):
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (tx_data["tx_hash"], block_number, tx_data["type"], 
                  tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
                  tx_data["from_addr"], tx_data["to_addr"],
                  tx_data.get("gas_used", 0), tx_data.get("execution_depth", 1), 
                  tx_data.get("pnl", 0.0), tx_data.get("narrative", ""),
-                 tx_data.get("sec_score", 99), tx_data.get("sec_label", "✅ VERIFIED SAFE"), tx_data.get("cluster", ""))
+                 tx_data.get("sec_score", 99), tx_data.get("sec_label", "✅ VERIFIED SAFE"), 
+                 tx_data.get("cluster", ""), tx_data.get("health_factor", 99.0))
             )
             await db.commit()
     except Exception as e:
@@ -217,6 +234,7 @@ async def send_history_to_client(websocket):
                 if row["type"] == "AI_AGENT": flag = "AGENT_FLOW"
                 elif row["type"] in ["DEX_SWAP", "DEX_LIQUIDITY"]: flag = "DEX_ACTIVITY"
                 elif row["type"] == "CROSS_CHAIN": flag = "BRIDGE_ACTIVITY"
+                elif row["type"] == "LENDING": flag = "LENDING_ACTIVITY"
                 elif (amt * prc >= 10000 or (prc == 0.0 and amt >= 50000)): flag = "WHALE"
                 
                 tx_data = {
@@ -237,6 +255,7 @@ async def send_history_to_client(websocket):
                     "sec_score": row["sec_score"] if "sec_score" in row.keys() else 99,
                     "sec_label": row["sec_label"] if "sec_label" in row.keys() else "✅ VERIFIED SAFE",
                     "cluster": row["cluster"] if "cluster" in row.keys() else "",
+                    "health_factor": row["health_factor"] if "health_factor" in row.keys() else 99.0,
                     "flag": flag,
                     "status": "CONFIRMED"
                 }
@@ -318,6 +337,7 @@ async def scan_mempool():
                                 "sec_score": 99,
                                 "sec_label": "✅ VERIFIED SAFE",
                                 "cluster": "",
+                                "health_factor": 99.0,
                                 "flag": "PENDING_WHALE",
                                 "status": "PENDING"
                             }
@@ -377,6 +397,7 @@ async def scan_block(block_number):
                     "sec_score": 99,
                     "sec_label": "✅ VERIFIED SAFE",
                     "cluster": sybil_cluster,
+                    "health_factor": calculate_health_factor(from_addr),
                     "flag": "WHALE" if is_whale else "STANDARD",
                     "status": "CONFIRMED"
                 }
@@ -393,7 +414,65 @@ async def scan_block(block_number):
                 if not log.topics: continue
                 topic0 = log.topics[0].hex()
                 
-                if topic0 == BRIDGE_OUT_SIG and not dex_processed:
+                if topic0 in [AAVE_SUPPLY_SIG, AAVE_BORROW_SIG, AAVE_REPAY_SIG, AAVE_LIQ_SIG]:
+                    try:
+                        ENTITY_MEMORY[log.address] = "🏦 AAVE V3 Pool"
+                        user_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
+                        
+                        raw_amount = int(log.data.hex()[:64], 16) if len(log.data.hex()) >= 64 else 0
+                        actual_amt = (raw_amount / 1e18) if raw_amount > 0 else 1.0
+                        usd_val = actual_amt * PRICE_CACHE["DEFAULT_TOKEN"]
+
+                        if user_addr not in LENDING_MEMORY:
+                            LENDING_MEMORY[user_addr] = {"collateral": 0.0, "debt": 0.0}
+
+                        narrative_text = ""
+                        hf_before = calculate_health_factor(user_addr)
+
+                        if topic0 == AAVE_SUPPLY_SIG:
+                            LENDING_MEMORY[user_addr]["collateral"] += usd_val
+                            narrative_text = f"↳ Lending: Supplied ${usd_val:.2f} Collateral"
+                        elif topic0 == AAVE_BORROW_SIG:
+                            LENDING_MEMORY[user_addr]["debt"] += usd_val
+                            narrative_text = f"↳ Lending: Borrowed ${usd_val:.2f} Debt"
+                        elif topic0 == AAVE_REPAY_SIG:
+                            LENDING_MEMORY[user_addr]["debt"] = max(0, LENDING_MEMORY[user_addr]["debt"] - usd_val)
+                            narrative_text = f"↳ Lending: Repaid ${usd_val:.2f} Debt"
+                        elif topic0 == AAVE_LIQ_SIG:
+                            LENDING_MEMORY[user_addr]["collateral"] = 0.0
+                            LENDING_MEMORY[user_addr]["debt"] = 0.0
+                            narrative_text = f"💀 LENDING: LIQUIDATION EXECUTED!"
+
+                        hf_after = calculate_health_factor(user_addr)
+                        
+                        tx_data = {
+                            "type": "LENDING",
+                            "asset": "AAVE Asset",
+                            "amount": actual_amt, 
+                            "price_usd": PRICE_CACHE["DEFAULT_TOKEN"],
+                            "tx_hash": tx_hash_str,
+                            "from_addr": user_addr,
+                            "to_addr": log.address,
+                            "from_label": ENTITY_MEMORY.get(user_addr),
+                            "to_label": ENTITY_MEMORY.get(log.address),
+                            "gas_used": gas_used,
+                            "execution_depth": exec_depth,
+                            "pnl": 0.0,
+                            "narrative": narrative_text,
+                            "sec_score": 99,
+                            "sec_label": "✅ VERIFIED SAFE",
+                            "cluster": "",
+                            "health_factor": hf_after if topic0 != AAVE_LIQ_SIG else 0.0,
+                            "flag": "LENDING_ACTIVITY",
+                            "status": "CONFIRMED"
+                        }
+                        await broadcast_alert(tx_data)
+                        await save_transfer(tx_data, block_number)
+                        dex_processed = True
+                    except Exception:
+                        pass
+                
+                elif topic0 == BRIDGE_OUT_SIG and not dex_processed:
                     try:
                         ENTITY_MEMORY[log.address] = "🌉 Base Bridge Router"
                         bridger = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
@@ -417,6 +496,7 @@ async def scan_block(block_number):
                             "sec_score": score,
                             "sec_label": label,
                             "cluster": "",
+                            "health_factor": calculate_health_factor(bridger),
                             "flag": "BRIDGE_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -451,6 +531,7 @@ async def scan_block(block_number):
                             "sec_score": 99,
                             "sec_label": "✅ VERIFIED SAFE",
                             "cluster": "",
+                            "health_factor": calculate_health_factor(sender),
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -481,6 +562,7 @@ async def scan_block(block_number):
                             "sec_score": 99,
                             "sec_label": "✅ VERIFIED SAFE",
                             "cluster": "",
+                            "health_factor": calculate_health_factor(provider),
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -512,6 +594,7 @@ async def scan_block(block_number):
                             "sec_score": score,
                             "sec_label": label,
                             "cluster": "",
+                            "health_factor": calculate_health_factor(owner_addr),
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -547,6 +630,7 @@ async def scan_block(block_number):
                             "sec_score": score,
                             "sec_label": label,
                             "cluster": "",
+                            "health_factor": calculate_health_factor(funder),
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -588,6 +672,7 @@ async def scan_block(block_number):
                                 "sec_score": score,
                                 "sec_label": label,
                                 "cluster": sybil_cluster,
+                                "health_factor": calculate_health_factor(from_addr),
                                 "flag": "WHALE" if is_whale else "STANDARD",
                                 "status": "CONFIRMED"
                             }
