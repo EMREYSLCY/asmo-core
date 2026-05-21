@@ -46,6 +46,7 @@ connected_clients = set()
 seen_pending_txs = set()
 WALLET_MEMORY = {}
 LENDING_MEMORY = {}
+AGENT_PERFORMANCE = {}
 ENTITY_MEMORY = {
     "0x0000000000000000000000000000000000000000": "🏦 Arc Genesis / Burn"
 }
@@ -119,6 +120,16 @@ def simulate_price_impact(usd_volume):
     impact = (usd_volume / (base_liquidity + usd_volume)) * 100
     return round(impact, 2)
 
+def update_agent_performance(agent_addr, pnl):
+    if agent_addr not in AGENT_PERFORMANCE:
+        AGENT_PERFORMANCE[agent_addr] = {"wins": 0, "total": 0, "net_pnl": 0.0}
+    AGENT_PERFORMANCE[agent_addr]["total"] += 1
+    AGENT_PERFORMANCE[agent_addr]["net_pnl"] += pnl
+    if pnl > 0: AGENT_PERFORMANCE[agent_addr]["wins"] += 1
+    
+    wr = (AGENT_PERFORMANCE[agent_addr]["wins"] / AGENT_PERFORMANCE[agent_addr]["total"]) * 100
+    return round(wr, 1), AGENT_PERFORMANCE[agent_addr]["net_pnl"]
+
 async def init_db():
     async with aiosqlite.connect("asmo.db") as db:
         await db.execute("""
@@ -142,15 +153,16 @@ async def init_db():
                 health_factor REAL NOT NULL DEFAULT 99.0,
                 price_impact REAL NOT NULL DEFAULT 0.0,
                 spread REAL NOT NULL DEFAULT 0.0,
+                agent_win_rate REAL NOT NULL DEFAULT 0.0,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
         try:
-            await db.execute("ALTER TABLE transfers ADD COLUMN spread REAL NOT NULL DEFAULT 0.0")
+            await db.execute("ALTER TABLE transfers ADD COLUMN agent_win_rate REAL NOT NULL DEFAULT 0.0")
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with Arbitrage Scanner Module.")
+        logger.info("💾 Database verified with Agent Win Rate Profiler.")
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     realized_pnl = 0.0
@@ -180,8 +192,8 @@ async def save_transfer(tx_data, block_number):
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread, agent_win_rate) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (tx_data["tx_hash"], block_number, tx_data["type"], 
                  tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
                  tx_data["from_addr"], tx_data["to_addr"],
@@ -189,7 +201,7 @@ async def save_transfer(tx_data, block_number):
                  tx_data.get("pnl", 0.0), tx_data.get("narrative", ""),
                  tx_data.get("sec_score", 99), tx_data.get("sec_label", "✅ VERIFIED SAFE"), 
                  tx_data.get("cluster", ""), tx_data.get("health_factor", 99.0), 
-                 tx_data.get("price_impact", 0.0), tx_data.get("spread", 0.0))
+                 tx_data.get("price_impact", 0.0), tx_data.get("spread", 0.0), tx_data.get("agent_win_rate", 0.0))
             )
             await db.commit()
     except Exception as e:
@@ -247,6 +259,7 @@ async def send_history_to_client(websocket):
                     "health_factor": row["health_factor"] if "health_factor" in row.keys() else 99.0,
                     "price_impact": row["price_impact"] if "price_impact" in row.keys() else 0.0,
                     "spread": row["spread"] if "spread" in row.keys() else 0.0,
+                    "agent_win_rate": row["agent_win_rate"] if "agent_win_rate" in row.keys() else 0.0,
                     "flag": flag,
                     "status": "CONFIRMED"
                 }
@@ -333,6 +346,7 @@ async def scan_mempool():
                                 "health_factor": 99.0,
                                 "price_impact": p_impact,
                                 "spread": 0.0,
+                                "agent_win_rate": 0.0,
                                 "flag": "PENDING_WHALE",
                                 "status": "PENDING"
                             }
@@ -377,6 +391,8 @@ async def scan_block(block_number):
                 sybil_cluster = resolve_sybil_cluster(from_addr, to_addr)
                 p_impact = simulate_price_impact(usd_volume) if is_whale else 0.0
                 
+                wr, _ = update_agent_performance(from_addr, realized_pnl) if "Agent" in ENTITY_MEMORY.get(from_addr, "") else (0.0, 0.0)
+                
                 tx_data = {
                     "type": "NATIVE",
                     "asset": "ARC",
@@ -397,6 +413,7 @@ async def scan_block(block_number):
                     "health_factor": calculate_health_factor(from_addr),
                     "price_impact": p_impact,
                     "spread": 0.0,
+                    "agent_win_rate": wr,
                     "flag": "WHALE" if is_whale else "STANDARD",
                     "status": "CONFIRMED"
                 }
@@ -439,6 +456,7 @@ async def scan_block(block_number):
 
                         hf_after = calculate_health_factor(user_addr)
                         p_impact = simulate_price_impact(usd_val) if topic0 == AAVE_LIQ_SIG else 0.0
+                        wr, _ = update_agent_performance(user_addr, 0) if "Agent" in ENTITY_MEMORY.get(user_addr, "") else (0.0, 0.0)
                         
                         tx_data = {
                             "type": "LENDING",
@@ -460,6 +478,7 @@ async def scan_block(block_number):
                             "health_factor": hf_after if topic0 != AAVE_LIQ_SIG else 0.0,
                             "price_impact": p_impact,
                             "spread": 0.0,
+                            "agent_win_rate": wr,
                             "flag": "LENDING_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -477,6 +496,7 @@ async def scan_block(block_number):
                         score, label = analyze_contract_security(log.address)
                         usd_val = 1.0 * (PRICE_CACHE["ARC"] * 5)
                         p_impact = simulate_price_impact(usd_val)
+                        wr, _ = update_agent_performance(bridger, 0) if "Agent" in ENTITY_MEMORY.get(bridger, "") else (0.0, 0.0)
                         
                         tx_data = {
                             "type": "CROSS_CHAIN",
@@ -498,6 +518,7 @@ async def scan_block(block_number):
                             "health_factor": calculate_health_factor(bridger),
                             "price_impact": p_impact,
                             "spread": 0.0,
+                            "agent_win_rate": wr,
                             "flag": "BRIDGE_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -519,6 +540,8 @@ async def scan_block(block_number):
                         spread_val = round(1.0 + (int(tx_hash_str[-2:], 16) / 50.0), 2)
                         is_arb = spread_val >= 2.5
                         
+                        wr, _ = update_agent_performance(sender, realized_pnl) if "Agent" in ENTITY_MEMORY.get(sender, "") else (0.0, 0.0)
+                        
                         tx_data = {
                             "type": "ARBITRAGE" if is_arb else "DEX_SWAP",
                             "asset": f"Pool: {pool_addr[:8]}...",
@@ -539,6 +562,7 @@ async def scan_block(block_number):
                             "health_factor": calculate_health_factor(sender),
                             "price_impact": p_impact,
                             "spread": spread_val if is_arb else 0.0,
+                            "agent_win_rate": wr,
                             "flag": "ARBITRAGE_ACTIVITY" if is_arb else "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -553,6 +577,8 @@ async def scan_block(block_number):
                         ENTITY_MEMORY[pool_addr] = "🌊 Liquidity Pool"
                         provider = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
                         p_impact = simulate_price_impact(1.0 * (PRICE_CACHE["DEFAULT_TOKEN"] * 2))
+                        wr, _ = update_agent_performance(provider, 0) if "Agent" in ENTITY_MEMORY.get(provider, "") else (0.0, 0.0)
+                        
                         tx_data = {
                             "type": "DEX_LIQUIDITY",
                             "asset": f"LP: {pool_addr[:8]}...",
@@ -573,6 +599,7 @@ async def scan_block(block_number):
                             "health_factor": calculate_health_factor(provider),
                             "price_impact": p_impact,
                             "spread": 0.0,
+                            "agent_win_rate": wr,
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -587,6 +614,8 @@ async def scan_block(block_number):
                         owner_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
                         narrative_text = decode_agent_narrative(tx_hash_str, "REGISTER")
                         score, label = analyze_contract_security(log.address)
+                        wr, _ = update_agent_performance(owner_addr, 0) if "Agent" in ENTITY_MEMORY.get(owner_addr, "") else (0.0, 0.0)
+                        
                         tx_data = {
                             "type": "AI_AGENT",
                             "asset": "ERC-8004 Registration",
@@ -607,6 +636,7 @@ async def scan_block(block_number):
                             "health_factor": calculate_health_factor(owner_addr),
                             "price_impact": 0.0,
                             "spread": 0.0,
+                            "agent_win_rate": wr,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -624,6 +654,7 @@ async def scan_block(block_number):
                         actual_amt = float(w3.from_wei(int(log.data.hex(), 16), 'ether'))
                         narrative_text = decode_agent_narrative(tx_hash_str, "WORKFLOW")
                         score, label = analyze_contract_security(agent)
+                        wr, _ = update_agent_performance(funder, 0) if "Agent" in ENTITY_MEMORY.get(funder, "") else (0.0, 0.0)
                         
                         tx_data = {
                             "type": "AI_AGENT",
@@ -645,6 +676,7 @@ async def scan_block(block_number):
                             "health_factor": calculate_health_factor(funder),
                             "price_impact": 0.0,
                             "spread": 0.0,
+                            "agent_win_rate": wr,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -671,6 +703,8 @@ async def scan_block(block_number):
                             score, label = analyze_contract_security(contract_address)
                             p_impact = simulate_price_impact(usd_volume) if is_whale else 0.0
                             
+                            wr, _ = update_agent_performance(from_addr, realized_pnl) if "Agent" in ENTITY_MEMORY.get(from_addr, "") else (0.0, 0.0)
+                            
                             tx_data = {
                                 "type": "TOKEN",
                                 "asset": contract_address,
@@ -691,6 +725,7 @@ async def scan_block(block_number):
                                 "health_factor": calculate_health_factor(from_addr),
                                 "price_impact": p_impact,
                                 "spread": 0.0,
+                                "agent_win_rate": wr,
                                 "flag": "WHALE" if is_whale else "STANDARD",
                                 "status": "CONFIRMED"
                             }
