@@ -52,6 +52,7 @@ ENTITY_MEMORY = {
 }
 CLUSTER_MAP = {}
 cluster_counter = 0
+RECENT_TRADES = []
 
 AI_TASKS = [
     "🧠 Dataset Analysis & Classification",
@@ -66,15 +67,11 @@ AI_TASKS = [
 
 def decode_agent_narrative(tx_hash, type_sig):
     val = int(tx_hash[-2:], 16)
-    if type_sig == "REGISTER":
-        return f"New Autonomous Agent Registered (v1.{val%10})"
-    else:
-        task = AI_TASKS[val % len(AI_TASKS)]
-        return f"↳ Workflow: {task}"
+    if type_sig == "REGISTER": return f"New Autonomous Agent Registered (v1.{val%10})"
+    else: return f"↳ Workflow: {AI_TASKS[val % len(AI_TASKS)]}"
 
 def analyze_contract_security(addr):
-    if addr in ENTITY_MEMORY and ("Genesis" in ENTITY_MEMORY[addr] or "Pool" in ENTITY_MEMORY[addr] or "Router" in ENTITY_MEMORY[addr]):
-        return 99, "✅ VERIFIED SAFE"
+    if addr in ENTITY_MEMORY and ("Genesis" in ENTITY_MEMORY[addr] or "Pool" in ENTITY_MEMORY[addr] or "Router" in ENTITY_MEMORY[addr]): return 99, "✅ VERIFIED SAFE"
     val = int(w3.keccak(text=addr).hex()[-4:], 16)
     score = (val % 100)
     if score < 25: return score, "☢️ HIGH RISK (HONEYPOT)"
@@ -111,24 +108,39 @@ def calculate_health_factor(user_addr):
     col = LENDING_MEMORY[user_addr]["collateral"]
     debt = LENDING_MEMORY[user_addr]["debt"]
     if debt == 0: return 99.0
-    hf = (col * 0.8) / debt
-    return round(hf, 2)
+    return round((col * 0.8) / debt, 2)
 
 def simulate_price_impact(usd_volume):
     base_liquidity = 5000000.0 
     if usd_volume <= 0: return 0.0
-    impact = (usd_volume / (base_liquidity + usd_volume)) * 100
-    return round(impact, 2)
+    return round((usd_volume / (base_liquidity + usd_volume)) * 100, 2)
 
 def update_agent_performance(agent_addr, pnl):
-    if agent_addr not in AGENT_PERFORMANCE:
-        AGENT_PERFORMANCE[agent_addr] = {"wins": 0, "total": 0, "net_pnl": 0.0}
+    if agent_addr not in AGENT_PERFORMANCE: AGENT_PERFORMANCE[agent_addr] = {"wins": 0, "total": 0, "net_pnl": 0.0}
     AGENT_PERFORMANCE[agent_addr]["total"] += 1
     AGENT_PERFORMANCE[agent_addr]["net_pnl"] += pnl
     if pnl > 0: AGENT_PERFORMANCE[agent_addr]["wins"] += 1
-    
     wr = (AGENT_PERFORMANCE[agent_addr]["wins"] / AGENT_PERFORMANCE[agent_addr]["total"]) * 100
     return round(wr, 1), AGENT_PERFORMANCE[agent_addr]["net_pnl"]
+
+def calculate_twap_and_pressure(tx_hash, amount, price):
+    global RECENT_TRADES
+    is_buy = int(tx_hash[-1], 16) % 2 == 0 
+    RECENT_TRADES.append({"amount": amount, "price": price, "is_buy": is_buy})
+    if len(RECENT_TRADES) > 50: RECENT_TRADES.pop(0)
+    
+    total_vol = sum(t["amount"] for t in RECENT_TRADES)
+    if total_vol == 0: return price, "🌊 Neutral Flow"
+    
+    twap = sum(t["amount"] * t["price"] for t in RECENT_TRADES) / total_vol
+    buy_vol = sum(t["amount"] for t in RECENT_TRADES if t["is_buy"])
+    ratio = buy_vol / total_vol
+    
+    if ratio >= 0.7: return round(twap, 4), "🧊 Stealth Accumulation"
+    elif ratio <= 0.3: return round(twap, 4), "🔥 High Sell Pressure"
+    elif ratio >= 0.55: return round(twap, 4), "📈 Bullish Bias"
+    elif ratio <= 0.45: return round(twap, 4), "📉 Bearish Bias"
+    else: return round(twap, 4), "🌊 Neutral Flow"
 
 async def init_db():
     async with aiosqlite.connect("asmo.db") as db:
@@ -154,15 +166,18 @@ async def init_db():
                 price_impact REAL NOT NULL DEFAULT 0.0,
                 spread REAL NOT NULL DEFAULT 0.0,
                 agent_win_rate REAL NOT NULL DEFAULT 0.0,
+                twap REAL NOT NULL DEFAULT 0.0,
+                twap_trend TEXT NOT NULL DEFAULT '🌊 Neutral Flow',
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
         try:
-            await db.execute("ALTER TABLE transfers ADD COLUMN agent_win_rate REAL NOT NULL DEFAULT 0.0")
+            await db.execute("ALTER TABLE transfers ADD COLUMN twap REAL NOT NULL DEFAULT 0.0")
+            await db.execute("ALTER TABLE transfers ADD COLUMN twap_trend TEXT NOT NULL DEFAULT '🌊 Neutral Flow'")
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with Agent Win Rate Profiler.")
+        logger.info("💾 Database verified with TWAP & Market Pressure Oscillator.")
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     realized_pnl = 0.0
@@ -192,8 +207,8 @@ async def save_transfer(tx_data, block_number):
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread, agent_win_rate) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread, agent_win_rate, twap, twap_trend) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (tx_data["tx_hash"], block_number, tx_data["type"], 
                  tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
                  tx_data["from_addr"], tx_data["to_addr"],
@@ -201,7 +216,8 @@ async def save_transfer(tx_data, block_number):
                  tx_data.get("pnl", 0.0), tx_data.get("narrative", ""),
                  tx_data.get("sec_score", 99), tx_data.get("sec_label", "✅ VERIFIED SAFE"), 
                  tx_data.get("cluster", ""), tx_data.get("health_factor", 99.0), 
-                 tx_data.get("price_impact", 0.0), tx_data.get("spread", 0.0), tx_data.get("agent_win_rate", 0.0))
+                 tx_data.get("price_impact", 0.0), tx_data.get("spread", 0.0), 
+                 tx_data.get("agent_win_rate", 0.0), tx_data.get("twap", 0.0), tx_data.get("twap_trend", ""))
             )
             await db.commit()
     except Exception as e:
@@ -260,6 +276,8 @@ async def send_history_to_client(websocket):
                     "price_impact": row["price_impact"] if "price_impact" in row.keys() else 0.0,
                     "spread": row["spread"] if "spread" in row.keys() else 0.0,
                     "agent_win_rate": row["agent_win_rate"] if "agent_win_rate" in row.keys() else 0.0,
+                    "twap": row["twap"] if "twap" in row.keys() else 0.0,
+                    "twap_trend": row["twap_trend"] if "twap_trend" in row.keys() else "",
                     "flag": flag,
                     "status": "CONFIRMED"
                 }
@@ -325,6 +343,7 @@ async def scan_mempool():
                             if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = "⏳ Vanguard Whale"
                             
                             p_impact = simulate_price_impact(usd_volume)
+                            twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_value, current_price)
                             
                             tx_data = {
                                 "type": "NATIVE",
@@ -347,6 +366,8 @@ async def scan_mempool():
                                 "price_impact": p_impact,
                                 "spread": 0.0,
                                 "agent_win_rate": 0.0,
+                                "twap": twap_val,
+                                "twap_trend": twap_trend,
                                 "flag": "PENDING_WHALE",
                                 "status": "PENDING"
                             }
@@ -390,8 +411,8 @@ async def scan_block(block_number):
                 update_entity_labels(from_addr, realized_pnl, is_whale)
                 sybil_cluster = resolve_sybil_cluster(from_addr, to_addr)
                 p_impact = simulate_price_impact(usd_volume) if is_whale else 0.0
-                
                 wr, _ = update_agent_performance(from_addr, realized_pnl) if "Agent" in ENTITY_MEMORY.get(from_addr, "") else (0.0, 0.0)
+                twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_value, current_price)
                 
                 tx_data = {
                     "type": "NATIVE",
@@ -414,6 +435,8 @@ async def scan_block(block_number):
                     "price_impact": p_impact,
                     "spread": 0.0,
                     "agent_win_rate": wr,
+                    "twap": twap_val,
+                    "twap_trend": twap_trend,
                     "flag": "WHALE" if is_whale else "STANDARD",
                     "status": "CONFIRMED"
                 }
@@ -457,6 +480,7 @@ async def scan_block(block_number):
                         hf_after = calculate_health_factor(user_addr)
                         p_impact = simulate_price_impact(usd_val) if topic0 == AAVE_LIQ_SIG else 0.0
                         wr, _ = update_agent_performance(user_addr, 0) if "Agent" in ENTITY_MEMORY.get(user_addr, "") else (0.0, 0.0)
+                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_amt, PRICE_CACHE["DEFAULT_TOKEN"])
                         
                         tx_data = {
                             "type": "LENDING",
@@ -479,6 +503,8 @@ async def scan_block(block_number):
                             "price_impact": p_impact,
                             "spread": 0.0,
                             "agent_win_rate": wr,
+                            "twap": twap_val,
+                            "twap_trend": twap_trend,
                             "flag": "LENDING_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -497,6 +523,7 @@ async def scan_block(block_number):
                         usd_val = 1.0 * (PRICE_CACHE["ARC"] * 5)
                         p_impact = simulate_price_impact(usd_val)
                         wr, _ = update_agent_performance(bridger, 0) if "Agent" in ENTITY_MEMORY.get(bridger, "") else (0.0, 0.0)
+                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, PRICE_CACHE["ARC"] * 5)
                         
                         tx_data = {
                             "type": "CROSS_CHAIN",
@@ -519,6 +546,8 @@ async def scan_block(block_number):
                             "price_impact": p_impact,
                             "spread": 0.0,
                             "agent_win_rate": wr,
+                            "twap": twap_val,
+                            "twap_trend": twap_trend,
                             "flag": "BRIDGE_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -536,11 +565,10 @@ async def scan_block(block_number):
                         realized_pnl = calculate_and_update_pnl(sender, pool_addr, f"Pool:{pool_addr[:8]}", 1.0, current_price)
                         update_entity_labels(sender, realized_pnl, False)
                         p_impact = simulate_price_impact(1.0 * current_price)
-                        
                         spread_val = round(1.0 + (int(tx_hash_str[-2:], 16) / 50.0), 2)
                         is_arb = spread_val >= 2.5
-                        
                         wr, _ = update_agent_performance(sender, realized_pnl) if "Agent" in ENTITY_MEMORY.get(sender, "") else (0.0, 0.0)
+                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, current_price)
                         
                         tx_data = {
                             "type": "ARBITRAGE" if is_arb else "DEX_SWAP",
@@ -563,6 +591,8 @@ async def scan_block(block_number):
                             "price_impact": p_impact,
                             "spread": spread_val if is_arb else 0.0,
                             "agent_win_rate": wr,
+                            "twap": twap_val,
+                            "twap_trend": twap_trend,
                             "flag": "ARBITRAGE_ACTIVITY" if is_arb else "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -578,6 +608,7 @@ async def scan_block(block_number):
                         provider = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
                         p_impact = simulate_price_impact(1.0 * (PRICE_CACHE["DEFAULT_TOKEN"] * 2))
                         wr, _ = update_agent_performance(provider, 0) if "Agent" in ENTITY_MEMORY.get(provider, "") else (0.0, 0.0)
+                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, PRICE_CACHE["DEFAULT_TOKEN"] * 2)
                         
                         tx_data = {
                             "type": "DEX_LIQUIDITY",
@@ -600,6 +631,8 @@ async def scan_block(block_number):
                             "price_impact": p_impact,
                             "spread": 0.0,
                             "agent_win_rate": wr,
+                            "twap": twap_val,
+                            "twap_trend": twap_trend,
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
@@ -615,6 +648,7 @@ async def scan_block(block_number):
                         narrative_text = decode_agent_narrative(tx_hash_str, "REGISTER")
                         score, label = analyze_contract_security(log.address)
                         wr, _ = update_agent_performance(owner_addr, 0) if "Agent" in ENTITY_MEMORY.get(owner_addr, "") else (0.0, 0.0)
+                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, 0.0)
                         
                         tx_data = {
                             "type": "AI_AGENT",
@@ -637,6 +671,8 @@ async def scan_block(block_number):
                             "price_impact": 0.0,
                             "spread": 0.0,
                             "agent_win_rate": wr,
+                            "twap": twap_val,
+                            "twap_trend": twap_trend,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -655,6 +691,7 @@ async def scan_block(block_number):
                         narrative_text = decode_agent_narrative(tx_hash_str, "WORKFLOW")
                         score, label = analyze_contract_security(agent)
                         wr, _ = update_agent_performance(funder, 0) if "Agent" in ENTITY_MEMORY.get(funder, "") else (0.0, 0.0)
+                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_amt, PRICE_CACHE["ARC"])
                         
                         tx_data = {
                             "type": "AI_AGENT",
@@ -677,6 +714,8 @@ async def scan_block(block_number):
                             "price_impact": 0.0,
                             "spread": 0.0,
                             "agent_win_rate": wr,
+                            "twap": twap_val,
+                            "twap_trend": twap_trend,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
@@ -702,8 +741,8 @@ async def scan_block(block_number):
                             sybil_cluster = resolve_sybil_cluster(from_addr, to_addr)
                             score, label = analyze_contract_security(contract_address)
                             p_impact = simulate_price_impact(usd_volume) if is_whale else 0.0
-                            
                             wr, _ = update_agent_performance(from_addr, realized_pnl) if "Agent" in ENTITY_MEMORY.get(from_addr, "") else (0.0, 0.0)
+                            twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_token_amount, current_token_price)
                             
                             tx_data = {
                                 "type": "TOKEN",
@@ -726,6 +765,8 @@ async def scan_block(block_number):
                                 "price_impact": p_impact,
                                 "spread": 0.0,
                                 "agent_win_rate": wr,
+                                "twap": twap_val,
+                                "twap_trend": twap_trend,
                                 "flag": "WHALE" if is_whale else "STANDARD",
                                 "status": "CONFIRMED"
                             }
