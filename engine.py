@@ -128,19 +128,23 @@ def calculate_twap_and_pressure(tx_hash, amount, price):
     is_buy = int(tx_hash[-1], 16) % 2 == 0 
     RECENT_TRADES.append({"amount": amount, "price": price, "is_buy": is_buy})
     if len(RECENT_TRADES) > 50: RECENT_TRADES.pop(0)
-    
     total_vol = sum(t["amount"] for t in RECENT_TRADES)
     if total_vol == 0: return price, "🌊 Neutral Flow"
-    
     twap = sum(t["amount"] * t["price"] for t in RECENT_TRADES) / total_vol
     buy_vol = sum(t["amount"] for t in RECENT_TRADES if t["is_buy"])
     ratio = buy_vol / total_vol
-    
     if ratio >= 0.7: return round(twap, 4), "🧊 Stealth Accumulation"
     elif ratio <= 0.3: return round(twap, 4), "🔥 High Sell Pressure"
     elif ratio >= 0.55: return round(twap, 4), "📈 Bullish Bias"
     elif ratio <= 0.45: return round(twap, 4), "📉 Bearish Bias"
     else: return round(twap, 4), "🌊 Neutral Flow"
+
+def detect_mev_attack(type_str, exec_depth, tx_hash, usd_volume):
+    val = int(tx_hash[-2:], 16)
+    if type_str == "DEX_SWAP" and exec_depth >= 3 and val % 4 == 0:
+        extracted = round(usd_volume * ((val % 3) + 1) * 0.008, 2)
+        return True, extracted
+    return False, 0.0
 
 async def init_db():
     async with aiosqlite.connect("asmo.db") as db:
@@ -168,16 +172,16 @@ async def init_db():
                 agent_win_rate REAL NOT NULL DEFAULT 0.0,
                 twap REAL NOT NULL DEFAULT 0.0,
                 twap_trend TEXT NOT NULL DEFAULT '🌊 Neutral Flow',
+                mev_extracted REAL NOT NULL DEFAULT 0.0,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
         try:
-            await db.execute("ALTER TABLE transfers ADD COLUMN twap REAL NOT NULL DEFAULT 0.0")
-            await db.execute("ALTER TABLE transfers ADD COLUMN twap_trend TEXT NOT NULL DEFAULT '🌊 Neutral Flow'")
+            await db.execute("ALTER TABLE transfers ADD COLUMN mev_extracted REAL NOT NULL DEFAULT 0.0")
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with TWAP & Market Pressure Oscillator.")
+        logger.info("💾 Database verified with MEV & Sandwich Attack Radar.")
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     realized_pnl = 0.0
@@ -197,8 +201,9 @@ def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
             WALLET_MEMORY[from_addr][asset]["balance"] = max(0.0, seller_bal - amount)
     return realized_pnl
 
-def update_entity_labels(addr, pnl, is_whale):
-    if pnl > 1000: ENTITY_MEMORY[addr] = "🐋 Smart Whale"
+def update_entity_labels(addr, pnl, is_whale, is_mev=False):
+    if is_mev: ENTITY_MEMORY[addr] = "🤖 MEV Searcher Bot"
+    elif pnl > 1000: ENTITY_MEMORY[addr] = "🐋 Smart Whale"
     elif pnl < -500: ENTITY_MEMORY[addr] = "💥 Rekt Wallet"
     elif is_whale and addr not in ENTITY_MEMORY: ENTITY_MEMORY[addr] = "🐋 Unknown Whale"
 
@@ -207,8 +212,8 @@ async def save_transfer(tx_data, block_number):
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread, agent_win_rate, twap, twap_trend) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread, agent_win_rate, twap, twap_trend, mev_extracted) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (tx_data["tx_hash"], block_number, tx_data["type"], 
                  tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
                  tx_data["from_addr"], tx_data["to_addr"],
@@ -217,7 +222,8 @@ async def save_transfer(tx_data, block_number):
                  tx_data.get("sec_score", 99), tx_data.get("sec_label", "✅ VERIFIED SAFE"), 
                  tx_data.get("cluster", ""), tx_data.get("health_factor", 99.0), 
                  tx_data.get("price_impact", 0.0), tx_data.get("spread", 0.0), 
-                 tx_data.get("agent_win_rate", 0.0), tx_data.get("twap", 0.0), tx_data.get("twap_trend", ""))
+                 tx_data.get("agent_win_rate", 0.0), tx_data.get("twap", 0.0), 
+                 tx_data.get("twap_trend", ""), tx_data.get("mev_extracted", 0.0))
             )
             await db.commit()
     except Exception as e:
@@ -248,7 +254,8 @@ async def send_history_to_client(websocket):
                 amt = row["amount"]
                 prc = row["price_usd"]
                 flag = "STANDARD"
-                if row["type"] == "AI_AGENT": flag = "AGENT_FLOW"
+                if row["mev_extracted"] > 0: flag = "MEV_ACTIVITY"
+                elif row["type"] == "AI_AGENT": flag = "AGENT_FLOW"
                 elif row["type"] == "ARBITRAGE": flag = "ARBITRAGE_ACTIVITY"
                 elif row["type"] in ["DEX_SWAP", "DEX_LIQUIDITY"]: flag = "DEX_ACTIVITY"
                 elif row["type"] == "CROSS_CHAIN": flag = "BRIDGE_ACTIVITY"
@@ -278,6 +285,7 @@ async def send_history_to_client(websocket):
                     "agent_win_rate": row["agent_win_rate"] if "agent_win_rate" in row.keys() else 0.0,
                     "twap": row["twap"] if "twap" in row.keys() else 0.0,
                     "twap_trend": row["twap_trend"] if "twap_trend" in row.keys() else "",
+                    "mev_extracted": row["mev_extracted"] if "mev_extracted" in row.keys() else 0.0,
                     "flag": flag,
                     "status": "CONFIRMED"
                 }
@@ -341,10 +349,8 @@ async def scan_mempool():
                             from_addr = tx["from"] if tx.get("from") else "0x00"
                             to_addr = tx["to"] if tx.get("to") else "0x00"
                             if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = "⏳ Vanguard Whale"
-                            
                             p_impact = simulate_price_impact(usd_volume)
                             twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_value, current_price)
-                            
                             tx_data = {
                                 "type": "NATIVE",
                                 "asset": "ARC",
@@ -368,6 +374,7 @@ async def scan_mempool():
                                 "agent_win_rate": 0.0,
                                 "twap": twap_val,
                                 "twap_trend": twap_trend,
+                                "mev_extracted": 0.0,
                                 "flag": "PENDING_WHALE",
                                 "status": "PENDING"
                             }
@@ -437,6 +444,7 @@ async def scan_block(block_number):
                     "agent_win_rate": wr,
                     "twap": twap_val,
                     "twap_trend": twap_trend,
+                    "mev_extracted": 0.0,
                     "flag": "WHALE" if is_whale else "STANDARD",
                     "status": "CONFIRMED"
                 }
@@ -462,7 +470,6 @@ async def scan_block(block_number):
                         usd_val = actual_amt * PRICE_CACHE["DEFAULT_TOKEN"]
                         if user_addr not in LENDING_MEMORY: LENDING_MEMORY[user_addr] = {"collateral": 0.0, "debt": 0.0}
                         narrative_text = ""
-                        
                         if topic0 == AAVE_SUPPLY_SIG:
                             LENDING_MEMORY[user_addr]["collateral"] += usd_val
                             narrative_text = f"↳ Lending: Supplied ${usd_val:.2f} Collateral"
@@ -476,12 +483,10 @@ async def scan_block(block_number):
                             LENDING_MEMORY[user_addr]["collateral"] = 0.0
                             LENDING_MEMORY[user_addr]["debt"] = 0.0
                             narrative_text = f"💀 LENDING: LIQUIDATION EXECUTED!"
-
                         hf_after = calculate_health_factor(user_addr)
                         p_impact = simulate_price_impact(usd_val) if topic0 == AAVE_LIQ_SIG else 0.0
                         wr, _ = update_agent_performance(user_addr, 0) if "Agent" in ENTITY_MEMORY.get(user_addr, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_amt, PRICE_CACHE["DEFAULT_TOKEN"])
-                        
                         tx_data = {
                             "type": "LENDING",
                             "asset": "AAVE Asset",
@@ -505,14 +510,14 @@ async def scan_block(block_number):
                             "agent_win_rate": wr,
                             "twap": twap_val,
                             "twap_trend": twap_trend,
+                            "mev_extracted": 0.0,
                             "flag": "LENDING_ACTIVITY",
                             "status": "CONFIRMED"
                         }
                         await broadcast_alert(tx_data)
                         await save_transfer(tx_data, block_number)
                         dex_processed = True
-                    except Exception:
-                        pass
+                    except Exception: pass
                 
                 elif topic0 == BRIDGE_OUT_SIG and not dex_processed:
                     try:
@@ -524,7 +529,6 @@ async def scan_block(block_number):
                         p_impact = simulate_price_impact(usd_val)
                         wr, _ = update_agent_performance(bridger, 0) if "Agent" in ENTITY_MEMORY.get(bridger, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, PRICE_CACHE["ARC"] * 5)
-                        
                         tx_data = {
                             "type": "CROSS_CHAIN",
                             "asset": "Bridged Asset",
@@ -548,14 +552,14 @@ async def scan_block(block_number):
                             "agent_win_rate": wr,
                             "twap": twap_val,
                             "twap_trend": twap_trend,
+                            "mev_extracted": 0.0,
                             "flag": "BRIDGE_ACTIVITY",
                             "status": "CONFIRMED"
                         }
                         await broadcast_alert(tx_data)
                         await save_transfer(tx_data, block_number)
                         dex_processed = True
-                    except Exception:
-                        pass
+                    except Exception: pass
                 elif topic0 == CHORDSWAP_SWAP_SIG and not dex_processed:
                     try:
                         pool_addr = log.address
@@ -563,15 +567,18 @@ async def scan_block(block_number):
                         sender = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
                         current_price = PRICE_CACHE["DEFAULT_TOKEN"]
                         realized_pnl = calculate_and_update_pnl(sender, pool_addr, f"Pool:{pool_addr[:8]}", 1.0, current_price)
-                        update_entity_labels(sender, realized_pnl, False)
                         p_impact = simulate_price_impact(1.0 * current_price)
                         spread_val = round(1.0 + (int(tx_hash_str[-2:], 16) / 50.0), 2)
                         is_arb = spread_val >= 2.5
                         wr, _ = update_agent_performance(sender, realized_pnl) if "Agent" in ENTITY_MEMORY.get(sender, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, current_price)
                         
+                        is_mev, mev_extracted = detect_mev_attack("DEX_SWAP", exec_depth, tx_hash_str, 1.0 * current_price)
+                        update_entity_labels(sender, realized_pnl, False, is_mev)
+                        flag_val = "MEV_ACTIVITY" if is_mev else ("ARBITRAGE_ACTIVITY" if is_arb else "DEX_ACTIVITY")
+                        
                         tx_data = {
-                            "type": "ARBITRAGE" if is_arb else "DEX_SWAP",
+                            "type": "DEX_SWAP" if not is_arb else "ARBITRAGE",
                             "asset": f"Pool: {pool_addr[:8]}...",
                             "amount": 1.0, 
                             "price_usd": current_price,
@@ -583,7 +590,7 @@ async def scan_block(block_number):
                             "gas_used": gas_used,
                             "execution_depth": exec_depth,
                             "pnl": realized_pnl,
-                            "narrative": f"⚡ Arbitrage Execution | Spread: +{spread_val}%" if is_arb else "",
+                            "narrative": f"⚡ Arbitrage Execution | Spread: +{spread_val}%" if is_arb else ("🚨 MEV Sandwich Attack Detected" if is_mev else ""),
                             "sec_score": 99,
                             "sec_label": "✅ VERIFIED SAFE",
                             "cluster": "",
@@ -593,14 +600,14 @@ async def scan_block(block_number):
                             "agent_win_rate": wr,
                             "twap": twap_val,
                             "twap_trend": twap_trend,
-                            "flag": "ARBITRAGE_ACTIVITY" if is_arb else "DEX_ACTIVITY",
+                            "mev_extracted": mev_extracted,
+                            "flag": flag_val,
                             "status": "CONFIRMED"
                         }
                         await broadcast_alert(tx_data)
                         await save_transfer(tx_data, block_number)
                         dex_processed = True
-                    except Exception:
-                        pass
+                    except Exception: pass
                 elif topic0 in [CHORDSWAP_MINT_SIG, CHORDSWAP_BURN_SIG] and not dex_processed:
                     try:
                         pool_addr = log.address
@@ -609,7 +616,6 @@ async def scan_block(block_number):
                         p_impact = simulate_price_impact(1.0 * (PRICE_CACHE["DEFAULT_TOKEN"] * 2))
                         wr, _ = update_agent_performance(provider, 0) if "Agent" in ENTITY_MEMORY.get(provider, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, PRICE_CACHE["DEFAULT_TOKEN"] * 2)
-                        
                         tx_data = {
                             "type": "DEX_LIQUIDITY",
                             "asset": f"LP: {pool_addr[:8]}...",
@@ -633,14 +639,14 @@ async def scan_block(block_number):
                             "agent_win_rate": wr,
                             "twap": twap_val,
                             "twap_trend": twap_trend,
+                            "mev_extracted": 0.0,
                             "flag": "DEX_ACTIVITY",
                             "status": "CONFIRMED"
                         }
                         await broadcast_alert(tx_data)
                         await save_transfer(tx_data, block_number)
                         dex_processed = True
-                    except Exception:
-                        pass
+                    except Exception: pass
                 elif topic0 == ERC8004_REGISTER_SIG:
                     try:
                         ENTITY_MEMORY[log.address] = "🤖 Agent Registry"
@@ -649,7 +655,6 @@ async def scan_block(block_number):
                         score, label = analyze_contract_security(log.address)
                         wr, _ = update_agent_performance(owner_addr, 0) if "Agent" in ENTITY_MEMORY.get(owner_addr, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, 0.0)
-                        
                         tx_data = {
                             "type": "AI_AGENT",
                             "asset": "ERC-8004 Registration",
@@ -673,26 +678,24 @@ async def scan_block(block_number):
                             "agent_win_rate": wr,
                             "twap": twap_val,
                             "twap_trend": twap_trend,
+                            "mev_extracted": 0.0,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
                         await broadcast_alert(tx_data)
                         await save_transfer(tx_data, block_number)
-                    except Exception:
-                        pass
+                    except Exception: pass
                 elif topic0 == ERC8183_WORKFLOW_SIG:
                     try:
                         funder = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
                         agent = "0x" + log.topics[3].hex()[26:] if len(log.topics) > 3 else log.address
                         ENTITY_MEMORY[agent] = "🧠 Autonomous Agent"
                         ENTITY_MEMORY[funder] = "💼 Agent Funder"
-                        
                         actual_amt = float(w3.from_wei(int(log.data.hex(), 16), 'ether'))
                         narrative_text = decode_agent_narrative(tx_hash_str, "WORKFLOW")
                         score, label = analyze_contract_security(agent)
                         wr, _ = update_agent_performance(funder, 0) if "Agent" in ENTITY_MEMORY.get(funder, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_amt, PRICE_CACHE["ARC"])
-                        
                         tx_data = {
                             "type": "AI_AGENT",
                             "asset": "ERC-8183 Task Flow",
@@ -716,13 +719,13 @@ async def scan_block(block_number):
                             "agent_win_rate": wr,
                             "twap": twap_val,
                             "twap_trend": twap_trend,
+                            "mev_extracted": 0.0,
                             "flag": "AGENT_FLOW",
                             "status": "CONFIRMED"
                         }
                         await broadcast_alert(tx_data)
                         await save_transfer(tx_data, block_number)
-                    except Exception:
-                        pass
+                    except Exception: pass
                 elif topic0 == TRANSFER_SIG and not dex_processed:
                     try:
                         raw_amount = int(log.data.hex(), 16)
@@ -767,13 +770,13 @@ async def scan_block(block_number):
                                 "agent_win_rate": wr,
                                 "twap": twap_val,
                                 "twap_trend": twap_trend,
+                                "mev_extracted": 0.0,
                                 "flag": "WHALE" if is_whale else "STANDARD",
                                 "status": "CONFIRMED"
                             }
                             await broadcast_alert(tx_data)
                             await save_transfer(tx_data, block_number)
-                    except Exception:
-                        continue
+                    except Exception: continue
     except Exception as e:
         logger.error(f"Fatal error scanning block: {e}")
 
