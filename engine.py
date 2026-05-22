@@ -45,6 +45,7 @@ PRICE_CACHE = {
 connected_clients = set()
 seen_pending_txs = set()
 WALLET_MEMORY = {}
+WALLET_PNL = {}
 LENDING_MEMORY = {}
 AGENT_PERFORMANCE = {}
 ENTITY_MEMORY = {
@@ -181,7 +182,7 @@ async def init_db():
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with MEV & Sandwich Attack Radar.")
+        logger.info("💾 Database verified with Smart Money Leaderboard Module.")
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     realized_pnl = 0.0
@@ -199,6 +200,8 @@ def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
         if seller_bal > 0:
             realized_pnl = amount * (current_price - seller_cost)
             WALLET_MEMORY[from_addr][asset]["balance"] = max(0.0, seller_bal - amount)
+            if from_addr not in WALLET_PNL: WALLET_PNL[from_addr] = 0.0
+            WALLET_PNL[from_addr] += realized_pnl
     return realized_pnl
 
 def update_entity_labels(addr, pnl, is_whale, is_mev=False):
@@ -228,6 +231,20 @@ async def save_transfer(tx_data, block_number):
             await db.commit()
     except Exception as e:
         logger.error(f"Failed to save transfer to DB: {e}")
+
+async def broadcast_leaderboard():
+    while True:
+        await asyncio.sleep(5)
+        if connected_clients:
+            top_wallets = sorted([{"addr": k, "pnl": v, "label": ENTITY_MEMORY.get(k, "")} for k, v in WALLET_PNL.items() if v > 0 and "Agent" not in ENTITY_MEMORY.get(k, "")], key=lambda x: x["pnl"], reverse=True)[:5]
+            top_agents = sorted([{"addr": k, "pnl": v["net_pnl"], "wr": round((v["wins"]/v["total"]*100) if v["total"]>0 else 0, 1), "label": ENTITY_MEMORY.get(k, "🤖 Autonomous Agent")} for k, v in AGENT_PERFORMANCE.items() if v["net_pnl"] > 0], key=lambda x: x["pnl"], reverse=True)[:5]
+            
+            msg = json.dumps({
+                "msg_type": "LEADERBOARD_UPDATE",
+                "wallets": top_wallets,
+                "agents": top_agents
+            })
+            await asyncio.gather(*(client.send(msg) for client in connected_clients), return_exceptions=True)
 
 async def update_price_oracle():
     while True:
@@ -262,6 +279,7 @@ async def send_history_to_client(websocket):
                 elif row["type"] == "LENDING": flag = "LENDING_ACTIVITY"
                 elif (amt * prc >= 10000 or (prc == 0.0 and amt >= 50000)): flag = "WHALE"
                 tx_data = {
+                    "msg_type": "TRANSACTION",
                     "time": time_str,
                     "type": row["type"],
                     "asset": row["asset"],
@@ -352,6 +370,7 @@ async def scan_mempool():
                             p_impact = simulate_price_impact(usd_volume)
                             twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_value, current_price)
                             tx_data = {
+                                "msg_type": "TRANSACTION",
                                 "type": "NATIVE",
                                 "asset": "ARC",
                                 "amount": actual_value,
@@ -422,6 +441,7 @@ async def scan_block(block_number):
                 twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_value, current_price)
                 
                 tx_data = {
+                    "msg_type": "TRANSACTION",
                     "type": "NATIVE",
                     "asset": "ARC",
                     "amount": actual_value,
@@ -488,6 +508,7 @@ async def scan_block(block_number):
                         wr, _ = update_agent_performance(user_addr, 0) if "Agent" in ENTITY_MEMORY.get(user_addr, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_amt, PRICE_CACHE["DEFAULT_TOKEN"])
                         tx_data = {
+                            "msg_type": "TRANSACTION",
                             "type": "LENDING",
                             "asset": "AAVE Asset",
                             "amount": actual_amt, 
@@ -530,6 +551,7 @@ async def scan_block(block_number):
                         wr, _ = update_agent_performance(bridger, 0) if "Agent" in ENTITY_MEMORY.get(bridger, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, PRICE_CACHE["ARC"] * 5)
                         tx_data = {
+                            "msg_type": "TRANSACTION",
                             "type": "CROSS_CHAIN",
                             "asset": "Bridged Asset",
                             "amount": 1.0, 
@@ -578,6 +600,7 @@ async def scan_block(block_number):
                         flag_val = "MEV_ACTIVITY" if is_mev else ("ARBITRAGE_ACTIVITY" if is_arb else "DEX_ACTIVITY")
                         
                         tx_data = {
+                            "msg_type": "TRANSACTION",
                             "type": "DEX_SWAP" if not is_arb else "ARBITRAGE",
                             "asset": f"Pool: {pool_addr[:8]}...",
                             "amount": 1.0, 
@@ -617,6 +640,7 @@ async def scan_block(block_number):
                         wr, _ = update_agent_performance(provider, 0) if "Agent" in ENTITY_MEMORY.get(provider, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, PRICE_CACHE["DEFAULT_TOKEN"] * 2)
                         tx_data = {
+                            "msg_type": "TRANSACTION",
                             "type": "DEX_LIQUIDITY",
                             "asset": f"LP: {pool_addr[:8]}...",
                             "amount": 1.0,
@@ -656,6 +680,7 @@ async def scan_block(block_number):
                         wr, _ = update_agent_performance(owner_addr, 0) if "Agent" in ENTITY_MEMORY.get(owner_addr, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, 0.0)
                         tx_data = {
+                            "msg_type": "TRANSACTION",
                             "type": "AI_AGENT",
                             "asset": "ERC-8004 Registration",
                             "amount": 1.0,
@@ -697,6 +722,7 @@ async def scan_block(block_number):
                         wr, _ = update_agent_performance(funder, 0) if "Agent" in ENTITY_MEMORY.get(funder, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_amt, PRICE_CACHE["ARC"])
                         tx_data = {
+                            "msg_type": "TRANSACTION",
                             "type": "AI_AGENT",
                             "asset": "ERC-8183 Task Flow",
                             "amount": actual_amt,
@@ -748,6 +774,7 @@ async def scan_block(block_number):
                             twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_token_amount, current_token_price)
                             
                             tx_data = {
+                                "msg_type": "TRANSACTION",
                                 "type": "TOKEN",
                                 "asset": contract_address,
                                 "amount": actual_token_amount,
@@ -796,6 +823,7 @@ async def main():
 
     asyncio.create_task(update_price_oracle())
     asyncio.create_task(scan_mempool())
+    asyncio.create_task(broadcast_leaderboard())
 
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
         logger.info("🌉 WebSocket Bridge Active on Port 8765")
