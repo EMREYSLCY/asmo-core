@@ -6,13 +6,13 @@ import logging
 import aiosqlite
 import urllib.request
 from dotenv import load_dotenv
-from web3 import AsyncWeb3, AsyncHTTPProvider
+from web3 import Web3, AsyncWeb3, AsyncHTTPProvider
 
 load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
+    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
     handlers=[
         logging.FileHandler("asmo.log"),
         logging.StreamHandler()
@@ -21,24 +21,28 @@ logging.basicConfig(
 logger = logging.getLogger("ASMO")
 
 ARC_RPC_URL = os.getenv("ARC_RPC_URL")
-w3 = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL))
+BASE_RPC_URL = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
+
+w3_arc = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL)) if ARC_RPC_URL else None
+w3_base = AsyncWeb3(AsyncHTTPProvider(BASE_RPC_URL)) if BASE_RPC_URL else None
 
 TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
-ERC8004_REGISTER_SIG = "0x" + w3.keccak(text="AgentRegistered(bytes32,address,string)").hex()
-ERC8183_WORKFLOW_SIG = "0x" + w3.keccak(text="WorkflowFunded(bytes32,address,address,uint256)").hex()
-CHORDSWAP_SWAP_SIG = "0x" + w3.keccak(text="Swap(address,uint256,uint256,uint256,uint256,address)").hex()
-CHORDSWAP_MINT_SIG = "0x" + w3.keccak(text="Mint(address,uint256,uint256)").hex()
-CHORDSWAP_BURN_SIG = "0x" + w3.keccak(text="Burn(address,uint256,uint256,address)").hex()
-BRIDGE_OUT_SIG = "0x" + w3.keccak(text="BridgeOut(address,uint256,uint256)").hex()
-AAVE_SUPPLY_SIG = "0x" + w3.keccak(text="Supply(address,address,address,uint256,uint16)").hex()
-AAVE_BORROW_SIG = "0x" + w3.keccak(text="Borrow(address,address,address,uint256,uint8,uint256,uint16)").hex()
-AAVE_REPAY_SIG = "0x" + w3.keccak(text="Repay(address,address,address,uint256,bool)").hex()
-AAVE_LIQ_SIG = "0x" + w3.keccak(text="LiquidationCall(address,address,address,uint256,uint256,address,bool)").hex()
+ERC8004_REGISTER_SIG = "0x" + Web3.keccak(text="AgentRegistered(bytes32,address,string)").hex()
+ERC8183_WORKFLOW_SIG = "0x" + Web3.keccak(text="WorkflowFunded(bytes32,address,address,uint256)").hex()
+CHORDSWAP_SWAP_SIG = "0x" + Web3.keccak(text="Swap(address,uint256,uint256,uint256,uint256,address)").hex()
+CHORDSWAP_MINT_SIG = "0x" + Web3.keccak(text="Mint(address,uint256,uint256)").hex()
+CHORDSWAP_BURN_SIG = "0x" + Web3.keccak(text="Burn(address,uint256,uint256,address)").hex()
+BRIDGE_OUT_SIG = "0x" + Web3.keccak(text="BridgeOut(address,uint256,uint256)").hex()
+AAVE_SUPPLY_SIG = "0x" + Web3.keccak(text="Supply(address,address,address,uint256,uint16)").hex()
+AAVE_BORROW_SIG = "0x" + Web3.keccak(text="Borrow(address,address,address,uint256,uint8,uint256,uint16)").hex()
+AAVE_REPAY_SIG = "0x" + Web3.keccak(text="Repay(address,address,address,uint256,bool)").hex()
+AAVE_LIQ_SIG = "0x" + Web3.keccak(text="LiquidationCall(address,address,address,uint256,uint256,address,bool)").hex()
 
 ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]')
 TOKEN_CACHE = {}
 PRICE_CACHE = {
     "ARC": 1.25,
+    "BASE": 1.00,
     "DEFAULT_TOKEN": 2.50 
 }
 
@@ -49,7 +53,7 @@ WALLET_PNL = {}
 LENDING_MEMORY = {}
 AGENT_PERFORMANCE = {}
 ENTITY_MEMORY = {
-    "0x0000000000000000000000000000000000000000": "🏦 Arc Genesis / Burn"
+    "0x0000000000000000000000000000000000000000": "🏦 Genesis / Burn"
 }
 CLUSTER_MAP = {}
 cluster_counter = 0
@@ -73,7 +77,7 @@ def decode_agent_narrative(tx_hash, type_sig):
 
 def analyze_contract_security(addr):
     if addr in ENTITY_MEMORY and ("Genesis" in ENTITY_MEMORY[addr] or "Pool" in ENTITY_MEMORY[addr] or "Router" in ENTITY_MEMORY[addr]): return 99, "✅ VERIFIED SAFE"
-    val = int(w3.keccak(text=addr).hex()[-4:], 16)
+    val = int(Web3.keccak(text=addr).hex()[-4:], 16)
     score = (val % 100)
     if score < 25: return score, "☢️ HIGH RISK (HONEYPOT)"
     elif score < 50: return score, "⚠️ CAUTION (UNVERIFIED)"
@@ -154,6 +158,7 @@ async def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 tx_hash TEXT NOT NULL,
                 block_number INTEGER NOT NULL,
+                network TEXT NOT NULL DEFAULT 'ARC',
                 type TEXT NOT NULL,
                 asset TEXT NOT NULL,
                 amount REAL NOT NULL,
@@ -178,11 +183,11 @@ async def init_db():
             )
         """)
         try:
-            await db.execute("ALTER TABLE transfers ADD COLUMN mev_extracted REAL NOT NULL DEFAULT 0.0")
+            await db.execute("ALTER TABLE transfers ADD COLUMN network TEXT NOT NULL DEFAULT 'ARC'")
         except Exception:
             pass
         await db.commit()
-        logger.info("💾 Database verified with Smart Money Leaderboard Module.")
+        logger.info("💾 Database verified with Multi-Chain Architecture.")
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
     realized_pnl = 0.0
@@ -215,9 +220,9 @@ async def save_transfer(tx_data, block_number):
         async with aiosqlite.connect("asmo.db") as db:
             await db.execute(
                 """INSERT INTO transfers 
-                   (tx_hash, block_number, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread, agent_win_rate, twap, twap_trend, mev_extracted) 
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (tx_data["tx_hash"], block_number, tx_data["type"], 
+                   (tx_hash, block_number, network, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread, agent_win_rate, twap, twap_trend, mev_extracted) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (tx_data["tx_hash"], block_number, tx_data.get("network", "ARC"), tx_data["type"], 
                  tx_data["asset"], tx_data["amount"], tx_data["price_usd"],
                  tx_data["from_addr"], tx_data["to_addr"],
                  tx_data.get("gas_used", 0), tx_data.get("execution_depth", 1), 
@@ -249,12 +254,13 @@ async def broadcast_leaderboard():
 async def update_price_oracle():
     while True:
         try:
-            url = "https://api.coingecko.com/api/v3/simple/price?ids=arbitrum,ethereum&vs_currencies=usd"
+            # SADECE ETHEREUM VE BASE ÇEKİLİYOR. ARBITRUM TAMAMEN KALDIRILDI.
+            url = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,base&vs_currencies=usd"
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             loop = asyncio.get_running_loop()
             resp = await loop.run_in_executor(None, urllib.request.urlopen, req)
             data = json.loads(resp.read().decode('utf-8'))
-            if "arbitrum" in data: PRICE_CACHE["ARC"] = float(data["arbitrum"]["usd"])
+            if "base" in data: PRICE_CACHE["BASE"] = float(data["base"]["usd"])
             if "ethereum" in data: PRICE_CACHE["DEFAULT_TOKEN"] = float(data["ethereum"]["usd"]) * 0.001 
         except Exception:
             pass
@@ -281,6 +287,7 @@ async def send_history_to_client(websocket):
                 tx_data = {
                     "msg_type": "TRANSACTION",
                     "time": time_str,
+                    "network": row["network"] if "network" in row.keys() else "ARC",
                     "type": row["type"],
                     "asset": row["asset"],
                     "amount": amt,
@@ -325,7 +332,7 @@ async def broadcast_alert(data):
         message = json.dumps(data)
         await asyncio.gather(*(client.send(message) for client in connected_clients), return_exceptions=True)
 
-async def get_token_decimals(contract_address):
+async def get_token_decimals(w3, contract_address):
     if contract_address in TOKEN_CACHE: return TOKEN_CACHE[contract_address]
     try:
         contract_address_checksum = w3.to_checksum_address(contract_address)
@@ -335,7 +342,7 @@ async def get_token_decimals(contract_address):
         return decimals
     except Exception: return 18
 
-async def fetch_receipt(tx_hash):
+async def fetch_receipt(w3, tx_hash):
     try: return await w3.eth.get_transaction_receipt(tx_hash)
     except Exception: return None
 
@@ -347,8 +354,8 @@ def simulate_execution_trace(receipt):
     if log_count > 0 or gas > 50000: return gas, 2
     return gas, 1
 
-async def scan_mempool():
-    logger.info("⚡ Mempool Radar Activated: Hunting for Vanguard Signals...")
+async def scan_mempool(w3, network_name):
+    logger.info(f"⚡ [{network_name}] Mempool Radar Activated...")
     while True:
         try:
             pending_block = await w3.eth.get_block('pending', full_transactions=True)
@@ -360,19 +367,20 @@ async def scan_mempool():
                     if len(seen_pending_txs) > 10000: seen_pending_txs.clear()
                         
                     if tx.value > 0:
-                        actual_value = float(w3.from_wei(tx.value, 'ether'))
-                        current_price = PRICE_CACHE["ARC"]
+                        actual_value = float(Web3.from_wei(tx.value, 'ether'))
+                        current_price = PRICE_CACHE.get(network_name, 1.0)
                         usd_volume = actual_value * current_price
                         if usd_volume >= 10000:
                             from_addr = tx["from"] if tx.get("from") else "0x00"
                             to_addr = tx["to"] if tx.get("to") else "0x00"
-                            if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = "⏳ Vanguard Whale"
+                            if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = f"⏳ Vanguard Whale"
                             p_impact = simulate_price_impact(usd_volume)
                             twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_value, current_price)
                             tx_data = {
                                 "msg_type": "TRANSACTION",
+                                "network": network_name,
                                 "type": "NATIVE",
-                                "asset": "ARC",
+                                "asset": network_name,
                                 "amount": actual_value,
                                 "price_usd": current_price,
                                 "tx_hash": tx_hash_str,
@@ -402,13 +410,13 @@ async def scan_mempool():
             pass
         await asyncio.sleep(2)
 
-async def scan_block(block_number):
+async def scan_block(w3, network_name, block_number):
     try:
         block = await w3.eth.get_block(block_number, full_transactions=True)
         tx_count = len(block.transactions)
-        logger.info(f"📡 Scanning Block: {block_number} | Transactions: {tx_count}")
+        logger.info(f"📡 [{network_name}] Scanning Block: {block_number} | Transactions: {tx_count}")
         
-        tasks = [fetch_receipt(tx.hash) for tx in block.transactions]
+        tasks = [fetch_receipt(w3, tx.hash) for tx in block.transactions]
         receipts = []
         chunk_size = 15
         
@@ -426,13 +434,13 @@ async def scan_block(block_number):
             gas_used, exec_depth = simulate_execution_trace(receipt)
             
             if tx.value > 0:
-                actual_value = float(w3.from_wei(tx.value, 'ether'))
-                current_price = PRICE_CACHE["ARC"]
+                actual_value = float(Web3.from_wei(tx.value, 'ether'))
+                current_price = PRICE_CACHE.get(network_name, 1.0)
                 usd_volume = actual_value * current_price
                 from_addr = tx["from"] if tx.get("from") else "0x00"
                 to_addr = tx["to"] if tx.get("to") else "0x00"
                 
-                realized_pnl = calculate_and_update_pnl(from_addr, to_addr, "ARC", actual_value, current_price)
+                realized_pnl = calculate_and_update_pnl(from_addr, to_addr, network_name, actual_value, current_price)
                 is_whale = (usd_volume >= 10000)
                 update_entity_labels(from_addr, realized_pnl, is_whale)
                 sybil_cluster = resolve_sybil_cluster(from_addr, to_addr)
@@ -442,8 +450,9 @@ async def scan_block(block_number):
                 
                 tx_data = {
                     "msg_type": "TRANSACTION",
+                    "network": network_name,
                     "type": "NATIVE",
-                    "asset": "ARC",
+                    "asset": network_name,
                     "amount": actual_value,
                     "price_usd": current_price,
                     "tx_hash": tx_hash_str,
@@ -483,7 +492,7 @@ async def scan_block(block_number):
                 
                 if topic0 in [AAVE_SUPPLY_SIG, AAVE_BORROW_SIG, AAVE_REPAY_SIG, AAVE_LIQ_SIG]:
                     try:
-                        ENTITY_MEMORY[log.address] = "🏦 AAVE V3 Pool"
+                        ENTITY_MEMORY[log.address] = f"🏦 AAVE V3 Pool"
                         user_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
                         raw_amount = int(log.data.hex()[:64], 16) if len(log.data.hex()) >= 64 else 0
                         actual_amt = (raw_amount / 1e18) if raw_amount > 0 else 1.0
@@ -509,6 +518,7 @@ async def scan_block(block_number):
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_amt, PRICE_CACHE["DEFAULT_TOKEN"])
                         tx_data = {
                             "msg_type": "TRANSACTION",
+                            "network": network_name,
                             "type": "LENDING",
                             "asset": "AAVE Asset",
                             "amount": actual_amt, 
@@ -542,20 +552,22 @@ async def scan_block(block_number):
                 
                 elif topic0 == BRIDGE_OUT_SIG and not dex_processed:
                     try:
-                        ENTITY_MEMORY[log.address] = "🌉 Base Bridge Router"
+                        ENTITY_MEMORY[log.address] = "🌉 Bridge Router"
                         bridger = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
-                        narrative_text = "↳ Cross-Chain Exit: Routing Liquidity to Base"
+                        narrative_text = "↳ Cross-Chain Exit: Routing Liquidity"
                         score, label = analyze_contract_security(log.address)
-                        usd_val = 1.0 * (PRICE_CACHE["ARC"] * 5)
+                        base_p = PRICE_CACHE.get(network_name, 1.0)
+                        usd_val = 1.0 * (base_p * 5)
                         p_impact = simulate_price_impact(usd_val)
                         wr, _ = update_agent_performance(bridger, 0) if "Agent" in ENTITY_MEMORY.get(bridger, "") else (0.0, 0.0)
-                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, PRICE_CACHE["ARC"] * 5)
+                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, base_p * 5)
                         tx_data = {
                             "msg_type": "TRANSACTION",
+                            "network": network_name,
                             "type": "CROSS_CHAIN",
                             "asset": "Bridged Asset",
                             "amount": 1.0, 
-                            "price_usd": PRICE_CACHE["ARC"] * 5, 
+                            "price_usd": base_p * 5, 
                             "tx_hash": tx_hash_str,
                             "from_addr": bridger,
                             "to_addr": log.address,
@@ -585,7 +597,7 @@ async def scan_block(block_number):
                 elif topic0 == CHORDSWAP_SWAP_SIG and not dex_processed:
                     try:
                         pool_addr = log.address
-                        ENTITY_MEMORY[pool_addr] = "🦄 Chordswap Pool"
+                        ENTITY_MEMORY[pool_addr] = "🦄 DEX Pool"
                         sender = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
                         current_price = PRICE_CACHE["DEFAULT_TOKEN"]
                         realized_pnl = calculate_and_update_pnl(sender, pool_addr, f"Pool:{pool_addr[:8]}", 1.0, current_price)
@@ -601,6 +613,7 @@ async def scan_block(block_number):
                         
                         tx_data = {
                             "msg_type": "TRANSACTION",
+                            "network": network_name,
                             "type": "DEX_SWAP" if not is_arb else "ARBITRAGE",
                             "asset": f"Pool: {pool_addr[:8]}...",
                             "amount": 1.0, 
@@ -641,6 +654,7 @@ async def scan_block(block_number):
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, PRICE_CACHE["DEFAULT_TOKEN"] * 2)
                         tx_data = {
                             "msg_type": "TRANSACTION",
+                            "network": network_name,
                             "type": "DEX_LIQUIDITY",
                             "asset": f"LP: {pool_addr[:8]}...",
                             "amount": 1.0,
@@ -681,6 +695,7 @@ async def scan_block(block_number):
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, 0.0)
                         tx_data = {
                             "msg_type": "TRANSACTION",
+                            "network": network_name,
                             "type": "AI_AGENT",
                             "asset": "ERC-8004 Registration",
                             "amount": 1.0,
@@ -716,17 +731,19 @@ async def scan_block(block_number):
                         agent = "0x" + log.topics[3].hex()[26:] if len(log.topics) > 3 else log.address
                         ENTITY_MEMORY[agent] = "🧠 Autonomous Agent"
                         ENTITY_MEMORY[funder] = "💼 Agent Funder"
-                        actual_amt = float(w3.from_wei(int(log.data.hex(), 16), 'ether'))
+                        actual_amt = float(Web3.from_wei(int(log.data.hex(), 16), 'ether'))
                         narrative_text = decode_agent_narrative(tx_hash_str, "WORKFLOW")
                         score, label = analyze_contract_security(agent)
                         wr, _ = update_agent_performance(funder, 0) if "Agent" in ENTITY_MEMORY.get(funder, "") else (0.0, 0.0)
-                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_amt, PRICE_CACHE["ARC"])
+                        base_p = PRICE_CACHE.get(network_name, 1.0)
+                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_amt, base_p)
                         tx_data = {
                             "msg_type": "TRANSACTION",
+                            "network": network_name,
                             "type": "AI_AGENT",
                             "asset": "ERC-8183 Task Flow",
                             "amount": actual_amt,
-                            "price_usd": PRICE_CACHE["ARC"],
+                            "price_usd": base_p,
                             "tx_hash": tx_hash_str,
                             "from_addr": funder,
                             "to_addr": agent,
@@ -757,7 +774,7 @@ async def scan_block(block_number):
                         raw_amount = int(log.data.hex(), 16)
                         if raw_amount > 0:
                             contract_address = log.address
-                            decimals = await get_token_decimals(contract_address)
+                            decimals = await get_token_decimals(w3, contract_address)
                             actual_token_amount = raw_amount / (10 ** decimals)
                             current_token_price = PRICE_CACHE["DEFAULT_TOKEN"]
                             usd_volume = actual_token_amount * current_token_price
@@ -775,6 +792,7 @@ async def scan_block(block_number):
                             
                             tx_data = {
                                 "msg_type": "TRANSACTION",
+                                "network": network_name,
                                 "type": "TOKEN",
                                 "asset": contract_address,
                                 "amount": actual_token_amount,
@@ -807,37 +825,45 @@ async def scan_block(block_number):
     except Exception as e:
         logger.error(f"Fatal error scanning block: {e}")
 
-async def check_network_status():
+async def check_network_status(w3):
     try:
         if await w3.is_connected(): return await w3.eth.block_number
     except Exception: pass
     return None
 
-async def main():
-    logger.info("Initializing A.S.M.O. Boot Sequence...")
-    await init_db() 
-    last_scanned_block = await check_network_status()
+async def process_chain(w3, network_name):
+    last_scanned_block = await check_network_status(w3)
     if not last_scanned_block:
-        logger.error("Failed to connect to ARC RPC.")
+        logger.error(f"Failed to connect to {network_name} RPC.")
         return
 
+    asyncio.create_task(scan_mempool(w3, network_name))
+
+    while True:
+        try:
+            current_block = await w3.eth.block_number
+            if current_block > last_scanned_block:
+                for b in range(last_scanned_block + 1, current_block + 1):
+                    await scan_block(w3, network_name, b)
+                    last_scanned_block = b
+            else:
+                await asyncio.sleep(2)
+        except Exception:
+            await asyncio.sleep(5)
+
+async def main():
+    logger.info("Initializing A.S.M.O. Multi-Chain Boot Sequence...")
+    await init_db() 
+
     asyncio.create_task(update_price_oracle())
-    asyncio.create_task(scan_mempool())
     asyncio.create_task(broadcast_leaderboard())
 
+    if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC"))
+    if w3_base: asyncio.create_task(process_chain(w3_base, "BASE"))
+
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
-        logger.info("🌉 WebSocket Bridge Active on Port 8765")
-        while True:
-            try:
-                current_block = await w3.eth.block_number
-                if current_block > last_scanned_block:
-                    for b in range(last_scanned_block + 1, current_block + 1):
-                        await scan_block(b)
-                        last_scanned_block = b
-                else:
-                    await asyncio.sleep(2)
-            except Exception:
-                await asyncio.sleep(5)
+        logger.info("🌉 Multi-Chain WebSocket Bridge Active on Port 8765")
+        await asyncio.Future()
 
 if __name__ == "__main__":
     asyncio.run(main())
