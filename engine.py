@@ -4,7 +4,6 @@ import asyncio
 import websockets
 import logging
 import aiosqlite
-import urllib.request
 from dotenv import load_dotenv
 from web3 import Web3, AsyncWeb3, AsyncHTTPProvider
 
@@ -182,16 +181,40 @@ async def broadcast_leaderboard():
             await asyncio.gather(*(client.send(json.dumps({"msg_type": "LEADERBOARD_UPDATE", "wallets": top_wallets, "agents": top_agents})) for client in connected_clients), return_exceptions=True)
 
 async def update_price_oracle():
+    """ ⚡ Pyth Network High-Frequency WebSocket Oracle """
+    pyth_ws_url = "wss://hermes.pyth.network/ws"
+    # ETH and ARB Price IDs for Real-Time Streaming
+    msg = {
+        "type": "subscribe",
+        "price_ids": [
+            "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace", 
+            "3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5"  
+        ]
+    }
     while True:
         try:
-            url = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,base&vs_currencies=usd"
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            resp = await asyncio.get_running_loop().run_in_executor(None, urllib.request.urlopen, req)
-            data = json.loads(resp.read().decode('utf-8'))
-            if "base" in data: PRICE_CACHE["BASE"] = float(data["base"]["usd"])
-            if "ethereum" in data: PRICE_CACHE["DEFAULT_TOKEN"] = float(data["ethereum"]["usd"]) * 0.001 
-        except Exception: pass
-        await asyncio.sleep(180)
+            async with websockets.connect(pyth_ws_url) as ws:
+                await ws.send(json.dumps(msg))
+                logger.info("⚡ Pyth Network Oracle Connected (Real-Time Sub-Second Pricing)")
+                while True:
+                    response = await ws.recv()
+                    data = json.loads(response)
+                    if data.get("type") == "price_update":
+                        for price_data in data.get("price_update", {}).get("parsed", []):
+                            p_id = price_data.get("id")
+                            price_info = price_data.get("price", {})
+                            raw_price = int(price_info.get("price", 0))
+                            expo = int(price_info.get("expo", 0))
+                            actual_price = raw_price * (10 ** expo)
+
+                            if p_id == "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace":
+                                PRICE_CACHE["DEFAULT_TOKEN"] = actual_price * 0.001 
+                            elif p_id == "3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5":
+                                PRICE_CACHE["ARC"] = actual_price
+                                PRICE_CACHE["BASE"] = actual_price * 0.8
+        except Exception as e:
+            logger.warning(f"Pyth Oracle Connection Lost: {e}. Reconnecting in 3s...")
+            await asyncio.sleep(3)
 
 async def send_history_to_client(websocket):
     try:
