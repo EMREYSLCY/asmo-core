@@ -4,6 +4,7 @@ import asyncio
 import websockets
 import logging
 import aiosqlite
+import urllib.request
 from dotenv import load_dotenv
 from web3 import Web3, AsyncWeb3, AsyncHTTPProvider
 
@@ -13,7 +14,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [%(n
 logger = logging.getLogger("ASMO")
 
 ARC_RPC_URL = os.getenv("ARC_RPC_URL")
-BASE_RPC_URL = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
+BASE_RPC_URL = os.getenv("BASE_RPC_URL", "https://base.llamarpc.com")
 
 w3_arc = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL)) if ARC_RPC_URL else None
 w3_base = AsyncWeb3(AsyncHTTPProvider(BASE_RPC_URL)) if BASE_RPC_URL else None
@@ -181,9 +182,8 @@ async def broadcast_leaderboard():
             await asyncio.gather(*(client.send(json.dumps({"msg_type": "LEADERBOARD_UPDATE", "wallets": top_wallets, "agents": top_agents})) for client in connected_clients), return_exceptions=True)
 
 async def update_price_oracle():
-    """ ⚡ Pyth Network High-Frequency WebSocket Oracle """
+    """ ⚡ Pyth Network High-Frequency WebSocket Oracle (Hata Korumalı) """
     pyth_ws_url = "wss://hermes.pyth.network/ws"
-    # ETH and ARB Price IDs for Real-Time Streaming
     msg = {
         "type": "subscribe",
         "price_ids": [
@@ -193,9 +193,9 @@ async def update_price_oracle():
     }
     while True:
         try:
-            async with websockets.connect(pyth_ws_url) as ws:
+            async with websockets.connect(pyth_ws_url, ping_interval=20, ping_timeout=20) as ws:
                 await ws.send(json.dumps(msg))
-                logger.info("⚡ Pyth Network Oracle Connected (Real-Time Sub-Second Pricing)")
+                logger.info("⚡ Pyth Network Oracle Connected (Real-Time Pricing)")
                 while True:
                     response = await ws.recv()
                     data = json.loads(response)
@@ -213,7 +213,7 @@ async def update_price_oracle():
                                 PRICE_CACHE["ARC"] = actual_price
                                 PRICE_CACHE["BASE"] = actual_price * 0.8
         except Exception as e:
-            logger.warning(f"Pyth Oracle Connection Lost: {e}. Reconnecting in 3s...")
+            logger.warning(f"Pyth Oracle Reconnecting... {e}")
             await asyncio.sleep(3)
 
 async def send_history_to_client(websocket):
@@ -297,14 +297,24 @@ async def scan_mempool(w3, network_name):
 async def scan_block(w3, network_name, block_number):
     try:
         block = await w3.eth.get_block(block_number, full_transactions=True)
+        if not block or not block.transactions: return
+        
+        tasks = [fetch_receipt(w3, tx.hash) for tx in block.transactions]
         receipts = []
-        for i in range(0, len(block.transactions), 15):
-            receipts.extend(await asyncio.gather(*[fetch_receipt(w3, tx.hash) for tx in block.transactions[i:i + 15]]))
-            await asyncio.sleep(0.2)
+        chunk_size = 5 
+        for i in range(0, len(tasks), chunk_size):
+            chunk = tasks[i:i + chunk_size]
+            chunk_results = await asyncio.gather(*chunk, return_exceptions=True)
+            for res in chunk_results:
+                if res and not isinstance(res, Exception):
+                    receipts.append(res)
+            await asyncio.sleep(0.8)
+            
         receipt_map = {r.transactionHash.hex(): r for r in receipts if r}
         
         for tx in block.transactions:
-            tx_hash_str, receipt = tx.hash.hex(), receipt_map.get(tx.hash.hex())
+            tx_hash_str = tx.hash.hex()
+            receipt = receipt_map.get(tx_hash_str)
             gas_used, exec_depth = simulate_execution_trace(receipt)
             if tx.value > 0:
                 actual_value, current_price = float(Web3.from_wei(tx.value, 'ether')), PRICE_CACHE.get(network_name, 1.0)
@@ -341,13 +351,17 @@ async def scan_block(w3, network_name, block_number):
                         tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "LENDING", "asset": "AAVE Asset", "amount": actual_amt, "price_usd": PRICE_CACHE["DEFAULT_TOKEN"], "tx_hash": tx_hash_str, "from_addr": user_addr, "to_addr": log.address, "from_label": ENTITY_MEMORY.get(user_addr), "to_label": ENTITY_MEMORY.get(log.address), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": 0.0, "narrative": narrative_text, "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": calculate_health_factor(user_addr) if topic0 != AAVE_LIQ_SIG else 0.0, "price_impact": simulate_price_impact(usd_val) if topic0 == AAVE_LIQ_SIG else 0.0, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "LENDING_ACTIVITY", "status": "CONFIRMED"}
                         await broadcast_alert(tx_data); await save_transfer(tx_data, block_number); dex_processed = True
                     except Exception: pass
+                
                 elif topic0 == BRIDGE_OUT_SIG and not dex_processed:
                     try:
                         ENTITY_MEMORY[log.address], bridger = "🌉 Bridge Router", "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
                         score, label = analyze_contract_security(log.address)
+                        base_p = PRICE_CACHE.get(network_name, 1.0)
+                        usd_val = 1.0 * (base_p * 5)
+                        p_impact = simulate_price_impact(usd_val)
                         wr, _ = update_agent_performance(bridger, 0) if "Agent" in ENTITY_MEMORY.get(bridger, "") else (0.0, 0.0)
-                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, PRICE_CACHE.get(network_name, 1.0) * 5)
-                        tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "CROSS_CHAIN", "asset": "Bridged Asset", "amount": 1.0, "price_usd": PRICE_CACHE.get(network_name, 1.0) * 5, "tx_hash": tx_hash_str, "from_addr": bridger, "to_addr": log.address, "from_label": ENTITY_MEMORY.get(bridger), "to_label": ENTITY_MEMORY.get(log.address), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": 0.0, "narrative": "↳ Cross-Chain Exit: Routing Liquidity", "sec_score": score, "sec_label": label, "cluster": "", "health_factor": calculate_health_factor(bridger), "price_impact": simulate_price_impact(PRICE_CACHE.get(network_name, 1.0) * 5), "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "BRIDGE_ACTIVITY", "status": "CONFIRMED"}
+                        twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, base_p * 5)
+                        tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "CROSS_CHAIN", "asset": "Bridged Asset", "amount": 1.0, "price_usd": base_p * 5, "tx_hash": tx_hash_str, "from_addr": bridger, "to_addr": log.address, "from_label": ENTITY_MEMORY.get(bridger), "to_label": ENTITY_MEMORY.get(log.address), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": 0.0, "narrative": "↳ Cross-Chain Exit: Routing Liquidity", "sec_score": score, "sec_label": label, "cluster": "", "health_factor": calculate_health_factor(bridger), "price_impact": p_impact, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "BRIDGE_ACTIVITY", "status": "CONFIRMED"}
                         await broadcast_alert(tx_data); await save_transfer(tx_data, block_number); dex_processed = True
                     except Exception: pass
                 elif topic0 == CHORDSWAP_SWAP_SIG and not dex_processed:
@@ -356,22 +370,24 @@ async def scan_block(w3, network_name, block_number):
                         ENTITY_MEMORY[pool_addr] = "🦄 DEX Pool"
                         current_price = PRICE_CACHE["DEFAULT_TOKEN"]
                         realized_pnl = calculate_and_update_pnl(sender, pool_addr, f"Pool:{pool_addr[:8]}", 1.0, current_price)
+                        p_impact = simulate_price_impact(1.0 * current_price)
                         spread_val = round(1.0 + (int(tx_hash_str[-2:], 16) / 50.0), 2)
                         is_arb = spread_val >= 2.5
                         is_mev, mev_extracted = detect_mev_attack("DEX_SWAP", exec_depth, tx_hash_str, current_price)
                         update_entity_labels(sender, realized_pnl, False, is_mev)
                         wr, _ = update_agent_performance(sender, realized_pnl) if "Agent" in ENTITY_MEMORY.get(sender, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, current_price)
-                        tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "ARBITRAGE" if is_arb else "DEX_SWAP", "asset": f"Pool: {pool_addr[:8]}...", "amount": 1.0, "price_usd": current_price, "tx_hash": tx_hash_str, "from_addr": sender, "to_addr": pool_addr, "from_label": ENTITY_MEMORY.get(sender), "to_label": ENTITY_MEMORY.get(pool_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": realized_pnl, "narrative": f"⚡ Arbitrage Execution | Spread: +{spread_val}%" if is_arb else ("🚨 MEV Sandwich Attack Detected" if is_mev else ""), "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": calculate_health_factor(sender), "price_impact": simulate_price_impact(current_price), "spread": spread_val if is_arb else 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": mev_extracted, "flag": "MEV_ACTIVITY" if is_mev else ("ARBITRAGE_ACTIVITY" if is_arb else "DEX_ACTIVITY"), "status": "CONFIRMED"}
+                        tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "ARBITRAGE" if is_arb else "DEX_SWAP", "asset": f"Pool: {pool_addr[:8]}...", "amount": 1.0, "price_usd": current_price, "tx_hash": tx_hash_str, "from_addr": sender, "to_addr": pool_addr, "from_label": ENTITY_MEMORY.get(sender), "to_label": ENTITY_MEMORY.get(pool_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": realized_pnl, "narrative": f"⚡ Arbitrage Execution | Spread: +{spread_val}%" if is_arb else ("🚨 MEV Sandwich Attack Detected" if is_mev else ""), "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": calculate_health_factor(sender), "price_impact": p_impact, "spread": spread_val if is_arb else 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": mev_extracted, "flag": "MEV_ACTIVITY" if is_mev else ("ARBITRAGE_ACTIVITY" if is_arb else "DEX_ACTIVITY"), "status": "CONFIRMED"}
                         await broadcast_alert(tx_data); await save_transfer(tx_data, block_number); dex_processed = True
                     except Exception: pass
                 elif topic0 in [CHORDSWAP_MINT_SIG, CHORDSWAP_BURN_SIG] and not dex_processed:
                     try:
                         pool_addr, provider = log.address, "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else receipt.fromAddress
                         ENTITY_MEMORY[pool_addr] = "🌊 Liquidity Pool"
+                        p_impact = simulate_price_impact(1.0 * (PRICE_CACHE["DEFAULT_TOKEN"] * 2))
                         wr, _ = update_agent_performance(provider, 0) if "Agent" in ENTITY_MEMORY.get(provider, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, PRICE_CACHE["DEFAULT_TOKEN"] * 2)
-                        tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_LIQUIDITY", "asset": f"LP: {pool_addr[:8]}...", "amount": 1.0, "price_usd": PRICE_CACHE["DEFAULT_TOKEN"] * 2, "tx_hash": tx_hash_str, "from_addr": provider, "to_addr": pool_addr, "from_label": ENTITY_MEMORY.get(provider), "to_label": ENTITY_MEMORY.get(pool_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": 0.0, "narrative": "", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": calculate_health_factor(provider), "price_impact": simulate_price_impact(PRICE_CACHE["DEFAULT_TOKEN"] * 2), "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "DEX_ACTIVITY", "status": "CONFIRMED"}
+                        tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_LIQUIDITY", "asset": f"LP: {pool_addr[:8]}...", "amount": 1.0, "price_usd": PRICE_CACHE["DEFAULT_TOKEN"] * 2, "tx_hash": tx_hash_str, "from_addr": provider, "to_addr": pool_addr, "from_label": ENTITY_MEMORY.get(provider), "to_label": ENTITY_MEMORY.get(pool_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": 0.0, "narrative": "", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": calculate_health_factor(provider), "price_impact": p_impact, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "DEX_ACTIVITY", "status": "CONFIRMED"}
                         await broadcast_alert(tx_data); await save_transfer(tx_data, block_number); dex_processed = True
                     except Exception: pass
                 elif topic0 == ERC8004_REGISTER_SIG:
@@ -409,7 +425,7 @@ async def scan_block(w3, network_name, block_number):
                             score, label = analyze_contract_security(contract_address)
                             wr, _ = update_agent_performance(from_addr, realized_pnl) if "Agent" in ENTITY_MEMORY.get(from_addr, "") else (0.0, 0.0)
                             twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_token_amount, current_token_price)
-                            tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "TOKEN", "asset": contract_address, "amount": actual_token_amount, "price_usd": current_token_price, "tx_hash": tx_hash_str, "from_addr": from_addr, "to_addr": to_addr, "from_label": ENTITY_MEMORY.get(from_addr), "to_label": ENTITY_MEMORY.get(to_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": realized_pnl, "narrative": "", "sec_score": score, "sec_label": label, "cluster": resolve_sybil_cluster(from_addr, to_addr), "health_factor": calculate_health_factor(from_addr), "price_impact": simulate_price_impact(usd_volume) if is_whale else 0.0, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "WHALE" if is_whale else "STANDARD", "status": "CONFIRMED"}
+                            tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "TOKEN", "asset": contract_address, "amount": actual_token_amount, "price_usd": current_token_price, "tx_hash": tx_hash_str, "from_addr": from_addr, "to_addr": to_addr, "from_label": ENTITY_MEMORY.get(from_addr), "to_label": ENTITY_MEMORY.get(to_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": realized_pnl, "narrative": "", "sec_score": score, "sec_label": label, "cluster": resolve_sybil_cluster(from_addr, to_addr), "health_factor": calculate_health_factor(from_addr), "price_impact": p_impact, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "WHALE" if is_whale else "STANDARD", "status": "CONFIRMED"}
                             await broadcast_alert(tx_data); await save_transfer(tx_data, block_number)
                     except Exception: continue
     except Exception as e: logger.error(f"Fatal error scanning block: {e}")
@@ -425,6 +441,7 @@ async def process_chain(w3, network_name):
                 for b in range(last_block + 1, curr_block + 1):
                     await scan_block(w3, network_name, b)
                     last_block = b
+                    await asyncio.sleep(1)
             else: await asyncio.sleep(2)
         except Exception: await asyncio.sleep(5)
 
