@@ -14,6 +14,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [%(n
 logger = logging.getLogger("ASMO")
 
 ARC_RPC_URL = os.getenv("ARC_RPC_URL")
+# 🔥 Cömert ve kotası yüksek LlamaRPC sunucusuna geçildi
 BASE_RPC_URL = os.getenv("BASE_RPC_URL", "https://base.llamarpc.com")
 
 w3_arc = AsyncWeb3(AsyncHTTPProvider(ARC_RPC_URL)) if ARC_RPC_URL else None
@@ -299,6 +300,7 @@ async def scan_block(w3, network_name, block_number):
         block = await w3.eth.get_block(block_number, full_transactions=True)
         if not block or not block.transactions: return
         
+        # 🔥 AĞ ZIRHI (RATE LIMIT ARMOR): Chunk boyutu küçültüldü ve gecikmeler eklendi
         tasks = [fetch_receipt(w3, tx.hash) for tx in block.transactions]
         receipts = []
         chunk_size = 5 
@@ -308,7 +310,7 @@ async def scan_block(w3, network_name, block_number):
             for res in chunk_results:
                 if res and not isinstance(res, Exception):
                     receipts.append(res)
-            await asyncio.sleep(0.8)
+            await asyncio.sleep(0.8) # Ağ limitlerine saygı duruşu
             
         receipt_map = {r.transactionHash.hex(): r for r in receipts if r}
         
@@ -432,7 +434,10 @@ async def scan_block(w3, network_name, block_number):
 
 async def process_chain(w3, network_name):
     last_block = await w3.eth.block_number if await w3.is_connected() else None
-    if not last_block: return logger.error(f"Failed to connect to {network_name} RPC.")
+    if not last_block: 
+        logger.error(f"Failed to connect to {network_name} RPC.")
+        return
+    
     asyncio.create_task(scan_mempool(w3, network_name))
     while True:
         try:
@@ -441,7 +446,7 @@ async def process_chain(w3, network_name):
                 for b in range(last_block + 1, curr_block + 1):
                     await scan_block(w3, network_name, b)
                     last_block = b
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(1) # 🔥 AĞ ZIRHI: Bloklar arası bekleme eklendi
             else: await asyncio.sleep(2)
         except Exception: await asyncio.sleep(5)
 
