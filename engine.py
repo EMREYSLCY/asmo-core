@@ -162,6 +162,13 @@ async def init_db():
         """)
         try: await db.execute("ALTER TABLE transfers ADD COLUMN network TEXT NOT NULL DEFAULT 'ARC'")
         except Exception: pass
+        
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_transfers_id ON transfers(id DESC)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_transfers_network ON transfers(network)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_transfers_type ON transfers(type)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_transfers_from_addr ON transfers(from_addr)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_transfers_to_addr ON transfers(to_addr)")
+        
         await db.commit()
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
