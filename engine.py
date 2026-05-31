@@ -305,18 +305,39 @@ async def scan_mempool(w3, network_name):
         try:
             pending_block = await w3.eth.get_block('pending', full_transactions=True)
             if pending_block and pending_block.transactions:
+                sim_txs = []
+                total_vol = 0.0
                 for tx in pending_block.transactions:
                     tx_hash_str = tx.hash.hex()
                     if tx_hash_str in seen_pending_txs: continue
                     seen_pending_txs.add(tx_hash_str)
                     if len(seen_pending_txs) > 10000: seen_pending_txs.clear()
                     if tx.value > 0:
-                        actual_value, current_price = float(Web3.from_wei(tx.value, 'ether')), PRICE_CACHE.get(network_name, 1.0)
-                        if actual_value * current_price >= 10000:
+                        actual_value = float(Web3.from_wei(tx.value, 'ether'))
+                        current_price = PRICE_CACHE.get(network_name, 1.0)
+                        usd_volume = actual_value * current_price
+                        total_vol += usd_volume
+                        
+                        if usd_volume >= 2500:
                             from_addr, to_addr = tx.get("from", "0x00"), tx.get("to", "0x00")
-                            if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = "⏳ Vanguard Whale"
-                            twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_value, current_price)
-                            await broadcast_alert({"msg_type": "TRANSACTION", "network": network_name, "type": "NATIVE", "asset": network_name, "amount": actual_value, "price_usd": current_price, "tx_hash": tx_hash_str, "from_addr": from_addr, "to_addr": to_addr, "from_label": ENTITY_MEMORY.get(from_addr), "to_label": ENTITY_MEMORY.get(to_addr), "gas_used": 0, "execution_depth": 0, "pnl": 0.0, "narrative": "", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": simulate_price_impact(actual_value * current_price), "spread": 0.0, "agent_win_rate": 0.0, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "PENDING_WHALE", "status": "PENDING"})
+                            if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = "⏳ Vanguard Entity"
+                            sim_txs.append({
+                                "tx_hash": tx_hash_str,
+                                "amount": actual_value,
+                                "usd_value": usd_volume,
+                                "from_addr": from_addr,
+                                "to_addr": to_addr,
+                                "impact": simulate_price_impact(usd_volume)
+                            })
+                
+                if total_vol > 0 or sim_txs:
+                    await broadcast_alert({
+                        "msg_type": "MEMPOOL_SIMULATION",
+                        "network": network_name,
+                        "total_volume": total_vol,
+                        "expected_impact": simulate_price_impact(total_vol),
+                        "high_risk_txs": sorted(sim_txs, key=lambda x: x["usd_value"], reverse=True)[:5]
+                    })
         except Exception: pass
         await asyncio.sleep(2)
 
