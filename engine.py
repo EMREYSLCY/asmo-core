@@ -274,8 +274,29 @@ async def send_history_to_client(websocket):
 async def ws_handler(websocket):
     connected_clients.add(websocket)
     await send_history_to_client(websocket)
-    try: await websocket.wait_closed()
-    finally: connected_clients.remove(websocket)
+    try:
+        async for message in websocket:
+            try:
+                payload = json.loads(message)
+                if payload.get("action") == "BACKUP":
+                    async with aiosqlite.connect("asmo.db") as db:
+                        db.row_factory = aiosqlite.Row
+                        rows = await (await db.execute("SELECT * FROM transfers")).fetchall()
+                        await websocket.send(json.dumps({"msg_type": "BACKUP_READY", "data": [dict(r) for r in rows]}))
+                elif payload.get("action") == "RESTORE":
+                    records = payload.get("data", [])
+                    async with aiosqlite.connect("asmo.db") as db:
+                        for r in records:
+                            try:
+                                await db.execute("INSERT INTO transfers (tx_hash, block_number, network, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread, agent_win_rate, twap, twap_trend, mev_extracted, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (r.get("tx_hash"), r.get("block_number", 0), r.get("network", "ARC"), r.get("type", "NATIVE"), r.get("asset", ""), r.get("amount", 0.0), r.get("price_usd", 0.0), r.get("from_addr", ""), r.get("to_addr", ""), r.get("gas_used", 0), r.get("execution_depth", 1), r.get("pnl", 0.0), r.get("narrative", ""), r.get("sec_score", 99), r.get("sec_label", ""), r.get("cluster", ""), r.get("health_factor", 99.0), r.get("price_impact", 0.0), r.get("spread", 0.0), r.get("agent_win_rate", 0.0), r.get("twap", 0.0), r.get("twap_trend", ""), r.get("mev_extracted", 0.0), r.get("timestamp")))
+                            except Exception:
+                                pass
+                        await db.commit()
+                    await send_history_to_client(websocket)
+            except Exception:
+                pass
+    finally:
+        connected_clients.remove(websocket)
 
 async def broadcast_alert(data):
     if connected_clients: await asyncio.gather(*(client.send(json.dumps(data)) for client in connected_clients), return_exceptions=True)
