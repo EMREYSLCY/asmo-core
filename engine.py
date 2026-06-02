@@ -208,6 +208,31 @@ async def broadcast_leaderboard():
             top_agents = sorted([{"addr": k, "pnl": v["net_pnl"], "wr": round((v["wins"]/v["total"]*100) if v["total"]>0 else 0, 1), "label": ENTITY_MEMORY.get(k, "🤖 Autonomous Agent")} for k, v in AGENT_PERFORMANCE.items() if v["net_pnl"] > 0], key=lambda x: x["pnl"], reverse=True)[:5]
             await asyncio.gather(*(client.send(json.dumps({"msg_type": "LEADERBOARD_UPDATE", "wallets": top_wallets, "agents": top_agents})) for client in connected_clients), return_exceptions=True)
 
+async def detect_cross_chain_arbitrage():
+    while True:
+        await asyncio.sleep(6)
+        try:
+            p_arc = PRICE_CACHE.get("ARC", 1.0)
+            p_base = PRICE_CACHE.get("BASE", 1.0)
+            if p_arc > 0 and p_base > 0:
+                spread = abs(p_arc - p_base) / min(p_arc, p_base) * 100
+                if spread >= 1.5:
+                    direction = "ARC ➔ BASE" if p_arc < p_base else "BASE ➔ ARC"
+                    buy_price = min(p_arc, p_base)
+                    sell_price = max(p_arc, p_base)
+                    est_profit = (sell_price - buy_price) * 50000
+                    await broadcast_alert({
+                        "msg_type": "ARBITRAGE_RADAR",
+                        "asset": "Native Volatility Asset",
+                        "route": direction,
+                        "buy_price": buy_price,
+                        "sell_price": sell_price,
+                        "spread": round(spread, 2),
+                        "est_profit": round(est_profit, 2)
+                    })
+        except Exception:
+            pass
+
 async def update_price_oracle():
     pyth_ws_url = "wss://hermes.pyth.network/ws"
     msg = {
@@ -522,6 +547,7 @@ async def main():
     await init_db() 
     asyncio.create_task(update_price_oracle())
     asyncio.create_task(broadcast_leaderboard())
+    asyncio.create_task(detect_cross_chain_arbitrage())
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC"))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE"))
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
