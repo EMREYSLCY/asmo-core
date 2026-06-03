@@ -233,6 +233,28 @@ async def detect_cross_chain_arbitrage():
         except Exception:
             pass
 
+async def broadcast_kill_zone():
+    while True:
+        await asyncio.sleep(3)
+        if connected_clients and LENDING_MEMORY:
+            risky_wallets = []
+            for addr, pos in LENDING_MEMORY.items():
+                col = pos["collateral"]
+                debt = pos["debt"]
+                if debt > 0:
+                    hf = (col * 0.8) / debt
+                    if 0 < hf <= 1.25:
+                        risky_wallets.append({
+                            "address": addr,
+                            "collateral": col,
+                            "debt": debt,
+                            "hf": round(hf, 3),
+                            "est_liq_profit": round(debt * 0.05, 2)
+                        })
+            if risky_wallets:
+                risky_wallets = sorted(risky_wallets, key=lambda x: x["hf"])[:8]
+                await broadcast_alert({"msg_type": "KILL_ZONE_UPDATE", "data": risky_wallets})
+
 async def update_price_oracle():
     pyth_ws_url = "wss://hermes.pyth.network/ws"
     msg = {
@@ -548,6 +570,7 @@ async def main():
     asyncio.create_task(update_price_oracle())
     asyncio.create_task(broadcast_leaderboard())
     asyncio.create_task(detect_cross_chain_arbitrage())
+    asyncio.create_task(broadcast_kill_zone())
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC"))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE"))
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
