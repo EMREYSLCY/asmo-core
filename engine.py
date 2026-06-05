@@ -296,6 +296,23 @@ async def broadcast_kill_zone():
                 risky_wallets = sorted(risky_wallets, key=lambda x: x["hf"])[:8]
                 await broadcast_alert({"msg_type": "KILL_ZONE_UPDATE", "data": risky_wallets})
 
+async def broadcast_sybil_clusters():
+    while True:
+        await asyncio.sleep(8)
+        if connected_clients and CLUSTER_MAP:
+            cluster_stats = {}
+            for addr, c_name in CLUSTER_MAP.items():
+                if c_name not in cluster_stats:
+                    cluster_stats[c_name] = {"name": c_name, "wallets": [], "total_pnl": 0.0}
+                cluster_stats[c_name]["wallets"].append(addr)
+                cluster_stats[c_name]["total_pnl"] += WALLET_PNL.get(addr, 0.0)
+
+            active_clusters = [c for c in cluster_stats.values() if len(c["wallets"]) > 1]
+            active_clusters = sorted(active_clusters, key=lambda x: len(x["wallets"]), reverse=True)[:10]
+
+            if active_clusters:
+                await broadcast_alert({"msg_type": "SYBIL_HUNTER_UPDATE", "data": active_clusters})
+
 async def update_price_oracle():
     pyth_ws_url = "wss://hermes.pyth.network/ws"
     msg = {
@@ -632,6 +649,7 @@ async def main():
     asyncio.create_task(broadcast_leaderboard())
     asyncio.create_task(detect_cross_chain_arbitrage())
     asyncio.create_task(broadcast_kill_zone())
+    asyncio.create_task(broadcast_sybil_clusters())
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC"))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE"))
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
