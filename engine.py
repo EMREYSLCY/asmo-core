@@ -30,6 +30,7 @@ AAVE_SUPPLY_SIG = "0x" + Web3.keccak(text="Supply(address,address,address,uint25
 AAVE_BORROW_SIG = "0x" + Web3.keccak(text="Borrow(address,address,address,uint256,uint8,uint256,uint16)").hex()
 AAVE_REPAY_SIG = "0x" + Web3.keccak(text="Repay(address,address,address,uint256,bool)").hex()
 AAVE_LIQ_SIG = "0x" + Web3.keccak(text="LiquidationCall(address,address,address,uint256,uint256,address,bool)").hex()
+PAIR_CREATED_SIG = "0x" + Web3.keccak(text="PairCreated(address,address,address,uint256)").hex()
 
 ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]')
 TOKEN_CACHE = {}
@@ -584,7 +585,35 @@ async def scan_block(w3, network_name, block_number):
             for log in receipt.logs:
                 if not log.topics: continue
                 topic0 = log.topics[0].hex()
-                if topic0 in [AAVE_SUPPLY_SIG, AAVE_BORROW_SIG, AAVE_REPAY_SIG, AAVE_LIQ_SIG]:
+                
+                if topic0 == PAIR_CREATED_SIG and not dex_processed:
+                    try:
+                        token0 = "0x" + log.topics[1].hex()[26:] if len(log.topics) > 1 else "0x00"
+                        token1 = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else "0x00"
+                        pair_addr = "0x" + log.data.hex()[24:64] if len(log.data.hex()) >= 64 else "0x00"
+                        creator = receipt.fromAddress
+                        
+                        score, label = await analyze_contract_security(token0, network_name)
+                        if score >= 80: verdict = "🟢 SNIPE (SAFE)"
+                        elif score >= 50: verdict = "🟡 CAUTION"
+                        else: verdict = "🔴 RUG PULL (AVOID)"
+                        
+                        tx_data = {
+                            "msg_type": "ZERO_BLOCK_SNIPER",
+                            "network": network_name,
+                            "token0": token0,
+                            "token1": token1,
+                            "pair": pair_addr,
+                            "creator": creator,
+                            "score": score,
+                            "label": label,
+                            "verdict": verdict
+                        }
+                        await broadcast_alert(tx_data)
+                        dex_processed = True
+                    except Exception: pass
+                
+                elif topic0 in [AAVE_SUPPLY_SIG, AAVE_BORROW_SIG, AAVE_REPAY_SIG, AAVE_LIQ_SIG]:
                     try:
                         ENTITY_MEMORY[log.address] = "🏦 AAVE V3 Pool"
                         user_addr = "0x" + log.topics[2].hex()[26:] if len(log.topics) > 2 else receipt.fromAddress
