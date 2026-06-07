@@ -501,12 +501,23 @@ async def scan_mempool(w3, network_name):
                         usd_volume = actual_value * current_price
                         total_vol += usd_volume
                         
+                        decoded_p = decipher_payload(safe_get_input(tx))
+                        from_addr, to_addr = tx.get("from", "0x00"), tx.get("to", "0x00")
+                        
+                        if actual_value >= 25.0 and decoded_p["method"] == "0x":
+                            await broadcast_alert({
+                                "msg_type": "DARK_POOL_ALERT",
+                                "network": network_name,
+                                "tx_hash": tx_hash_str,
+                                "from_addr": from_addr,
+                                "to_addr": to_addr,
+                                "amount": actual_value,
+                                "usd_value": usd_volume,
+                                "protocol": "Shadow OTC / Unmarked Transfer"
+                            })
+
                         if usd_volume >= 2500:
-                            from_addr, to_addr = tx.get("from", "0x00"), tx.get("to", "0x00")
                             if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = "⏳ Vanguard Entity"
-                            
-                            decoded_p = decipher_payload(safe_get_input(tx))
-                            
                             sim_txs.append({
                                 "tx_hash": tx_hash_str,
                                 "amount": actual_value,
@@ -566,12 +577,26 @@ async def scan_block(w3, network_name, block_number):
             if tx.value > 0:
                 actual_value, current_price = float(Web3.from_wei(tx.value, 'ether')), PRICE_CACHE.get(network_name, 1.0)
                 from_addr, to_addr = tx.get("from", "0x00"), tx.get("to", "0x00")
+                usd_volume = actual_value * current_price
+                
+                if actual_value >= 25.0 and decoded_p["method"] == "0x" and exec_depth == 1:
+                    await broadcast_alert({
+                        "msg_type": "DARK_POOL_ALERT",
+                        "network": network_name,
+                        "tx_hash": tx_hash_str,
+                        "from_addr": from_addr,
+                        "to_addr": to_addr,
+                        "amount": actual_value,
+                        "usd_value": usd_volume,
+                        "protocol": "Shadow OTC / Unmarked Pool"
+                    })
+                
                 realized_pnl = calculate_and_update_pnl(from_addr, to_addr, network_name, actual_value, current_price)
-                is_whale = (actual_value * current_price >= 10000)
+                is_whale = (usd_volume >= 10000)
                 update_entity_labels(from_addr, realized_pnl, is_whale)
                 wr, _ = update_agent_performance(from_addr, realized_pnl) if "Agent" in ENTITY_MEMORY.get(from_addr, "") else (0.0, 0.0)
                 twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_value, current_price)
-                tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "NATIVE", "asset": network_name, "amount": actual_value, "price_usd": current_price, "tx_hash": tx_hash_str, "from_addr": from_addr, "to_addr": to_addr, "from_label": ENTITY_MEMORY.get(from_addr), "to_label": ENTITY_MEMORY.get(to_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": realized_pnl, "narrative": "", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": resolve_sybil_cluster(from_addr, to_addr), "health_factor": calculate_health_factor(from_addr), "price_impact": simulate_price_impact(actual_value * current_price) if is_whale else 0.0, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "WHALE" if is_whale else "STANDARD", "status": "CONFIRMED", "decoded_payload": decoded_p}
+                tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "NATIVE", "asset": network_name, "amount": actual_value, "price_usd": current_price, "tx_hash": tx_hash_str, "from_addr": from_addr, "to_addr": to_addr, "from_label": ENTITY_MEMORY.get(from_addr), "to_label": ENTITY_MEMORY.get(to_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": realized_pnl, "narrative": "", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": resolve_sybil_cluster(from_addr, to_addr), "health_factor": calculate_health_factor(from_addr), "price_impact": simulate_price_impact(usd_volume) if is_whale else 0.0, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "WHALE" if is_whale else "STANDARD", "status": "CONFIRMED", "decoded_payload": decoded_p}
                 await broadcast_alert(tx_data)
                 await save_transfer(tx_data, block_number)
 
