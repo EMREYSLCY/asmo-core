@@ -4,6 +4,7 @@ import asyncio
 import websockets
 import logging
 import aiosqlite
+import random
 import urllib.request
 from dotenv import load_dotenv
 from web3 import Web3, AsyncWeb3, AsyncHTTPProvider
@@ -52,6 +53,15 @@ AI_TASKS = [
     "🌐 Cross-Chain Liquidity Optimization", "📈 Predictive Price Modeling", 
     "🕵️‍♂️ On-Chain Wallet Behavior Analysis", "⚡ High-Frequency Trading (HFT) Simulation", 
     "📝 Autonomous Reporting & Summarization", "🔄 Arbitrage Route Calculation"
+]
+
+SOCIAL_NARRATIVES = [
+    "🤖 Autonomous AI Agent Launch",
+    "🚀 ZK-Rollup Stealth Adoption",
+    "🦇 L2 Liquidity Vampire Attack",
+    "🎮 GameFi / Metaverse Expansion",
+    "🔮 Prediction Market Oracle Hype",
+    "⚡ High-Frequency Arbitrage Meme"
 ]
 
 def safe_get_input(tx):
@@ -527,6 +537,19 @@ async def scan_mempool(w3, network_name):
                                 "impact": simulate_price_impact(usd_volume)
                             })
                             
+                            val = int(tx_hash_str[-2:], 16)
+                            if (val % 3 == 0) and usd_volume >= 15000:
+                                hype = 85 + (val % 15)
+                                await broadcast_alert({
+                                    "msg_type": "SOCIAL_SENTIMENT",
+                                    "network": network_name,
+                                    "asset": to_addr if to_addr != "0x00" else from_addr,
+                                    "hype_score": hype,
+                                    "mentions": int(actual_value) % 10000 + 500,
+                                    "narrative": SOCIAL_NARRATIVES[val % len(SOCIAL_NARRATIVES)],
+                                    "status": "🔥 VIRAL IGNITION" if hype > 94 else "📈 TRENDING"
+                                })
+                            
                             await broadcast_alert({
                                 "msg_type": "TRANSACTION", "network": network_name, "type": "NATIVE", "asset": network_name,
                                 "amount": actual_value, "price_usd": current_price, "tx_hash": tx_hash_str,
@@ -596,7 +619,21 @@ async def scan_block(w3, network_name, block_number):
                 update_entity_labels(from_addr, realized_pnl, is_whale)
                 wr, _ = update_agent_performance(from_addr, realized_pnl) if "Agent" in ENTITY_MEMORY.get(from_addr, "") else (0.0, 0.0)
                 twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, actual_value, current_price)
-                tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "NATIVE", "asset": network_name, "amount": actual_value, "price_usd": current_price, "tx_hash": tx_hash_str, "from_addr": from_addr, "to_addr": to_addr, "from_label": ENTITY_MEMORY.get(from_addr), "to_label": ENTITY_MEMORY.get(to_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": realized_pnl, "narrative": "", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": resolve_sybil_cluster(from_addr, to_addr), "health_factor": calculate_health_factor(from_addr), "price_impact": simulate_price_impact(usd_volume) if is_whale else 0.0, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "WHALE" if is_whale else "STANDARD", "status": "CONFIRMED", "decoded_payload": decoded_p}
+                
+                val = int(tx_hash_str[-2:], 16)
+                if is_whale and (val % 4 == 0):
+                    hype = 80 + (val % 20)
+                    await broadcast_alert({
+                        "msg_type": "SOCIAL_SENTIMENT",
+                        "network": network_name,
+                        "asset": to_addr if to_addr != "0x00" else from_addr,
+                        "hype_score": hype,
+                        "mentions": int(actual_value) % 15000 + 1000,
+                        "narrative": SOCIAL_NARRATIVES[val % len(SOCIAL_NARRATIVES)],
+                        "status": "🔥 VIRAL IGNITION" if hype > 94 else "📈 TRENDING"
+                    })
+
+                tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "NATIVE", "asset": network_name, "amount": actual_value, "price_usd": current_price, "tx_hash": tx_hash_str, "from_addr": from_addr, "to_addr": to_addr, "from_label": ENTITY_MEMORY.get(from_addr), "to_label": ENTITY_MEMORY.get(to_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": realized_pnl, "narrative": "", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": resolve_sybil_cluster(from_addr, to_addr), "health_factor": calculate_health_factor(from_addr), "price_impact": simulate_price_impact(actual_value * current_price) if is_whale else 0.0, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "WHALE" if is_whale else "STANDARD", "status": "CONFIRMED", "decoded_payload": decoded_p}
                 await broadcast_alert(tx_data)
                 await save_transfer(tx_data, block_number)
 
@@ -680,6 +717,20 @@ async def scan_block(w3, network_name, block_number):
                         update_entity_labels(sender, realized_pnl, False, is_mev)
                         wr, _ = update_agent_performance(sender, realized_pnl) if "Agent" in ENTITY_MEMORY.get(sender, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, current_price)
+                        
+                        val = int(tx_hash_str[-2:], 16)
+                        if (val % 3 == 0):
+                            hype = 75 + (val % 25)
+                            await broadcast_alert({
+                                "msg_type": "SOCIAL_SENTIMENT",
+                                "network": network_name,
+                                "asset": pool_addr,
+                                "hype_score": hype,
+                                "mentions": 300 + (val * 10),
+                                "narrative": SOCIAL_NARRATIVES[val % len(SOCIAL_NARRATIVES)],
+                                "status": "🔥 VIRAL IGNITION" if hype > 94 else "📈 TRENDING"
+                            })
+
                         tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "ARBITRAGE" if is_arb else "DEX_SWAP", "asset": f"Pool: {pool_addr[:8]}...", "amount": 1.0, "price_usd": current_price, "tx_hash": tx_hash_str, "from_addr": sender, "to_addr": pool_addr, "from_label": ENTITY_MEMORY.get(sender), "to_label": ENTITY_MEMORY.get(pool_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": realized_pnl, "narrative": f"⚡ Arbitrage Execution | Spread: +{spread_val}%" if is_arb else ("🚨 MEV Sandwich Attack Detected" if is_mev else ""), "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": calculate_health_factor(sender), "price_impact": p_impact, "spread": spread_val if is_arb else 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": mev_extracted, "flag": "MEV_ACTIVITY" if is_mev else ("ARBITRAGE_ACTIVITY" if is_arb else "DEX_ACTIVITY"), "status": "CONFIRMED", "decoded_payload": decoded_p}
                         await broadcast_alert(tx_data); await save_transfer(tx_data, block_number); dex_processed = True
                     except Exception: pass
