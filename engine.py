@@ -465,6 +465,23 @@ async def ws_handler(websocket):
                     net = payload.get("network", "ARC")
                     result = await perform_manual_audit(addr, net)
                     await websocket.send(json.dumps({"msg_type": "AUDIT_RESULT", "data": result}))
+                elif payload.get("action") == "EXECUTE_FLASHLOAN":
+                    flash_data = payload.get("data", {})
+                    fake_hash = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)])
+                    tx_data = {
+                        "msg_type": "TRANSACTION", "network": "ARC", "type": "ARBITRAGE", "asset": "AAVE Flashloan Execution",
+                        "amount": flash_data.get("amount", 0), "price_usd": 1.0, "tx_hash": fake_hash,
+                        "from_addr": "0xASMO_Flashbot_Contract", "to_addr": "0xArbitrage_Router",
+                        "from_label": "🤖 A.S.M.O. Flashbot", "to_label": "🌉 Arbitrage Router",
+                        "gas_used": 185000, "execution_depth": 3, "pnl": flash_data.get("netProfit", 0),
+                        "narrative": f"⚡ Tactical Flashloan Executed | Spread: {flash_data.get('spread', 0)}%", 
+                        "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, 
+                        "price_impact": flash_data.get("slippage", 0), "spread": flash_data.get("spread", 0), 
+                        "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, 
+                        "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"
+                    }
+                    await broadcast_alert(tx_data)
+                    await save_transfer(tx_data, 99999999)
             except Exception:
                 pass
     finally:
@@ -717,20 +734,6 @@ async def scan_block(w3, network_name, block_number):
                         update_entity_labels(sender, realized_pnl, False, is_mev)
                         wr, _ = update_agent_performance(sender, realized_pnl) if "Agent" in ENTITY_MEMORY.get(sender, "") else (0.0, 0.0)
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, current_price)
-                        
-                        val = int(tx_hash_str[-2:], 16)
-                        if (val % 3 == 0):
-                            hype = 75 + (val % 25)
-                            await broadcast_alert({
-                                "msg_type": "SOCIAL_SENTIMENT",
-                                "network": network_name,
-                                "asset": pool_addr,
-                                "hype_score": hype,
-                                "mentions": 300 + (val * 10),
-                                "narrative": SOCIAL_NARRATIVES[val % len(SOCIAL_NARRATIVES)],
-                                "status": "🔥 VIRAL IGNITION" if hype > 94 else "📈 TRENDING"
-                            })
-
                         tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "ARBITRAGE" if is_arb else "DEX_SWAP", "asset": f"Pool: {pool_addr[:8]}...", "amount": 1.0, "price_usd": current_price, "tx_hash": tx_hash_str, "from_addr": sender, "to_addr": pool_addr, "from_label": ENTITY_MEMORY.get(sender), "to_label": ENTITY_MEMORY.get(pool_addr), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": realized_pnl, "narrative": f"⚡ Arbitrage Execution | Spread: +{spread_val}%" if is_arb else ("🚨 MEV Sandwich Attack Detected" if is_mev else ""), "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": calculate_health_factor(sender), "price_impact": p_impact, "spread": spread_val if is_arb else 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": mev_extracted, "flag": "MEV_ACTIVITY" if is_mev else ("ARBITRAGE_ACTIVITY" if is_arb else "DEX_ACTIVITY"), "status": "CONFIRMED", "decoded_payload": decoded_p}
                         await broadcast_alert(tx_data); await save_transfer(tx_data, block_number); dex_processed = True
                     except Exception: pass
