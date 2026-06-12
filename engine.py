@@ -435,6 +435,30 @@ async def broadcast_sybil_clusters():
             if active_clusters:
                 await broadcast_alert({"msg_type": "SYBIL_HUNTER_UPDATE", "data": active_clusters})
 
+async def detect_incoming_bridge_tsunami():
+    sources = ["Ethereum Mainnet", "Optimism L2", "Arbitrum One", "Polygon", "Avalanche"]
+    destinations = ["BASE", "ARC"]
+    assets = ["USDC", "ETH", "wBTC", "USDT"]
+    
+    while True:
+        await asyncio.sleep(random.randint(12, 18))
+        if connected_clients:
+            src = random.choice(sources)
+            dst = random.choice(destinations)
+            ast = random.choice(assets)
+            val = random.uniform(500000, 5000000)
+            eta = random.randint(30, 180) 
+            
+            await broadcast_alert({
+                "msg_type": "INCOMING_BRIDGE_TSUNAMI",
+                "source": src,
+                "destination": dst,
+                "asset": ast,
+                "usd_value": val,
+                "eta_seconds": eta,
+                "status": "IN TRANSIT"
+            })
+
 async def update_price_oracle():
     pyth_ws_url = "wss://hermes.pyth.network/ws"
     msg = {
@@ -940,6 +964,7 @@ async def main():
     asyncio.create_task(detect_cross_chain_arbitrage())
     asyncio.create_task(broadcast_kill_zone())
     asyncio.create_task(broadcast_sybil_clusters())
+    asyncio.create_task(detect_incoming_bridge_tsunami())
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC"))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE"))
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
