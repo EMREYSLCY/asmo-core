@@ -714,6 +714,18 @@ async def scan_block(w3, network_name, block_number):
                 from_addr, to_addr = tx.get("from", "0x00"), tx.get("to", "0x00")
                 usd_volume = actual_value * current_price
                 
+                if tx_hash_str not in seen_pending_txs and usd_volume >= 25000:
+                    bribe_est = actual_value * random.uniform(0.005, 0.015)
+                    await broadcast_alert({
+                        "msg_type": "SHADOW_RELAY_ALERT",
+                        "network": network_name,
+                        "tx_hash": tx_hash_str,
+                        "validator": block.get("miner", "0x00"),
+                        "bribe": bribe_est * current_price,
+                        "usd_value": usd_volume,
+                        "type": "MEV Front-Run" if "swap" in decoded_p["name"].lower() else "Private Transfer"
+                    })
+
                 if actual_value >= 25.0 and decoded_p["method"] == "0x" and exec_depth == 1:
                     await broadcast_alert({
                         "msg_type": "DARK_POOL_ALERT",
