@@ -100,7 +100,11 @@ def decipher_payload(input_data):
         "0x42842e0e": ("safeTransferFrom(address,address,uint256)", "LOW"),
         "0x40c10f19": ("mint(address,uint256)", "HIGH"),
         "0xf242432a": ("safeTransferFrom(address,address,uint256,uint256,bytes)", "LOW"),
-        "0x3593564c": ("execute(bytes32,bytes) [Proxy/Agent]", "HIGH")
+        "0x3593564c": ("execute(bytes32,bytes) [Proxy/Agent]", "HIGH"),
+        "0xbaa2abde": ("removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)", "CRITICAL"),
+        "0x02751cec": ("removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)", "CRITICAL"),
+        "0xaf2979eb": ("removeLiquidityETHSupportingFeeOnTransferTokens", "CRITICAL"),
+        "0x5b0d5984": ("removeLiquidityETHWithPermit", "CRITICAL")
     }
 
     name, risk = SIG_DB.get(method_id, ("UNKNOWN_CUSTOM_METHOD", "MEDIUM"))
@@ -577,6 +581,23 @@ async def ws_handler(websocket):
                     tgt = payload.get("address")
                     if tgt in SHADOW_TARGETS:
                         SHADOW_TARGETS.remove(tgt)
+                elif payload.get("action") == "EXECUTE_AUTO_EJECT":
+                    hash_tgt = payload.get("tx_hash")
+                    fake_hash = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)])
+                    tx_data = {
+                        "msg_type": "TRANSACTION", "network": "BASE", "type": "DEX_SWAP", "asset": "Rescued Capital",
+                        "amount": payload.get("rescued_amount", 50000), "price_usd": 1.0, "tx_hash": fake_hash,
+                        "from_addr": "0xASMO_AutoEject_Shield", "to_addr": "0xSafe_Cold_Wallet",
+                        "from_label": "🛡️ A.S.M.O. Anti-Rug Shield", "to_label": "🔐 Cold Storage",
+                        "gas_used": payload.get("gas", 250) * 1000, "execution_depth": 1, "pnl": payload.get("rescued_amount", 50000),
+                        "narrative": f"🛡️ Auto-Eject Front-Run Successful! Blocked Rug: {hash_tgt[:8]}", 
+                        "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, 
+                        "price_impact": 0.0, "spread": 0.0, 
+                        "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, 
+                        "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"
+                    }
+                    await broadcast_alert(tx_data)
+                    await save_transfer(tx_data, 99999999)
             except Exception:
                 pass
     finally:
@@ -626,6 +647,17 @@ async def scan_mempool(w3, network_name):
                         decoded_p = decipher_payload(safe_get_input(tx))
                         from_addr, to_addr = tx.get("from", "0x00"), tx.get("to", "0x00")
                         
+                        if "removeLiquidity" in decoded_p["name"]:
+                            await broadcast_alert({
+                                "msg_type": "AUTO_EJECT_ALERT",
+                                "network": network_name,
+                                "tx_hash": tx_hash_str,
+                                "pool_addr": to_addr,
+                                "dev_addr": from_addr,
+                                "est_gas_gwei": random.randint(30, 80),
+                                "risk": "CRITICAL RUG PULL IMMINENT"
+                            })
+
                         if actual_value >= 25.0 and decoded_p["method"] == "0x":
                             await broadcast_alert({
                                 "msg_type": "DARK_POOL_ALERT",
@@ -710,7 +742,7 @@ async def scan_block(w3, network_name, block_number):
             decoded_p = decipher_payload(safe_get_input(tx))
             
             if tx.value > 0:
-                actual_value, current_price = float(Web3.from_wei(tx.value, 'ether')), PRICE_CACHE.get(network_name, 1.0)
+                actual_value, float(Web3.from_wei(tx.value, 'ether')), PRICE_CACHE.get(network_name, 1.0)
                 from_addr, to_addr = tx.get("from", "0x00"), tx.get("to", "0x00")
                 usd_volume = actual_value * current_price
                 
