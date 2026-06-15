@@ -742,7 +742,7 @@ async def scan_block(w3, network_name, block_number):
             decoded_p = decipher_payload(safe_get_input(tx))
             
             if tx.value > 0:
-                actual_value, float(Web3.from_wei(tx.value, 'ether')), PRICE_CACHE.get(network_name, 1.0)
+                actual_value, current_price = float(Web3.from_wei(tx.value, 'ether')), PRICE_CACHE.get(network_name, 1.0)
                 from_addr, to_addr = tx.get("from", "0x00"), tx.get("to", "0x00")
                 usd_volume = actual_value * current_price
                 
