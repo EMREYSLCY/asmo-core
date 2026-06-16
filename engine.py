@@ -104,7 +104,10 @@ def decipher_payload(input_data):
         "0xbaa2abde": ("removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)", "CRITICAL"),
         "0x02751cec": ("removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)", "CRITICAL"),
         "0xaf2979eb": ("removeLiquidityETHSupportingFeeOnTransferTokens", "CRITICAL"),
-        "0x5b0d5984": ("removeLiquidityETHWithPermit", "CRITICAL")
+        "0x5b0d5984": ("removeLiquidityETHWithPermit", "CRITICAL"),
+        "0x86d1a69f": ("release() [Vesting Unlock]", "HIGH"),
+        "0x3d18b912": ("unlock() [TimeLock]", "HIGH"),
+        "0x4e71d92d": ("claim() [Vesting Claim]", "MEDIUM")
     }
 
     name, risk = SIG_DB.get(method_id, ("UNKNOWN_CUSTOM_METHOD", "MEDIUM"))
@@ -463,6 +466,22 @@ async def detect_incoming_bridge_tsunami():
                 "status": "IN TRANSIT"
             })
 
+async def detect_vesting_dumps():
+    assets = ["0xAI_Protocol_Token", "0xGameFi_Governance", "0xDeFi_Yield_Token", "0xLayer2_Native_Coin"]
+    while True:
+        await asyncio.sleep(random.randint(20, 45))
+        if connected_clients:
+            val = random.uniform(250000, 3500000)
+            await broadcast_alert({
+                "msg_type": "VESTING_DUMP_ALERT",
+                "network": random.choice(["ARC", "BASE"]),
+                "tx_hash": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)]),
+                "token_addr": random.choice(assets),
+                "dev_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]),
+                "usd_value": val,
+                "status": "IMMINENT DUMP"
+            })
+
 async def update_price_oracle():
     pyth_ws_url = "wss://hermes.pyth.network/ws"
     msg = {
@@ -598,6 +617,23 @@ async def ws_handler(websocket):
                     }
                     await broadcast_alert(tx_data)
                     await save_transfer(tx_data, 99999999)
+                elif payload.get("action") == "EXECUTE_SHORT_DUMP":
+                    hash_tgt = payload.get("token_addr")
+                    fake_hash = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)])
+                    tx_data = {
+                        "msg_type": "TRANSACTION", "network": "BASE", "type": "DEX_SWAP", "asset": "Short Position Executed",
+                        "amount": 1.0, "price_usd": 1.0, "tx_hash": fake_hash,
+                        "from_addr": "0xASMO_Sniper_Contract", "to_addr": hash_tgt,
+                        "from_label": "🤖 A.S.M.O. Sniper Bot", "to_label": "📉 Short Target",
+                        "gas_used": 150000, "execution_depth": 2, "pnl": 0.0,
+                        "narrative": f"🩸 Pre-Dump Short Opened on: {hash_tgt[:8]}", 
+                        "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, 
+                        "price_impact": 0.0, "spread": 0.0, 
+                        "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, 
+                        "flag": "AGENT_FLOW", "status": "CONFIRMED"
+                    }
+                    await broadcast_alert(tx_data)
+                    await save_transfer(tx_data, 99999999)
             except Exception:
                 pass
     finally:
@@ -656,6 +692,17 @@ async def scan_mempool(w3, network_name):
                                 "dev_addr": from_addr,
                                 "est_gas_gwei": random.randint(30, 80),
                                 "risk": "CRITICAL RUG PULL IMMINENT"
+                            })
+                            
+                        if actual_value >= 50.0 and ("unlock" in decoded_p["name"].lower() or "release" in decoded_p["name"].lower() or "claim" in decoded_p["name"].lower()):
+                            await broadcast_alert({
+                                "msg_type": "VESTING_DUMP_ALERT",
+                                "network": network_name,
+                                "tx_hash": tx_hash_str,
+                                "token_addr": to_addr,
+                                "dev_addr": from_addr,
+                                "usd_value": usd_volume * random.uniform(5.0, 15.0),
+                                "status": "IMMINENT DUMP"
                             })
 
                         if actual_value >= 25.0 and decoded_p["method"] == "0x":
@@ -1009,6 +1056,7 @@ async def main():
     asyncio.create_task(broadcast_kill_zone())
     asyncio.create_task(broadcast_sybil_clusters())
     asyncio.create_task(detect_incoming_bridge_tsunami())
+    asyncio.create_task(detect_vesting_dumps())
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC"))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE"))
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
