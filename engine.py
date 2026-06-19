@@ -51,6 +51,12 @@ SHADOW_TARGETS = set()
 cluster_counter = 0
 RECENT_TRADES = []
 
+OVERLORD_STATE = {
+    "active": False,
+    "max_spend": 50000.0,
+    "min_profit": 500.0
+}
+
 AI_TASKS = [
     "🧠 Dataset Analysis & Classification", "🛡️ Smart Contract Security Scan", 
     "🌐 Cross-Chain Liquidity Optimization", "📈 Predictive Price Modeling", 
@@ -58,51 +64,38 @@ AI_TASKS = [
     "📝 Autonomous Reporting & Summarization", "🔄 Arbitrage Route Calculation"
 ]
 
+SOCIAL_NARRATIVES = [
+    "🤖 Autonomous AI Agent Launch", "🚀 ZK-Rollup Stealth Adoption",
+    "🦇 L2 Liquidity Vampire Attack", "🎮 GameFi / Metaverse Expansion",
+    "🔮 Prediction Market Oracle Hype", "⚡ High-Frequency Arbitrage Meme"
+]
+
 def safe_get_input(tx):
     try:
         inp = tx.get('input', '0x')
         if hasattr(inp, 'hex'): return inp.hex()
         return str(inp)
-    except:
-        return "0x"
+    except: return "0x"
 
 def decipher_payload(input_data):
-    if not input_data or input_data == '0x':
-        return {"method": "0x", "name": "NATIVE_TRANSFER / NO_DATA", "risk": "LOW", "raw_length": 0}
-    if not input_data.startswith('0x'):
-        input_data = '0x' + input_data
-    if len(input_data) < 10:
-        return {"method": input_data, "name": "MALFORMED_PAYLOAD", "risk": "LOW", "raw_length": len(input_data)}
-
+    if not input_data or input_data == '0x': return {"method": "0x", "name": "NATIVE_TRANSFER / NO_DATA", "risk": "LOW", "raw_length": 0}
+    if not input_data.startswith('0x'): input_data = '0x' + input_data
+    if len(input_data) < 10: return {"method": input_data, "name": "MALFORMED_PAYLOAD", "risk": "LOW", "raw_length": len(input_data)}
     method_id = input_data[:10]
-    
     SIG_DB = {
-        "0xa9059cbb": ("transfer(address,uint256)", "LOW"),
-        "0x095ea7b3": ("approve(address,uint256)", "LOW"),
-        "0x38ed1739": ("swapExactTokensForTokens", "MEDIUM"),
-        "0x7ff36ab5": ("swapExactETHForTokens", "MEDIUM"),
-        "0x18cbafe5": ("swapExactTokensForETH", "MEDIUM"),
-        "0x4a25d94a": ("swapTokensForExactETH", "MEDIUM"),
-        "0x5c11d795": ("swapExactTokensForTokensSupportingFeeOnTransferTokens", "MEDIUM"),
-        "0xab834bab": ("executeOperation(address[],uint256[],uint256[],address,bytes)", "CRITICAL"),
-        "0x1cff79cd": ("execute(bytes,bytes[]) [Universal Router]", "MEDIUM"),
-        "0x5ae401dc": ("multicall(uint256,bytes[])", "HIGH"),
-        "0xac9650d8": ("multicall(bytes[])", "HIGH"),
-        "0xd0e30db0": ("deposit()", "LOW"),
-        "0x2e1a7d4d": ("withdraw(uint256)", "LOW"),
-        "0x42842e0e": ("safeTransferFrom(address,address,uint256)", "LOW"),
-        "0x40c10f19": ("mint(address,uint256)", "HIGH"),
-        "0xf242432a": ("safeTransferFrom(address,address,uint256,uint256,bytes)", "LOW"),
-        "0x3593564c": ("execute(bytes32,bytes) [Proxy/Agent]", "HIGH"),
-        "0xbaa2abde": ("removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)", "CRITICAL"),
-        "0x02751cec": ("removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)", "CRITICAL"),
-        "0xaf2979eb": ("removeLiquidityETHSupportingFeeOnTransferTokens", "CRITICAL"),
-        "0x5b0d5984": ("removeLiquidityETHWithPermit", "CRITICAL"),
-        "0x86d1a69f": ("release() [Vesting Unlock]", "HIGH"),
-        "0x3d18b912": ("unlock() [TimeLock]", "HIGH"),
-        "0x4e71d92d": ("claim() [Vesting Claim]", "MEDIUM")
+        "0xa9059cbb": ("transfer(address,uint256)", "LOW"), "0x095ea7b3": ("approve(address,uint256)", "LOW"),
+        "0x38ed1739": ("swapExactTokensForTokens", "MEDIUM"), "0x7ff36ab5": ("swapExactETHForTokens", "MEDIUM"),
+        "0x18cbafe5": ("swapExactTokensForETH", "MEDIUM"), "0x4a25d94a": ("swapTokensForExactETH", "MEDIUM"),
+        "0x5c11d795": ("swapExactTokensForTokensSupportingFeeOnTransferTokens", "MEDIUM"), "0xab834bab": ("executeOperation(address[],uint256[],uint256[],address,bytes)", "CRITICAL"),
+        "0x1cff79cd": ("execute(bytes,bytes[]) [Universal Router]", "MEDIUM"), "0x5ae401dc": ("multicall(uint256,bytes[])", "HIGH"),
+        "0xac9650d8": ("multicall(bytes[])", "HIGH"), "0xd0e30db0": ("deposit()", "LOW"),
+        "0x2e1a7d4d": ("withdraw(uint256)", "LOW"), "0x42842e0e": ("safeTransferFrom(address,address,uint256)", "LOW"),
+        "0x40c10f19": ("mint(address,uint256)", "HIGH"), "0xf242432a": ("safeTransferFrom(address,address,uint256,uint256,bytes)", "LOW"),
+        "0x3593564c": ("execute(bytes32,bytes) [Proxy/Agent]", "HIGH"), "0xbaa2abde": ("removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)", "CRITICAL"),
+        "0x02751cec": ("removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)", "CRITICAL"), "0xaf2979eb": ("removeLiquidityETHSupportingFeeOnTransferTokens", "CRITICAL"),
+        "0x5b0d5984": ("removeLiquidityETHWithPermit", "CRITICAL"), "0x86d1a69f": ("release() [Vesting Unlock]", "HIGH"),
+        "0x3d18b912": ("unlock() [TimeLock]", "HIGH"), "0x4e71d92d": ("claim() [Vesting Claim]", "MEDIUM")
     }
-
     name, risk = SIG_DB.get(method_id, ("UNKNOWN_CUSTOM_METHOD", "MEDIUM"))
     return {"method": method_id, "name": name, "risk": risk, "raw_length": len(input_data)}
 
@@ -110,71 +103,41 @@ async def perform_cabal_scan(addr, network_name):
     await asyncio.sleep(2.0)
     seed_val = int(Web3.keccak(text=addr).hex()[-8:], 16)
     random.seed(seed_val)
-    
-    cabals = []
-    nodes = []
-    links = []
-    
+    cabals, nodes, links = [], [], []
     num_cabals = random.randint(3, 6)
     cabal_colors = ["#dc2626", "#ea580c", "#ca8a04", "#0ea5e9", "#a371f7", "#db2777"]
     funding_sources = ["Binance 14", "KuCoin Hot Wallet", "Tornado Cash", "Unknown OTC", "Genesis Dev", "FixedFloat"]
-    
     total_cabal_dom = 0
-    
     for i in range(num_cabals):
         c_id = f"cabal_{i}"
         c_color = cabal_colors[i % len(cabal_colors)]
         c_name = f"Syndicate {chr(65+i)} ({funding_sources[i % len(funding_sources)]})"
-        
         cabal_size = random.randint(5, 18)
         cabal_total_supply = random.uniform(5.0, 22.0)
         total_cabal_dom += cabal_total_supply
-        
-        cabals.append({
-            "id": c_id,
-            "name": c_name,
-            "color": c_color,
-            "wallets": cabal_size,
-            "control_pct": round(cabal_total_supply, 2)
-        })
-        
+        cabals.append({"id": c_id, "name": c_name, "color": c_color, "wallets": cabal_size, "control_pct": round(cabal_total_supply, 2)})
         root_wallet = f"0xRoot{i}..." + "".join([random.choice("0123456789abcdef") for _ in range(4)])
         nodes.append({"id": root_wallet, "name": c_name, "val": cabal_total_supply * 1.5, "color": c_color, "type": "ROOT"})
-        
         for j in range(cabal_size):
             node_pct = cabal_total_supply / cabal_size * random.uniform(0.5, 1.5)
             node_addr = f"0x" + "".join([random.choice("0123456789abcdef") for _ in range(8)]) + f"_c{i}_{j}"
             nodes.append({"id": node_addr, "name": f"Wallet {node_addr[:6]}", "val": node_pct * 3, "color": c_color, "type": "NODE"})
             links.append({"source": root_wallet, "target": node_addr, "color": c_color})
-            
             if random.random() > 0.7 and j > 0:
                 prev_node = nodes[-2]["id"]
                 links.append({"source": prev_node, "target": node_addr, "color": c_color})
-                
     dex_pool_id = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(8)]) + "_DEX"
     nodes.append({"id": dex_pool_id, "name": "Primary DEX Liquidity", "val": 30.0, "color": "#3fb950", "type": "POOL"})
-    
     for i in range(15):
         retail_addr = f"0x" + "".join([random.choice("0123456789abcdef") for _ in range(8)]) + "_ret"
         nodes.append({"id": retail_addr, "name": "Retail Holder", "val": random.uniform(0.1, 0.8), "color": "#64748b", "type": "RETAIL"})
-        if random.random() > 0.5:
-            links.append({"source": dex_pool_id, "target": retail_addr, "color": "#64748b"})
-
+        if random.random() > 0.5: links.append({"source": dex_pool_id, "target": retail_addr, "color": "#64748b"})
     total_cabal_dom = min(total_cabal_dom, 98.5)
     risk_lvl = "CRITICAL" if total_cabal_dom > 60 else "HIGH" if total_cabal_dom > 40 else "MODERATE"
-    
-    return {
-        "target_asset": addr,
-        "network": network_name,
-        "total_cabal_dominance": round(total_cabal_dom, 2),
-        "risk_level": risk_lvl,
-        "syndicates": sorted(cabals, key=lambda x: x["control_pct"], reverse=True),
-        "graph": {"nodes": nodes, "links": links}
-    }
+    return {"target_asset": addr, "network": network_name, "total_cabal_dominance": round(total_cabal_dom, 2), "risk_level": risk_lvl, "syndicates": sorted(cabals, key=lambda x: x["control_pct"], reverse=True), "graph": {"nodes": nodes, "links": links}}
 
 async def analyze_contract_security(addr, network_name="ARC"):
-    if addr in ENTITY_MEMORY and ("Genesis" in ENTITY_MEMORY[addr] or "Pool" in ENTITY_MEMORY[addr] or "Router" in ENTITY_MEMORY[addr]): 
-        return 99, "✅ VERIFIED SAFE"
+    if addr in ENTITY_MEMORY and ("Genesis" in ENTITY_MEMORY[addr] or "Pool" in ENTITY_MEMORY[addr] or "Router" in ENTITY_MEMORY[addr]): return 99, "✅ VERIFIED SAFE"
     chain_id = "8453" if network_name == "BASE" else "42161"
     try:
         url = f"https://api.gopluslabs.io/api/v1/token_security/{chain_id}?contract_addresses={addr}"
@@ -227,9 +190,7 @@ async def perform_manual_audit(addr, network_name):
 async def decompile_bytecode(addr, network_name):
     await asyncio.sleep(1.0)
     val = int(Web3.keccak(text=addr).hex()[-4:], 16)
-    is_proxy = val % 5 == 0
-    has_selfdestruct = val % 7 == 0
-    has_delegatecall = val % 3 == 0
+    is_proxy, has_selfdestruct, has_delegatecall = val % 5 == 0, val % 7 == 0, val % 3 == 0
     tree = {"address": addr, "size_bytes": 1024 + (val * 4), "compiler_version": "solc v0.8.20" if val % 2 == 0 else "solc v0.8.19", "nodes": [{"id": "entry", "label": "EVM Entry Point (Dispatcher)", "type": "ENTRY", "risk": "LOW", "children": []}]}
     funcs = [{"id": "f1", "label": "FUNC: transfer(address,uint256)", "type": "FUNCTION", "risk": "LOW", "children": [{"id": "op1", "label": "OP: SLOAD (Read Balance)", "type": "OPCODE", "risk": "LOW", "children": []}, {"id": "op2", "label": "OP: CALLVALUE ISZERO", "type": "OPCODE", "risk": "LOW", "children": []}]}]
     if has_delegatecall: funcs.append({"id": "f2", "label": "FUNC: executeOperation (Hidden Logic)", "type": "FUNCTION", "risk": "HIGH", "children": [{"id": "op3", "label": "OP: DELEGATECALL (State Modification)", "type": "OPCODE", "risk": "CRITICAL", "children": [{"id": "vuln1", "label": "VULN: Unrestricted DelegateCall Detected", "type": "VULNERABILITY", "risk": "CRITICAL", "children": []}]}]})
@@ -241,6 +202,24 @@ async def decompile_bytecode(addr, network_name):
     elif is_proxy: overall_risk = "WARNING"
     tree["overall_risk"] = overall_risk
     return tree
+
+def resolve_sybil_cluster(addr1, addr2):
+    global cluster_counter
+    e1, e2 = ENTITY_MEMORY.get(addr1, ""), ENTITY_MEMORY.get(addr2, "")
+    if "Pool" in e1 or "Pool" in e2 or "Genesis" in e1 or "Genesis" in e2 or "Router" in e1 or "Router" in e2: return None 
+    c1, c2 = CLUSTER_MAP.get(addr1), CLUSTER_MAP.get(addr2)
+    if c1 is None and c2 is None:
+        cluster_counter += 1
+        new_c = f"🔗 Sybil Ring #{cluster_counter}"
+        CLUSTER_MAP[addr1], CLUSTER_MAP[addr2] = new_c, new_c
+        return new_c
+    elif c1 and not c2: CLUSTER_MAP[addr2] = c1; return c1
+    elif c2 and not c1: CLUSTER_MAP[addr1] = c2; return c2
+    elif c1 and c2 and c1 != c2:
+        for k, v in CLUSTER_MAP.items():
+            if v == c2: CLUSTER_MAP[k] = c1
+        return c1
+    return c1
 
 def calculate_health_factor(user_addr):
     if user_addr not in LENDING_MEMORY: return 99.0
@@ -277,24 +256,8 @@ def calculate_twap_and_pressure(tx_hash, amount, price):
 
 async def init_db():
     async with aiosqlite.connect("asmo.db") as db:
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS transfers (
-                id INTEGER PRIMARY KEY AUTOINCREMENT, tx_hash TEXT NOT NULL, block_number INTEGER NOT NULL,
-                network TEXT NOT NULL DEFAULT 'ARC', type TEXT NOT NULL, asset TEXT NOT NULL, amount REAL NOT NULL,
-                price_usd REAL NOT NULL, from_addr TEXT NOT NULL DEFAULT '0x00', to_addr TEXT NOT NULL DEFAULT '0x00',
-                gas_used INTEGER DEFAULT 0, execution_depth INTEGER DEFAULT 1, pnl REAL DEFAULT 0.0, narrative TEXT,
-                sec_score INTEGER DEFAULT 99, sec_label TEXT DEFAULT '✅ VERIFIED SAFE', cluster TEXT, health_factor REAL DEFAULT 99.0,
-                price_impact REAL DEFAULT 0.0, spread REAL DEFAULT 0.0, agent_win_rate REAL DEFAULT 0.0, twap REAL DEFAULT 0.0,
-                twap_trend TEXT DEFAULT '🌊 Neutral Flow', mev_extracted REAL DEFAULT 0.0, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        try: await db.execute("ALTER TABLE transfers ADD COLUMN network TEXT NOT NULL DEFAULT 'ARC'")
-        except Exception: pass
+        await db.execute("""CREATE TABLE IF NOT EXISTS transfers (id INTEGER PRIMARY KEY AUTOINCREMENT, tx_hash TEXT NOT NULL, block_number INTEGER NOT NULL, network TEXT NOT NULL DEFAULT 'ARC', type TEXT NOT NULL, asset TEXT NOT NULL, amount REAL NOT NULL, price_usd REAL NOT NULL, from_addr TEXT NOT NULL DEFAULT '0x00', to_addr TEXT NOT NULL DEFAULT '0x00', gas_used INTEGER DEFAULT 0, execution_depth INTEGER DEFAULT 1, pnl REAL DEFAULT 0.0, narrative TEXT, sec_score INTEGER DEFAULT 99, sec_label TEXT DEFAULT '✅ VERIFIED SAFE', cluster TEXT, health_factor REAL DEFAULT 99.0, price_impact REAL DEFAULT 0.0, spread REAL DEFAULT 0.0, agent_win_rate REAL DEFAULT 0.0, twap REAL DEFAULT 0.0, twap_trend TEXT DEFAULT '🌊 Neutral Flow', mev_extracted REAL DEFAULT 0.0, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
         await db.execute("CREATE INDEX IF NOT EXISTS idx_transfers_id ON transfers(id DESC)")
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_transfers_network ON transfers(network)")
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_transfers_type ON transfers(type)")
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_transfers_from_addr ON transfers(from_addr)")
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_transfers_to_addr ON transfers(to_addr)")
         await db.commit()
 
 def calculate_and_update_pnl(from_addr, to_addr, asset, amount, current_price):
@@ -346,16 +309,14 @@ async def detect_cross_chain_arbitrage():
                     direction = "ARC ➔ BASE" if p_arc < p_base else "BASE ➔ ARC"
                     buy_price = min(p_arc, p_base)
                     sell_price = max(p_arc, p_base)
-                    est_profit = (sell_price - buy_price) * 50000
-                    await broadcast_alert({
-                        "msg_type": "ARBITRAGE_RADAR",
-                        "asset": "Native Volatility Asset",
-                        "route": direction,
-                        "buy_price": buy_price,
-                        "sell_price": sell_price,
-                        "spread": round(spread, 2),
-                        "est_profit": round(est_profit, 2)
-                    })
+                    est_profit = (sell_price - buy_price) * OVERLORD_STATE["max_spend"]
+                    
+                    if OVERLORD_STATE["active"] and est_profit >= OVERLORD_STATE["min_profit"]:
+                        fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                        tx_data = {"msg_type": "TRANSACTION", "network": "ARC", "type": "ARBITRAGE", "asset": "AAVE Flashloan (OVERLORD)", "amount": OVERLORD_STATE["max_spend"], "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": "0xArbitrage_Router", "from_label": "⚡ OVERLORD AUTONOMOUS AI", "to_label": "🌉 Arbitrage Router", "gas_used": 185000, "execution_depth": 3, "pnl": est_profit, "narrative": f"⚡ OVERLORD AUTO-EXECUTION | Spread: {round(spread,2)}%", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.5, "spread": round(spread,2), "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
+                        await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
+                    else:
+                        await broadcast_alert({"msg_type": "ARBITRAGE_RADAR", "asset": "Native Volatility Asset", "route": direction, "buy_price": buy_price, "sell_price": sell_price, "spread": round(spread, 2), "est_profit": round(est_profit, 2)})
         except Exception: pass
 
 async def broadcast_kill_zone():
@@ -368,26 +329,30 @@ async def broadcast_kill_zone():
                 debt = pos["debt"]
                 if debt > 0:
                     hf = (col * 0.8) / debt
-                    if 0 < hf <= 1.25:
-                        risky_wallets.append({"address": addr, "collateral": col, "debt": debt, "hf": round(hf, 3), "est_liq_profit": round(debt * 0.05, 2)})
+                    if 0 < hf <= 1.25: risky_wallets.append({"address": addr, "collateral": col, "debt": debt, "hf": round(hf, 3), "est_liq_profit": round(debt * 0.05, 2)})
             if risky_wallets:
                 risky_wallets = sorted(risky_wallets, key=lambda x: x["hf"])[:8]
                 await broadcast_alert({"msg_type": "KILL_ZONE_UPDATE", "data": risky_wallets})
 
+async def broadcast_sybil_clusters():
+    while True:
+        await asyncio.sleep(8)
+        if connected_clients and CLUSTER_MAP:
+            cluster_stats = {}
+            for addr, c_name in CLUSTER_MAP.items():
+                if c_name not in cluster_stats: cluster_stats[c_name] = {"name": c_name, "wallets": [], "total_pnl": 0.0}
+                cluster_stats[c_name]["wallets"].append(addr)
+                cluster_stats[c_name]["total_pnl"] += WALLET_PNL.get(addr, 0.0)
+            active_clusters = sorted([c for c in cluster_stats.values() if len(c["wallets"]) > 1], key=lambda x: len(x["wallets"]), reverse=True)[:10]
+            if active_clusters: await broadcast_alert({"msg_type": "SYBIL_HUNTER_UPDATE", "data": active_clusters})
+
 async def update_price_oracle():
     pyth_ws_url = "wss://hermes.pyth.network/ws"
-    msg = {
-        "type": "subscribe",
-        "price_ids": [
-            "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace", 
-            "3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5"  
-        ]
-    }
+    msg = {"type": "subscribe", "price_ids": ["ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace", "3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5"]}
     while True:
         try:
             async with websockets.connect(pyth_ws_url, ping_interval=20, ping_timeout=20) as ws:
                 await ws.send(json.dumps(msg))
-                logger.info("⚡ Pyth Network Oracle Connected (Real-Time Pricing)")
                 while True:
                     response = await ws.recv()
                     data = json.loads(response)
@@ -398,15 +363,9 @@ async def update_price_oracle():
                             raw_price = int(price_info.get("price", 0))
                             expo = int(price_info.get("expo", 0))
                             actual_price = raw_price * (10 ** expo)
-
-                            if p_id == "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace":
-                                PRICE_CACHE["DEFAULT_TOKEN"] = actual_price * 0.001 
-                            elif p_id == "3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5":
-                                PRICE_CACHE["ARC"] = actual_price
-                                PRICE_CACHE["BASE"] = actual_price * 0.8
-        except Exception as e:
-            logger.warning(f"Pyth Oracle Reconnecting... {e}")
-            await asyncio.sleep(3)
+                            if p_id == "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace": PRICE_CACHE["DEFAULT_TOKEN"] = actual_price * 0.001 
+                            elif p_id == "3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5": PRICE_CACHE["ARC"] = actual_price; PRICE_CACHE["BASE"] = actual_price * 0.8
+        except Exception: await asyncio.sleep(3)
 
 async def send_history_to_client(websocket):
     try:
@@ -422,29 +381,24 @@ async def send_history_to_client(websocket):
                 elif row["type"] == "CROSS_CHAIN": flag = "BRIDGE_ACTIVITY"
                 elif row["type"] == "LENDING": flag = "LENDING_ACTIVITY"
                 elif (row["amount"] * row["price_usd"] >= 10000): flag = "WHALE"
-                await websocket.send(json.dumps({
-                    "msg_type": "TRANSACTION", "time": row["timestamp"].split(" ")[1] if row["timestamp"] else None,
-                    "network": row["network"] if "network" in row.keys() else "ARC", "type": row["type"], "asset": row["asset"], "amount": row["amount"],
-                    "price_usd": row["price_usd"], "tx_hash": row["tx_hash"], "from_addr": row["from_addr"], "to_addr": row["to_addr"],
-                    "from_label": ENTITY_MEMORY.get(row["from_addr"]), "to_label": ENTITY_MEMORY.get(row["to_addr"]),
-                    "gas_used": row["gas_used"], "execution_depth": row["execution_depth"], "pnl": row["pnl"],
-                    "narrative": row["narrative"] if "narrative" in row.keys() else "", "sec_score": row["sec_score"] if "sec_score" in row.keys() else 99,
-                    "sec_label": row["sec_label"] if "sec_label" in row.keys() else "✅ VERIFIED SAFE", "cluster": row["cluster"] if "cluster" in row.keys() else "",
-                    "health_factor": row["health_factor"] if "health_factor" in row.keys() else 99.0, "price_impact": row["price_impact"] if "price_impact" in row.keys() else 0.0,
-                    "spread": row["spread"] if "spread" in row.keys() else 0.0, "agent_win_rate": row["agent_win_rate"] if "agent_win_rate" in row.keys() else 0.0,
-                    "twap": row["twap"] if "twap" in row.keys() else 0.0, "twap_trend": row["twap_trend"] if "twap_trend" in row.keys() else "",
-                    "mev_extracted": row["mev_extracted"] if "mev_extracted" in row.keys() else 0.0, "flag": flag, "status": "CONFIRMED"
-                }))
+                await websocket.send(json.dumps({"msg_type": "TRANSACTION", "time": row["timestamp"].split(" ")[1] if row["timestamp"] else None, "network": row["network"] if "network" in row.keys() else "ARC", "type": row["type"], "asset": row["asset"], "amount": row["amount"], "price_usd": row["price_usd"], "tx_hash": row["tx_hash"], "from_addr": row["from_addr"], "to_addr": row["to_addr"], "from_label": ENTITY_MEMORY.get(row["from_addr"]), "to_label": ENTITY_MEMORY.get(row["to_addr"]), "gas_used": row["gas_used"], "execution_depth": row["execution_depth"], "pnl": row["pnl"], "narrative": row["narrative"] if "narrative" in row.keys() else "", "sec_score": row["sec_score"] if "sec_score" in row.keys() else 99, "sec_label": row["sec_label"] if "sec_label" in row.keys() else "✅ VERIFIED SAFE", "cluster": row["cluster"] if "cluster" in row.keys() else "", "health_factor": row["health_factor"] if "health_factor" in row.keys() else 99.0, "price_impact": row["price_impact"] if "price_impact" in row.keys() else 0.0, "spread": row["spread"] if "spread" in row.keys() else 0.0, "agent_win_rate": row["agent_win_rate"] if "agent_win_rate" in row.keys() else 0.0, "twap": row["twap"] if "twap" in row.keys() else 0.0, "twap_trend": row["twap_trend"] if "twap_trend" in row.keys() else "", "mev_extracted": row["mev_extracted"] if "mev_extracted" in row.keys() else 0.0, "flag": flag, "status": "CONFIRMED"}))
     except Exception as e: logger.error(f"Error sending history: {e}")
 
 async def ws_handler(websocket):
+    global OVERLORD_STATE
     connected_clients.add(websocket)
     await send_history_to_client(websocket)
+    await websocket.send(json.dumps({"msg_type": "OVERLORD_STATUS", "data": OVERLORD_STATE}))
     try:
         async for message in websocket:
             try:
                 payload = json.loads(message)
-                if payload.get("action") == "BACKUP":
+                if payload.get("action") == "TOGGLE_OVERLORD":
+                    OVERLORD_STATE["active"] = payload["data"].get("active", False)
+                    OVERLORD_STATE["max_spend"] = payload["data"].get("max_spend", 50000.0)
+                    OVERLORD_STATE["min_profit"] = payload["data"].get("min_profit", 500.0)
+                    await broadcast_alert({"msg_type": "OVERLORD_STATUS", "data": OVERLORD_STATE})
+                elif payload.get("action") == "BACKUP":
                     async with aiosqlite.connect("asmo.db") as db:
                         db.row_factory = aiosqlite.Row
                         rows = await (await db.execute("SELECT * FROM transfers")).fetchall()
@@ -453,8 +407,7 @@ async def ws_handler(websocket):
                     records = payload.get("data", [])
                     async with aiosqlite.connect("asmo.db") as db:
                         for r in records:
-                            try:
-                                await db.execute("INSERT INTO transfers (tx_hash, block_number, network, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread, agent_win_rate, twap, twap_trend, mev_extracted, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (r.get("tx_hash"), r.get("block_number", 0), r.get("network", "ARC"), r.get("type", "NATIVE"), r.get("asset", ""), r.get("amount", 0.0), r.get("price_usd", 0.0), r.get("from_addr", ""), r.get("to_addr", ""), r.get("gas_used", 0), r.get("execution_depth", 1), r.get("pnl", 0.0), r.get("narrative", ""), r.get("sec_score", 99), r.get("sec_label", ""), r.get("cluster", ""), r.get("health_factor", 99.0), r.get("price_impact", 0.0), r.get("spread", 0.0), r.get("agent_win_rate", 0.0), r.get("twap", 0.0), r.get("twap_trend", ""), r.get("mev_extracted", 0.0), r.get("timestamp")))
+                            try: await db.execute("INSERT INTO transfers (tx_hash, block_number, network, type, asset, amount, price_usd, from_addr, to_addr, gas_used, execution_depth, pnl, narrative, sec_score, sec_label, cluster, health_factor, price_impact, spread, agent_win_rate, twap, twap_trend, mev_extracted, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (r.get("tx_hash"), r.get("block_number", 0), r.get("network", "ARC"), r.get("type", "NATIVE"), r.get("asset", ""), r.get("amount", 0.0), r.get("price_usd", 0.0), r.get("from_addr", ""), r.get("to_addr", ""), r.get("gas_used", 0), r.get("execution_depth", 1), r.get("pnl", 0.0), r.get("narrative", ""), r.get("sec_score", 99), r.get("sec_label", ""), r.get("cluster", ""), r.get("health_factor", 99.0), r.get("price_impact", 0.0), r.get("spread", 0.0), r.get("agent_win_rate", 0.0), r.get("twap", 0.0), r.get("twap_trend", ""), r.get("mev_extracted", 0.0), r.get("timestamp")))
                             except Exception: pass
                         await db.commit()
                     await send_history_to_client(websocket)
@@ -469,7 +422,7 @@ async def ws_handler(websocket):
                     await websocket.send(json.dumps({"msg_type": "CABAL_RESULT", "data": result}))
                 elif payload.get("action") == "EXECUTE_FLASHLOAN":
                     flash_data = payload.get("data", {})
-                    fake_hash = "0x" + "".join([str(int(tx.hash.hex()[-1], 16) % 9) for _ in range(64)])
+                    fake_hash = "0x" + "".join([str(int(tx.hash.hex()[-1], 16) % 9) for _ in range(64)]) if 'tx' in locals() else "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)])
                     tx_data = {"msg_type": "TRANSACTION", "network": "ARC", "type": "ARBITRAGE", "asset": "AAVE Flashloan Execution", "amount": flash_data.get("amount", 0), "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_Flashbot_Contract", "to_addr": "0xArbitrage_Router", "from_label": "🤖 A.S.M.O. Flashbot", "to_label": "🌉 Arbitrage Router", "gas_used": 185000, "execution_depth": 3, "pnl": flash_data.get("netProfit", 0), "narrative": f"⚡ Tactical Flashloan Executed | Spread: {flash_data.get('spread', 0)}%", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": flash_data.get("slippage", 0), "spread": flash_data.get("spread", 0), "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
                     await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
                 elif payload.get("action") == "START_SHADOW": SHADOW_TARGETS.add(payload.get("address"))
@@ -477,13 +430,13 @@ async def ws_handler(websocket):
                     if payload.get("address") in SHADOW_TARGETS: SHADOW_TARGETS.remove(payload.get("address"))
                 elif payload.get("action") == "EXECUTE_AUTO_EJECT":
                     hash_tgt = payload.get("tx_hash")
-                    fake_hash = "0x" + "".join([str(int(hash_tgt[-1], 16) % 9) for _ in range(64)])
-                    tx_data = {"msg_type": "TRANSACTION", "network": "BASE", "type": "DEX_SWAP", "asset": "Rescued Capital", "amount": payload.get("rescued_amount", 50000), "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_AutoEject_Shield", "to_addr": "0xSafe_Cold_Wallet", "from_label": "🛡️ A.S.M.O. Anti-Rug Shield", "to_label": "🔐 Cold Storage", "gas_used": payload.get("gas", 250) * 1000, "execution_depth": 1, "pnl": payload.get("rescued_amount", 50000), "narrative": f"🛡️ Auto-Eject Front-Run Successful! Blocked Rug: {hash_tgt[:8]}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
+                    fake_hash = "0x" + "".join([str(int(hash_tgt[-1], 16) % 9) for _ in range(64)]) if hash_tgt else "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)])
+                    tx_data = {"msg_type": "TRANSACTION", "network": "BASE", "type": "DEX_SWAP", "asset": "Rescued Capital", "amount": payload.get("rescued_amount", 50000), "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_AutoEject_Shield", "to_addr": "0xSafe_Cold_Wallet", "from_label": "🛡️ A.S.M.O. Anti-Rug Shield", "to_label": "🔐 Cold Storage", "gas_used": payload.get("gas", 250) * 1000, "execution_depth": 1, "pnl": payload.get("rescued_amount", 50000), "narrative": f"🛡️ Auto-Eject Front-Run Successful! Blocked Rug: {str(hash_tgt)[:8]}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
                     await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
                 elif payload.get("action") == "EXECUTE_SHORT_DUMP":
                     hash_tgt = payload.get("token_addr")
-                    fake_hash = "0x" + "".join([str(int(hash_tgt[-1], 16) % 9) for _ in range(64)])
-                    tx_data = {"msg_type": "TRANSACTION", "network": "BASE", "type": "DEX_SWAP", "asset": "Short Position Executed", "amount": 1.0, "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_Sniper_Contract", "to_addr": hash_tgt, "from_label": "🤖 A.S.M.O. Sniper Bot", "to_label": "📉 Short Target", "gas_used": 150000, "execution_depth": 2, "pnl": 0.0, "narrative": f"🩸 Pre-Dump Short Opened on: {hash_tgt[:8]}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "AGENT_FLOW", "status": "CONFIRMED"}
+                    fake_hash = "0x" + "".join([str(int(hash_tgt[-1], 16) % 9) for _ in range(64)]) if hash_tgt else "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)])
+                    tx_data = {"msg_type": "TRANSACTION", "network": "BASE", "type": "DEX_SWAP", "asset": "Short Position Executed", "amount": 1.0, "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_Sniper_Contract", "to_addr": hash_tgt, "from_label": "🤖 A.S.M.O. Sniper Bot", "to_label": "📉 Short Target", "gas_used": 150000, "execution_depth": 2, "pnl": 0.0, "narrative": f"🩸 Pre-Dump Short Opened on: {str(hash_tgt)[:8]}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "AGENT_FLOW", "status": "CONFIRMED"}
                     await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
             except Exception: pass
     finally:
@@ -493,9 +446,7 @@ async def broadcast_alert(data):
     if connected_clients: await asyncio.gather(*(client.send(json.dumps(data)) for client in connected_clients), return_exceptions=True)
 
 async def true_mempool_worker(wss_url, network_name, w3):
-    if not wss_url:
-        logger.warning(f"No WSS URL for {network_name}. Mempool scanning disabled.")
-        return
+    if not wss_url: return
     while True:
         try:
             async with websockets.connect(wss_url) as ws:
@@ -520,11 +471,16 @@ async def true_mempool_worker(wss_url, network_name, w3):
                             to_addr = tx.get("to", "0x00")
                             
                             if "removeLiquidity" in decoded_p["name"]:
-                                await broadcast_alert({"msg_type": "AUTO_EJECT_ALERT", "network": network_name, "tx_hash": tx_hash, "pool_addr": to_addr, "dev_addr": from_addr, "est_gas_gwei": float(Web3.from_wei(tx.get("gasPrice", 0), 'gwei')), "risk": "CRITICAL RUG PULL IMMINENT"})
+                                if OVERLORD_STATE["active"]:
+                                    fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                                    tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_SWAP", "asset": "Rescued Capital", "amount": OVERLORD_STATE["max_spend"]/current_price, "price_usd": current_price, "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": "0xSafe_Cold_Wallet", "from_label": "⚡ OVERLORD AUTONOMOUS AI", "to_label": "🔐 Cold Storage", "gas_used": float(Web3.from_wei(tx.get("gasPrice", 0), 'gwei')) * 2 * 1000, "execution_depth": 1, "pnl": OVERLORD_STATE["max_spend"], "narrative": f"🛡️ OVERLORD AUTO-EJECT | Blocked Rug: {tx_hash[:8]}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
+                                    await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
+                                else:
+                                    await broadcast_alert({"msg_type": "AUTO_EJECT_ALERT", "network": network_name, "tx_hash": tx_hash, "pool_addr": to_addr, "dev_addr": from_addr, "est_gas_gwei": float(Web3.from_wei(tx.get("gasPrice", 0), 'gwei')), "risk": "CRITICAL RUG PULL IMMINENT"})
+                                    
                             if actual_value >= 10.0 and ("unlock" in decoded_p["name"].lower() or "release" in decoded_p["name"].lower() or "claim" in decoded_p["name"].lower()):
                                 await broadcast_alert({"msg_type": "VESTING_DUMP_ALERT", "network": network_name, "tx_hash": tx_hash, "token_addr": to_addr, "dev_addr": from_addr, "usd_value": usd_volume, "status": "IMMINENT DUMP"})
-                            if actual_value >= 25.0 and decoded_p["method"] == "0x":
-                                await broadcast_alert({"msg_type": "DARK_POOL_ALERT", "network": network_name, "tx_hash": tx_hash, "from_addr": from_addr, "to_addr": to_addr, "amount": actual_value, "usd_value": usd_volume, "protocol": "Shadow OTC / Unmarked Transfer"})
+                                
                             if usd_volume >= 2500:
                                 if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = "⏳ Vanguard Entity"
                                 val = int(tx_hash[-2:], 16)
@@ -533,9 +489,7 @@ async def true_mempool_worker(wss_url, network_name, w3):
                                     await broadcast_alert({"msg_type": "SOCIAL_SENTIMENT", "network": network_name, "asset": to_addr if to_addr != "0x00" else from_addr, "hype_score": hype, "mentions": int(actual_value) % 10000 + 500, "narrative": SOCIAL_NARRATIVES[val % len(SOCIAL_NARRATIVES)], "status": "🔥 VIRAL IGNITION" if hype > 94 else "📈 TRENDING"})
                                 await broadcast_alert({"msg_type": "TRANSACTION", "network": network_name, "type": "NATIVE", "asset": network_name, "amount": actual_value, "price_usd": current_price, "tx_hash": tx_hash, "from_addr": from_addr, "to_addr": to_addr, "from_label": ENTITY_MEMORY.get(from_addr), "to_label": ENTITY_MEMORY.get(to_addr), "gas_used": 0, "execution_depth": 0, "pnl": 0.0, "narrative": "", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": simulate_price_impact(usd_volume), "spread": 0.0, "agent_win_rate": 0.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "PENDING_WHALE", "status": "PENDING", "decoded_payload": decoded_p})
                         except Exception: pass
-        except Exception as e:
-            logger.error(f"Mempool WS connection error on {network_name}: {e}. Reconnecting...")
-            await asyncio.sleep(3)
+        except Exception as e: await asyncio.sleep(3)
 
 async def scan_block(w3, network_name, block_number):
     try:
@@ -552,6 +506,7 @@ async def scan_block(w3, network_name, block_number):
                 if res and not isinstance(res, Exception): receipts.append(res)
             await asyncio.sleep(0.8) 
         receipt_map = {r.transactionHash.hex(): r for r in receipts if r}
+        
         for tx in block.transactions:
             tx_hash_str = tx.hash.hex()
             receipt = receipt_map.get(tx_hash_str)
@@ -600,11 +555,14 @@ async def scan_block(w3, network_name, block_number):
                         pair_addr = "0x" + log.data.hex()[24:64] if len(log.data.hex()) >= 64 else "0x00"
                         creator = receipt.fromAddress
                         score, label = await analyze_contract_security(token0, network_name)
-                        if score >= 80: verdict = "🟢 SNIPE (SAFE)"
-                        elif score >= 50: verdict = "🟡 CAUTION"
-                        else: verdict = "🔴 RUG PULL (AVOID)"
-                        tx_data = {"msg_type": "ZERO_BLOCK_SNIPER", "network": network_name, "token0": token0, "token1": token1, "pair": pair_addr, "creator": creator, "score": score, "label": label, "verdict": verdict}
-                        await broadcast_alert(tx_data)
+                        
+                        if OVERLORD_STATE["active"] and score >= 90:
+                            fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                            tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_SWAP", "asset": f"Snipe: {token0[:8]}", "amount": OVERLORD_STATE["max_spend"]/PRICE_CACHE.get(network_name, 1.0), "price_usd": PRICE_CACHE.get(network_name, 1.0), "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": pair_addr, "from_label": "⚡ OVERLORD AUTONOMOUS AI", "to_label": "🦄 Zero-Block Pool", "gas_used": 250000, "execution_depth": 1, "pnl": 0.0, "narrative": f"⚡ OVERLORD AUTO-SNIPE | Score: {score}", "sec_score": score, "sec_label": label, "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "AGENT_FLOW", "status": "CONFIRMED"}
+                            await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
+                        else:
+                            verdict = "🟢 SNIPE (SAFE)" if score >= 80 else "🟡 CAUTION" if score >= 50 else "🔴 RUG PULL (AVOID)"
+                            await broadcast_alert({"msg_type": "ZERO_BLOCK_SNIPER", "network": network_name, "token0": token0, "token1": token1, "pair": pair_addr, "creator": creator, "score": score, "label": label, "verdict": verdict})
                         dex_processed = True
                     except Exception: pass
                 elif topic0 in [AAVE_SUPPLY_SIG, AAVE_BORROW_SIG, AAVE_REPAY_SIG, AAVE_LIQ_SIG]:
@@ -643,8 +601,6 @@ async def scan_block(w3, network_name, block_number):
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, base_p * 5)
                         tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "CROSS_CHAIN", "asset": "Bridged Asset", "amount": 1.0, "price_usd": base_p * 5, "tx_hash": tx_hash_str, "from_addr": bridger, "to_addr": log.address, "from_label": ENTITY_MEMORY.get(bridger), "to_label": ENTITY_MEMORY.get(log.address), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": 0.0, "narrative": "↳ Cross-Chain Exit: Routing Liquidity", "sec_score": score, "sec_label": label, "cluster": "", "health_factor": calculate_health_factor(bridger), "price_impact": p_impact, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "BRIDGE_ACTIVITY", "status": "CONFIRMED", "decoded_payload": decoded_p}
                         await broadcast_alert(tx_data); await save_transfer(tx_data, block_number); dex_processed = True
-                        src = "Ethereum Mainnet" if network_name == "BASE" else "Arbitrum One"
-                        await broadcast_alert({"msg_type": "INCOMING_BRIDGE_TSUNAMI", "source": src, "destination": network_name, "asset": "Bridged Liquidity", "usd_value": (base_p * 5) * 1000, "eta_seconds": int(str(int(tx_hash_str[-2:], 16))[0]) * 10 + 20, "status": "IN TRANSIT"})
                     except Exception: pass
                 elif topic0 == CHORDSWAP_SWAP_SIG and not dex_processed:
                     try:
@@ -757,8 +713,10 @@ async def main():
     asyncio.create_task(detect_cross_chain_arbitrage())
     asyncio.create_task(broadcast_kill_zone())
     asyncio.create_task(broadcast_sybil_clusters())
+    
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC", ARC_WSS_URL))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE", BASE_WSS_URL))
+    
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
         logger.info("🌉 Multi-Chain WebSocket Bridge Active on Port 8765")
         await asyncio.Future()
