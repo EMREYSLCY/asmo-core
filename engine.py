@@ -384,6 +384,21 @@ async def send_history_to_client(websocket):
                 await websocket.send(json.dumps({"msg_type": "TRANSACTION", "time": row["timestamp"].split(" ")[1] if row["timestamp"] else None, "network": row["network"] if "network" in row.keys() else "ARC", "type": row["type"], "asset": row["asset"], "amount": row["amount"], "price_usd": row["price_usd"], "tx_hash": row["tx_hash"], "from_addr": row["from_addr"], "to_addr": row["to_addr"], "from_label": ENTITY_MEMORY.get(row["from_addr"]), "to_label": ENTITY_MEMORY.get(row["to_addr"]), "gas_used": row["gas_used"], "execution_depth": row["execution_depth"], "pnl": row["pnl"], "narrative": row["narrative"] if "narrative" in row.keys() else "", "sec_score": row["sec_score"] if "sec_score" in row.keys() else 99, "sec_label": row["sec_label"] if "sec_label" in row.keys() else "✅ VERIFIED SAFE", "cluster": row["cluster"] if "cluster" in row.keys() else "", "health_factor": row["health_factor"] if "health_factor" in row.keys() else 99.0, "price_impact": row["price_impact"] if "price_impact" in row.keys() else 0.0, "spread": row["spread"] if "spread" in row.keys() else 0.0, "agent_win_rate": row["agent_win_rate"] if "agent_win_rate" in row.keys() else 0.0, "twap": row["twap"] if "twap" in row.keys() else 0.0, "twap_trend": row["twap_trend"] if "twap_trend" in row.keys() else "", "mev_extracted": row["mev_extracted"] if "mev_extracted" in row.keys() else 0.0, "flag": flag, "status": "CONFIRMED"}))
     except Exception as e: logger.error(f"Error sending history: {e}")
 
+async def execute_bribe_optimizer(target_hash, original_gas_gwei, network_name):
+    rival_bid = original_gas_gwei * 1.3
+    optimized_bid = rival_bid + 1.5
+    cost_saved = (original_gas_gwei * 2) - optimized_bid
+    await broadcast_alert({
+        "msg_type": "GAS_WAR_ALERT",
+        "network": network_name,
+        "target_hash": target_hash,
+        "rival_bot": "0xFlashbot_" + "".join([str(random.randint(0,9)) for _ in range(4)]),
+        "rival_bid": round(rival_bid, 2),
+        "asmo_bid": round(optimized_bid, 2),
+        "saved_capital": round(cost_saved, 2),
+        "status": "OUTBID - TX SECURED"
+    })
+
 async def ws_handler(websocket):
     global OVERLORD_STATE
     connected_clients.add(websocket)
@@ -422,7 +437,7 @@ async def ws_handler(websocket):
                     await websocket.send(json.dumps({"msg_type": "CABAL_RESULT", "data": result}))
                 elif payload.get("action") == "EXECUTE_FLASHLOAN":
                     flash_data = payload.get("data", {})
-                    fake_hash = "0x" + "".join([str(int(tx.hash.hex()[-1], 16) % 9) for _ in range(64)]) if 'tx' in locals() else "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)])
+                    fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
                     tx_data = {"msg_type": "TRANSACTION", "network": "ARC", "type": "ARBITRAGE", "asset": "AAVE Flashloan Execution", "amount": flash_data.get("amount", 0), "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_Flashbot_Contract", "to_addr": "0xArbitrage_Router", "from_label": "🤖 A.S.M.O. Flashbot", "to_label": "🌉 Arbitrage Router", "gas_used": 185000, "execution_depth": 3, "pnl": flash_data.get("netProfit", 0), "narrative": f"⚡ Tactical Flashloan Executed | Spread: {flash_data.get('spread', 0)}%", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": flash_data.get("slippage", 0), "spread": flash_data.get("spread", 0), "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
                     await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
                 elif payload.get("action") == "START_SHADOW": SHADOW_TARGETS.add(payload.get("address"))
@@ -430,12 +445,13 @@ async def ws_handler(websocket):
                     if payload.get("address") in SHADOW_TARGETS: SHADOW_TARGETS.remove(payload.get("address"))
                 elif payload.get("action") == "EXECUTE_AUTO_EJECT":
                     hash_tgt = payload.get("tx_hash")
-                    fake_hash = "0x" + "".join([str(int(hash_tgt[-1], 16) % 9) for _ in range(64)]) if hash_tgt else "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)])
+                    fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                    await execute_bribe_optimizer(hash_tgt, payload.get("gas", 250)/2, "BASE")
                     tx_data = {"msg_type": "TRANSACTION", "network": "BASE", "type": "DEX_SWAP", "asset": "Rescued Capital", "amount": payload.get("rescued_amount", 50000), "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_AutoEject_Shield", "to_addr": "0xSafe_Cold_Wallet", "from_label": "🛡️ A.S.M.O. Anti-Rug Shield", "to_label": "🔐 Cold Storage", "gas_used": payload.get("gas", 250) * 1000, "execution_depth": 1, "pnl": payload.get("rescued_amount", 50000), "narrative": f"🛡️ Auto-Eject Front-Run Successful! Blocked Rug: {str(hash_tgt)[:8]}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
                     await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
                 elif payload.get("action") == "EXECUTE_SHORT_DUMP":
                     hash_tgt = payload.get("token_addr")
-                    fake_hash = "0x" + "".join([str(int(hash_tgt[-1], 16) % 9) for _ in range(64)]) if hash_tgt else "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)])
+                    fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
                     tx_data = {"msg_type": "TRANSACTION", "network": "BASE", "type": "DEX_SWAP", "asset": "Short Position Executed", "amount": 1.0, "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_Sniper_Contract", "to_addr": hash_tgt, "from_label": "🤖 A.S.M.O. Sniper Bot", "to_label": "📉 Short Target", "gas_used": 150000, "execution_depth": 2, "pnl": 0.0, "narrative": f"🩸 Pre-Dump Short Opened on: {str(hash_tgt)[:8]}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "AGENT_FLOW", "status": "CONFIRMED"}
                     await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
             except Exception: pass
@@ -471,15 +487,20 @@ async def true_mempool_worker(wss_url, network_name, w3):
                             to_addr = tx.get("to", "0x00")
                             
                             if "removeLiquidity" in decoded_p["name"]:
+                                base_gas = float(Web3.from_wei(tx.get("gasPrice", 0), 'gwei'))
                                 if OVERLORD_STATE["active"]:
+                                    await execute_bribe_optimizer(tx_hash, base_gas, network_name)
                                     fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
-                                    tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_SWAP", "asset": "Rescued Capital", "amount": OVERLORD_STATE["max_spend"]/current_price, "price_usd": current_price, "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": "0xSafe_Cold_Wallet", "from_label": "⚡ OVERLORD AUTONOMOUS AI", "to_label": "🔐 Cold Storage", "gas_used": float(Web3.from_wei(tx.get("gasPrice", 0), 'gwei')) * 2 * 1000, "execution_depth": 1, "pnl": OVERLORD_STATE["max_spend"], "narrative": f"🛡️ OVERLORD AUTO-EJECT | Blocked Rug: {tx_hash[:8]}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
+                                    tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_SWAP", "asset": "Rescued Capital", "amount": OVERLORD_STATE["max_spend"]/current_price, "price_usd": current_price, "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": "0xSafe_Cold_Wallet", "from_label": "⚡ OVERLORD AUTONOMOUS AI", "to_label": "🔐 Cold Storage", "gas_used": base_gas * 2 * 1000, "execution_depth": 1, "pnl": OVERLORD_STATE["max_spend"], "narrative": f"🛡️ OVERLORD AUTO-EJECT | Blocked Rug: {tx_hash[:8]}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
                                     await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
                                 else:
-                                    await broadcast_alert({"msg_type": "AUTO_EJECT_ALERT", "network": network_name, "tx_hash": tx_hash, "pool_addr": to_addr, "dev_addr": from_addr, "est_gas_gwei": float(Web3.from_wei(tx.get("gasPrice", 0), 'gwei')), "risk": "CRITICAL RUG PULL IMMINENT"})
+                                    await broadcast_alert({"msg_type": "AUTO_EJECT_ALERT", "network": network_name, "tx_hash": tx_hash, "pool_addr": to_addr, "dev_addr": from_addr, "est_gas_gwei": base_gas, "risk": "CRITICAL RUG PULL IMMINENT"})
                                     
                             if actual_value >= 10.0 and ("unlock" in decoded_p["name"].lower() or "release" in decoded_p["name"].lower() or "claim" in decoded_p["name"].lower()):
                                 await broadcast_alert({"msg_type": "VESTING_DUMP_ALERT", "network": network_name, "tx_hash": tx_hash, "token_addr": to_addr, "dev_addr": from_addr, "usd_value": usd_volume, "status": "IMMINENT DUMP"})
+                                
+                            if actual_value >= 25.0 and decoded_p["method"] == "0x":
+                                await broadcast_alert({"msg_type": "DARK_POOL_ALERT", "network": network_name, "tx_hash": tx_hash, "from_addr": from_addr, "to_addr": to_addr, "amount": actual_value, "usd_value": usd_volume, "protocol": "Shadow OTC / Unmarked Transfer"})
                                 
                             if usd_volume >= 2500:
                                 if from_addr not in ENTITY_MEMORY: ENTITY_MEMORY[from_addr] = "⏳ Vanguard Entity"
@@ -557,6 +578,7 @@ async def scan_block(w3, network_name, block_number):
                         score, label = await analyze_contract_security(token0, network_name)
                         
                         if OVERLORD_STATE["active"] and score >= 90:
+                            await execute_bribe_optimizer(tx_hash_str, 35.0, network_name)
                             fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
                             tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_SWAP", "asset": f"Snipe: {token0[:8]}", "amount": OVERLORD_STATE["max_spend"]/PRICE_CACHE.get(network_name, 1.0), "price_usd": PRICE_CACHE.get(network_name, 1.0), "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": pair_addr, "from_label": "⚡ OVERLORD AUTONOMOUS AI", "to_label": "🦄 Zero-Block Pool", "gas_used": 250000, "execution_depth": 1, "pnl": 0.0, "narrative": f"⚡ OVERLORD AUTO-SNIPE | Score: {score}", "sec_score": score, "sec_label": label, "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "AGENT_FLOW", "status": "CONFIRMED"}
                             await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
@@ -601,6 +623,8 @@ async def scan_block(w3, network_name, block_number):
                         twap_val, twap_trend = calculate_twap_and_pressure(tx_hash_str, 1.0, base_p * 5)
                         tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "CROSS_CHAIN", "asset": "Bridged Asset", "amount": 1.0, "price_usd": base_p * 5, "tx_hash": tx_hash_str, "from_addr": bridger, "to_addr": log.address, "from_label": ENTITY_MEMORY.get(bridger), "to_label": ENTITY_MEMORY.get(log.address), "gas_used": gas_used, "execution_depth": exec_depth, "pnl": 0.0, "narrative": "↳ Cross-Chain Exit: Routing Liquidity", "sec_score": score, "sec_label": label, "cluster": "", "health_factor": calculate_health_factor(bridger), "price_impact": p_impact, "spread": 0.0, "agent_win_rate": wr, "twap": twap_val, "twap_trend": twap_trend, "mev_extracted": 0.0, "flag": "BRIDGE_ACTIVITY", "status": "CONFIRMED", "decoded_payload": decoded_p}
                         await broadcast_alert(tx_data); await save_transfer(tx_data, block_number); dex_processed = True
+                        src = "Ethereum Mainnet" if network_name == "BASE" else "Arbitrum One"
+                        await broadcast_alert({"msg_type": "INCOMING_BRIDGE_TSUNAMI", "source": src, "destination": network_name, "asset": "Bridged Liquidity", "usd_value": (base_p * 5) * 1000, "eta_seconds": int(str(int(tx_hash_str[-2:], 16))[0]) * 10 + 20, "status": "IN TRANSIT"})
                     except Exception: pass
                 elif topic0 == CHORDSWAP_SWAP_SIG and not dex_processed:
                     try:
@@ -713,10 +737,8 @@ async def main():
     asyncio.create_task(detect_cross_chain_arbitrage())
     asyncio.create_task(broadcast_kill_zone())
     asyncio.create_task(broadcast_sybil_clusters())
-    
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC", ARC_WSS_URL))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE", BASE_WSS_URL))
-    
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
         logger.info("🌉 Multi-Chain WebSocket Bridge Active on Port 8765")
         await asyncio.Future()
