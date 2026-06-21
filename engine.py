@@ -312,9 +312,15 @@ async def detect_cross_chain_arbitrage():
                     est_profit = (sell_price - buy_price) * OVERLORD_STATE["max_spend"]
                     
                     if OVERLORD_STATE["active"] and est_profit >= OVERLORD_STATE["min_profit"]:
-                        fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
-                        tx_data = {"msg_type": "TRANSACTION", "network": "ARC", "type": "ARBITRAGE", "asset": "AAVE Flashloan (OVERLORD)", "amount": OVERLORD_STATE["max_spend"], "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": "0xArbitrage_Router", "from_label": "⚡ OVERLORD AUTONOMOUS AI", "to_label": "🌉 Arbitrage Router", "gas_used": 185000, "execution_depth": 3, "pnl": est_profit, "narrative": f"⚡ OVERLORD AUTO-EXECUTION | Spread: {round(spread,2)}%", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.5, "spread": round(spread,2), "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
-                        await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
+                        src_chain = direction.split(" ➔ ")[0]
+                        dst_chain = direction.split(" ➔ ")[1]
+                        fake_hash_src = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                        tx_data_src = {"msg_type": "TRANSACTION", "network": src_chain, "type": "CROSS_CHAIN", "asset": "Flashloan & Bridge (OVERLORD)", "amount": OVERLORD_STATE["max_spend"], "price_usd": 1.0, "tx_hash": fake_hash_src, "from_addr": "0xASMO_Interchain_Core", "to_addr": "0xStargate_Router", "from_label": "⚛️ OVERLORD ATOMIC ROUTER", "to_label": "🌉 L0 Bridge", "gas_used": 350000, "execution_depth": 4, "pnl": 0.0, "narrative": f"⚛️ ATOMIC HOP: {src_chain} -> {dst_chain}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "BRIDGE_ACTIVITY", "status": "CONFIRMED"}
+                        await broadcast_alert(tx_data_src); await save_transfer(tx_data_src, 99999999)
+                        await asyncio.sleep(0.8)
+                        fake_hash_dst = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                        tx_data_dst = {"msg_type": "TRANSACTION", "network": dst_chain, "type": "ARBITRAGE", "asset": "Atomic Arbitrage Exec", "amount": OVERLORD_STATE["max_spend"], "price_usd": 1.0, "tx_hash": fake_hash_dst, "from_addr": "0xStargate_Router", "to_addr": "0xASMO_Interchain_Core", "from_label": "🌉 L0 Bridge", "to_label": "⚛️ OVERLORD ATOMIC ROUTER", "gas_used": 210000, "execution_depth": 3, "pnl": est_profit, "narrative": f"⚡ ATOMIC PROFIT SECURED | Spread: +{round(spread, 2)}%", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": round(spread, 2), "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
+                        await broadcast_alert(tx_data_dst); await save_transfer(tx_data_dst, 99999999)
                     else:
                         await broadcast_alert({"msg_type": "ARBITRAGE_RADAR", "asset": "Native Volatility Asset", "route": direction, "buy_price": buy_price, "sell_price": sell_price, "spread": round(spread, 2), "est_profit": round(est_profit, 2)})
         except Exception: pass
@@ -388,16 +394,7 @@ async def execute_bribe_optimizer(target_hash, original_gas_gwei, network_name):
     rival_bid = original_gas_gwei * 1.3
     optimized_bid = rival_bid + 1.5
     cost_saved = (original_gas_gwei * 2) - optimized_bid
-    await broadcast_alert({
-        "msg_type": "GAS_WAR_ALERT",
-        "network": network_name,
-        "target_hash": target_hash,
-        "rival_bot": "0xFlashbot_" + "".join([str(random.randint(0,9)) for _ in range(4)]),
-        "rival_bid": round(rival_bid, 2),
-        "asmo_bid": round(optimized_bid, 2),
-        "saved_capital": round(cost_saved, 2),
-        "status": "OUTBID - TX SECURED"
-    })
+    await broadcast_alert({"msg_type": "GAS_WAR_ALERT", "network": network_name, "target_hash": target_hash, "rival_bot": "0xFlashbot_" + "".join([str(random.randint(0,9)) for _ in range(4)]), "rival_bid": round(rival_bid, 2), "asmo_bid": round(optimized_bid, 2), "saved_capital": round(cost_saved, 2), "status": "OUTBID - TX SECURED"})
 
 async def ws_handler(websocket):
     global OVERLORD_STATE
@@ -435,11 +432,19 @@ async def ws_handler(websocket):
                 elif payload.get("action") == "CABAL_SCAN":
                     result = await perform_cabal_scan(payload.get("address"), payload.get("network", "ARC"))
                     await websocket.send(json.dumps({"msg_type": "CABAL_RESULT", "data": result}))
-                elif payload.get("action") == "EXECUTE_FLASHLOAN":
-                    flash_data = payload.get("data", {})
-                    fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
-                    tx_data = {"msg_type": "TRANSACTION", "network": "ARC", "type": "ARBITRAGE", "asset": "AAVE Flashloan Execution", "amount": flash_data.get("amount", 0), "price_usd": 1.0, "tx_hash": fake_hash, "from_addr": "0xASMO_Flashbot_Contract", "to_addr": "0xArbitrage_Router", "from_label": "🤖 A.S.M.O. Flashbot", "to_label": "🌉 Arbitrage Router", "gas_used": 185000, "execution_depth": 3, "pnl": flash_data.get("netProfit", 0), "narrative": f"⚡ Tactical Flashloan Executed | Spread: {flash_data.get('spread', 0)}%", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": flash_data.get("slippage", 0), "spread": flash_data.get("spread", 0), "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
-                    await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
+                elif payload.get("action") == "EXECUTE_ATOMIC_ARB":
+                    arb_data = payload.get("data", {})
+                    src_chain = arb_data.get("route", "ARC ➔ BASE").split(" ➔ ")[0]
+                    dst_chain = arb_data.get("route", "ARC ➔ BASE").split(" ➔ ")[1]
+                    amt = arb_data.get("amount", 50000)
+                    profit = arb_data.get("netProfit", 0)
+                    fake_hash_src = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                    tx_data_src = {"msg_type": "TRANSACTION", "network": src_chain, "type": "CROSS_CHAIN", "asset": "Flashloan & Bridge", "amount": amt, "price_usd": 1.0, "tx_hash": fake_hash_src, "from_addr": "0xASMO_Interchain_Core", "to_addr": "0xStargate_Router", "from_label": "⚛️ ASMO ATOMIC ROUTER", "to_label": "🌉 L0 Bridge", "gas_used": 350000, "execution_depth": 4, "pnl": 0.0, "narrative": f"⚛️ ATOMIC HOP: {src_chain} -> {dst_chain}", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "BRIDGE_ACTIVITY", "status": "CONFIRMED"}
+                    await broadcast_alert(tx_data_src); await save_transfer(tx_data_src, 99999999)
+                    await asyncio.sleep(0.8)
+                    fake_hash_dst = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                    tx_data_dst = {"msg_type": "TRANSACTION", "network": dst_chain, "type": "ARBITRAGE", "asset": "Atomic Arbitrage Exec", "amount": amt, "price_usd": 1.0, "tx_hash": fake_hash_dst, "from_addr": "0xStargate_Router", "to_addr": "0xASMO_Interchain_Core", "from_label": "🌉 L0 Bridge", "to_label": "⚛️ ASMO ATOMIC ROUTER", "gas_used": 210000, "execution_depth": 3, "pnl": profit, "narrative": f"⚡ ATOMIC PROFIT SECURED | Spread: +{arb_data.get('spread', 0)}%", "sec_score": 99, "sec_label": "✅ VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": arb_data.get('spread', 0), "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
+                    await broadcast_alert(tx_data_dst); await save_transfer(tx_data_dst, 99999999)
                 elif payload.get("action") == "START_SHADOW": SHADOW_TARGETS.add(payload.get("address"))
                 elif payload.get("action") == "STOP_SHADOW": 
                     if payload.get("address") in SHADOW_TARGETS: SHADOW_TARGETS.remove(payload.get("address"))
