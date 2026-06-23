@@ -305,6 +305,55 @@ async def save_transfer(tx_data, block_number):
             await db.commit()
     except Exception as e: logger.error(f"Failed to save transfer: {e}")
 
+async def detect_cross_chain_arbitrage():
+    while True:
+        await asyncio.sleep(6)
+        try:
+            p_arc = PRICE_CACHE.get("ARC", 1.0)
+            p_base = PRICE_CACHE.get("BASE", 1.0)
+            if p_arc > 0 and p_base > 0:
+                spread = abs(p_arc - p_base) / min(p_arc, p_base) * 100
+                if spread >= 1.5:
+                    direction = "ARC -> BASE" if p_arc < p_base else "BASE -> ARC"
+                    buy_price = min(p_arc, p_base)
+                    sell_price = max(p_arc, p_base)
+                    est_profit = (sell_price - buy_price) * OVERLORD_STATE["max_spend"]
+                    if OVERLORD_STATE["active"] and est_profit >= OVERLORD_STATE["min_profit"]:
+                        src_chain = direction.split(" -> ")[0]
+                        dst_chain = direction.split(" -> ")[1]
+                        fake_hash_src = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                        tx_data_src = {"msg_type": "TRANSACTION", "network": src_chain, "type": "CROSS_CHAIN", "asset": "Flashloan & Bridge (OVERLORD)", "amount": OVERLORD_STATE["max_spend"], "price_usd": 1.0, "tx_hash": fake_hash_src, "from_addr": "0xASMO_Interchain_Core", "to_addr": "0xStargate_Router", "from_label": "OVERLORD ATOMIC ROUTER", "to_label": "L0 Bridge", "gas_used": 350000, "execution_depth": 4, "pnl": 0.0, "narrative": f"ATOMIC HOP: {src_chain} -> {dst_chain}", "sec_score": 99, "sec_label": "VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "BRIDGE_ACTIVITY", "status": "CONFIRMED"}
+                        await broadcast_alert(tx_data_src); await save_transfer(tx_data_src, 99999999)
+                        await asyncio.sleep(0.8)
+                        fake_hash_dst = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                        tx_data_dst = {"msg_type": "TRANSACTION", "network": dst_chain, "type": "ARBITRAGE", "asset": "Atomic Arbitrage Exec", "amount": OVERLORD_STATE["max_spend"], "price_usd": 1.0, "tx_hash": fake_hash_dst, "from_addr": "0xStargate_Router", "to_addr": "0xASMO_Interchain_Core", "from_label": "L0 Bridge", "to_label": "OVERLORD ATOMIC ROUTER", "gas_used": 210000, "execution_depth": 3, "pnl": est_profit, "narrative": f"ATOMIC PROFIT SECURED | Spread: +{round(spread, 2)}%", "sec_score": 99, "sec_label": "VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": round(spread, 2), "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
+                        await broadcast_alert(tx_data_dst); await save_transfer(tx_data_dst, 99999999)
+                    else:
+                        await broadcast_alert({"msg_type": "ARBITRAGE_RADAR", "asset": "Native Volatility Asset", "route": direction, "buy_price": buy_price, "sell_price": sell_price, "spread": round(spread, 2), "est_profit": round(est_profit, 2)})
+        except Exception: pass
+
+async def detect_incoming_bridge_tsunami():
+    sources = ["Ethereum Mainnet", "Optimism L2", "Arbitrum One", "Polygon", "Avalanche"]
+    destinations = ["BASE", "ARC"]
+    assets = ["USDC", "ETH", "wBTC", "USDT"]
+    while True:
+        await asyncio.sleep(random.randint(12, 18))
+        if connected_clients:
+            src = random.choice(sources)
+            dst = random.choice(destinations)
+            ast = random.choice(assets)
+            val = random.uniform(500000, 5000000)
+            eta = random.randint(30, 180) 
+            await broadcast_alert({"msg_type": "INCOMING_BRIDGE_TSUNAMI", "source": src, "destination": dst, "asset": ast, "usd_value": val, "eta_seconds": eta, "status": "IN TRANSIT"})
+
+async def detect_vesting_dumps():
+    assets = ["0xAI_Protocol_Token", "0xGameFi_Governance", "0xDeFi_Yield_Token", "0xLayer2_Native_Coin"]
+    while True:
+        await asyncio.sleep(random.randint(20, 45))
+        if connected_clients:
+            val = random.uniform(250000, 3500000)
+            await broadcast_alert({"msg_type": "VESTING_DUMP_ALERT", "network": random.choice(["ARC", "BASE"]), "tx_hash": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)]), "token_addr": random.choice(assets), "dev_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]), "usd_value": val, "status": "IMMINENT DUMP"})
+
 async def broadcast_leaderboard():
     while True:
         await asyncio.sleep(5)
@@ -732,6 +781,8 @@ async def main():
     asyncio.create_task(detect_cross_chain_arbitrage())
     asyncio.create_task(broadcast_kill_zone())
     asyncio.create_task(broadcast_sybil_clusters())
+    asyncio.create_task(detect_incoming_bridge_tsunami())
+    asyncio.create_task(detect_vesting_dumps())
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC", ARC_WSS_URL))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE", BASE_WSS_URL))
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
