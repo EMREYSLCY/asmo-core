@@ -45,7 +45,7 @@ WALLET_MEMORY = {}
 WALLET_PNL = {}
 LENDING_MEMORY = {}
 AGENT_PERFORMANCE = {}
-ENTITY_MEMORY = {"0x0000000000000000000000000000000000000000": "🏦 Genesis / Burn"}
+ENTITY_MEMORY = {"0x0000000000000000000000000000000000000000": "Genesis / Burn"}
 CLUSTER_MAP = {}
 SHADOW_TARGETS = set()
 cluster_counter = 0
@@ -103,7 +103,6 @@ async def process_oracle_query(payload, websocket):
     query = payload.get("query", "")
     target = payload.get("target", "GLOBAL_STATE")
     await asyncio.sleep(1.5)
-    
     mock_responses = [
         f"ANALYSIS SECURED: Target {target} exhibits non-standard EIP-20 proxy structures. Ownership renunciation is falsified. Risk index elevated.",
         f"BYTECODE TRACE: Deep execution path for {target} indicates a dormant delegatecall payload. Potential honeypot triggers detected at block + 1400.",
@@ -111,20 +110,10 @@ async def process_oracle_query(payload, websocket):
         f"ORACLE RESPONSE: Your query regarding '{query}' reveals a clustering of 14 Sybil nodes routing initial funding through Tornado Cash to {target}.",
         f"SYSTEM DIRECTIVE: The smart contract at {target} possesses a hardcoded fee modifier. Liquidity withdrawal limits are bypassed by the deployer address."
     ]
-    
     response = random.choice(mock_responses)
     if "rug" in query.lower() or "scam" in query.lower():
         response = f"CRITICAL OVERRIDE: Forensic scan of {target} confirms malicious removeLiquidity hooks. Probability of rug-pull exceeds 98.7%."
-        
-    await websocket.send(json.dumps({
-        "msg_type": "ORACLE_RESPONSE",
-        "data": {
-            "query": query,
-            "response": response,
-            "target": target,
-            "confidence": round(random.uniform(85.5, 99.9), 2)
-        }
-    }))
+    await websocket.send(json.dumps({"msg_type": "ORACLE_RESPONSE", "data": {"query": query, "response": response, "target": target, "confidence": round(random.uniform(85.5, 99.9), 2)}}))
 
 async def perform_cabal_scan(addr, network_name):
     await asyncio.sleep(2.0)
@@ -323,33 +312,6 @@ async def broadcast_leaderboard():
             top_wallets = sorted([{"addr": k, "pnl": v, "label": ENTITY_MEMORY.get(k, "")} for k, v in WALLET_PNL.items() if v > 0 and "Agent" not in ENTITY_MEMORY.get(k, "")], key=lambda x: x["pnl"], reverse=True)[:5]
             top_agents = sorted([{"addr": k, "pnl": v["net_pnl"], "wr": round((v["wins"]/v["total"]*100) if v["total"]>0 else 0, 1), "label": ENTITY_MEMORY.get(k, "Autonomous Agent")} for k, v in AGENT_PERFORMANCE.items() if v["net_pnl"] > 0], key=lambda x: x["pnl"], reverse=True)[:5]
             await asyncio.gather(*(client.send(json.dumps({"msg_type": "LEADERBOARD_UPDATE", "wallets": top_wallets, "agents": top_agents})) for client in connected_clients), return_exceptions=True)
-
-async def detect_cross_chain_arbitrage():
-    while True:
-        await asyncio.sleep(6)
-        try:
-            p_arc = PRICE_CACHE.get("ARC", 1.0)
-            p_base = PRICE_CACHE.get("BASE", 1.0)
-            if p_arc > 0 and p_base > 0:
-                spread = abs(p_arc - p_base) / min(p_arc, p_base) * 100
-                if spread >= 1.5:
-                    direction = "ARC -> BASE" if p_arc < p_base else "BASE -> ARC"
-                    buy_price = min(p_arc, p_base)
-                    sell_price = max(p_arc, p_base)
-                    est_profit = (sell_price - buy_price) * OVERLORD_STATE["max_spend"]
-                    if OVERLORD_STATE["active"] and est_profit >= OVERLORD_STATE["min_profit"]:
-                        src_chain = direction.split(" -> ")[0]
-                        dst_chain = direction.split(" -> ")[1]
-                        fake_hash_src = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
-                        tx_data_src = {"msg_type": "TRANSACTION", "network": src_chain, "type": "CROSS_CHAIN", "asset": "Flashloan & Bridge (OVERLORD)", "amount": OVERLORD_STATE["max_spend"], "price_usd": 1.0, "tx_hash": fake_hash_src, "from_addr": "0xASMO_Interchain_Core", "to_addr": "0xStargate_Router", "from_label": "OVERLORD ATOMIC ROUTER", "to_label": "L0 Bridge", "gas_used": 350000, "execution_depth": 4, "pnl": 0.0, "narrative": f"ATOMIC HOP: {src_chain} -> {dst_chain}", "sec_score": 99, "sec_label": "VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "BRIDGE_ACTIVITY", "status": "CONFIRMED"}
-                        await broadcast_alert(tx_data_src); await save_transfer(tx_data_src, 99999999)
-                        await asyncio.sleep(0.8)
-                        fake_hash_dst = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
-                        tx_data_dst = {"msg_type": "TRANSACTION", "network": dst_chain, "type": "ARBITRAGE", "asset": "Atomic Arbitrage Exec", "amount": OVERLORD_STATE["max_spend"], "price_usd": 1.0, "tx_hash": fake_hash_dst, "from_addr": "0xStargate_Router", "to_addr": "0xASMO_Interchain_Core", "from_label": "L0 Bridge", "to_label": "OVERLORD ATOMIC ROUTER", "gas_used": 210000, "execution_depth": 3, "pnl": est_profit, "narrative": f"ATOMIC PROFIT SECURED | Spread: +{round(spread, 2)}%", "sec_score": 99, "sec_label": "VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": round(spread, 2), "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
-                        await broadcast_alert(tx_data_dst); await save_transfer(tx_data_dst, 99999999)
-                    else:
-                        await broadcast_alert({"msg_type": "ARBITRAGE_RADAR", "asset": "Native Volatility Asset", "route": direction, "buy_price": buy_price, "sell_price": sell_price, "spread": round(spread, 2), "est_profit": round(est_profit, 2)})
-        except Exception: pass
 
 async def broadcast_kill_zone():
     while True:
