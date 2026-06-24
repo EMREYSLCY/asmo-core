@@ -57,6 +57,8 @@ OVERLORD_STATE = {
     "min_profit": 500.0
 }
 
+OVERLORD_STRATEGY = []
+
 AI_TASKS = [
     "Dataset Analysis & Classification", "Smart Contract Security Scan", 
     "Cross-Chain Liquidity Optimization", "Predictive Price Modeling", 
@@ -305,6 +307,14 @@ async def save_transfer(tx_data, block_number):
             await db.commit()
     except Exception as e: logger.error(f"Failed to save transfer: {e}")
 
+async def broadcast_leaderboard():
+    while True:
+        await asyncio.sleep(5)
+        if connected_clients:
+            top_wallets = sorted([{"addr": k, "pnl": v, "label": ENTITY_MEMORY.get(k, "")} for k, v in WALLET_PNL.items() if v > 0 and "Agent" not in ENTITY_MEMORY.get(k, "")], key=lambda x: x["pnl"], reverse=True)[:5]
+            top_agents = sorted([{"addr": k, "pnl": v["net_pnl"], "wr": round((v["wins"]/v["total"]*100) if v["total"]>0 else 0, 1), "label": ENTITY_MEMORY.get(k, "Autonomous Agent")} for k, v in AGENT_PERFORMANCE.items() if v["net_pnl"] > 0], key=lambda x: x["pnl"], reverse=True)[:5]
+            await asyncio.gather(*(client.send(json.dumps({"msg_type": "LEADERBOARD_UPDATE", "wallets": top_wallets, "agents": top_agents})) for client in connected_clients), return_exceptions=True)
+
 async def detect_cross_chain_arbitrage():
     while True:
         await asyncio.sleep(6)
@@ -332,36 +342,6 @@ async def detect_cross_chain_arbitrage():
                         await broadcast_alert({"msg_type": "ARBITRAGE_RADAR", "asset": "Native Volatility Asset", "route": direction, "buy_price": buy_price, "sell_price": sell_price, "spread": round(spread, 2), "est_profit": round(est_profit, 2)})
         except Exception: pass
 
-async def detect_incoming_bridge_tsunami():
-    sources = ["Ethereum Mainnet", "Optimism L2", "Arbitrum One", "Polygon", "Avalanche"]
-    destinations = ["BASE", "ARC"]
-    assets = ["USDC", "ETH", "wBTC", "USDT"]
-    while True:
-        await asyncio.sleep(random.randint(12, 18))
-        if connected_clients:
-            src = random.choice(sources)
-            dst = random.choice(destinations)
-            ast = random.choice(assets)
-            val = random.uniform(500000, 5000000)
-            eta = random.randint(30, 180) 
-            await broadcast_alert({"msg_type": "INCOMING_BRIDGE_TSUNAMI", "source": src, "destination": dst, "asset": ast, "usd_value": val, "eta_seconds": eta, "status": "IN TRANSIT"})
-
-async def detect_vesting_dumps():
-    assets = ["0xAI_Protocol_Token", "0xGameFi_Governance", "0xDeFi_Yield_Token", "0xLayer2_Native_Coin"]
-    while True:
-        await asyncio.sleep(random.randint(20, 45))
-        if connected_clients:
-            val = random.uniform(250000, 3500000)
-            await broadcast_alert({"msg_type": "VESTING_DUMP_ALERT", "network": random.choice(["ARC", "BASE"]), "tx_hash": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)]), "token_addr": random.choice(assets), "dev_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]), "usd_value": val, "status": "IMMINENT DUMP"})
-
-async def broadcast_leaderboard():
-    while True:
-        await asyncio.sleep(5)
-        if connected_clients:
-            top_wallets = sorted([{"addr": k, "pnl": v, "label": ENTITY_MEMORY.get(k, "")} for k, v in WALLET_PNL.items() if v > 0 and "Agent" not in ENTITY_MEMORY.get(k, "")], key=lambda x: x["pnl"], reverse=True)[:5]
-            top_agents = sorted([{"addr": k, "pnl": v["net_pnl"], "wr": round((v["wins"]/v["total"]*100) if v["total"]>0 else 0, 1), "label": ENTITY_MEMORY.get(k, "Autonomous Agent")} for k, v in AGENT_PERFORMANCE.items() if v["net_pnl"] > 0], key=lambda x: x["pnl"], reverse=True)[:5]
-            await asyncio.gather(*(client.send(json.dumps({"msg_type": "LEADERBOARD_UPDATE", "wallets": top_wallets, "agents": top_agents})) for client in connected_clients), return_exceptions=True)
-
 async def broadcast_kill_zone():
     while True:
         await asyncio.sleep(3)
@@ -388,6 +368,28 @@ async def broadcast_sybil_clusters():
                 cluster_stats[c_name]["total_pnl"] += WALLET_PNL.get(addr, 0.0)
             active_clusters = sorted([c for c in cluster_stats.values() if len(c["wallets"]) > 1], key=lambda x: len(x["wallets"]), reverse=True)[:10]
             if active_clusters: await broadcast_alert({"msg_type": "SYBIL_HUNTER_UPDATE", "data": active_clusters})
+
+async def detect_incoming_bridge_tsunami():
+    sources = ["Ethereum Mainnet", "Optimism L2", "Arbitrum One", "Polygon", "Avalanche"]
+    destinations = ["BASE", "ARC"]
+    assets = ["USDC", "ETH", "wBTC", "USDT"]
+    while True:
+        await asyncio.sleep(random.randint(12, 18))
+        if connected_clients:
+            src = random.choice(sources)
+            dst = random.choice(destinations)
+            ast = random.choice(assets)
+            val = random.uniform(500000, 5000000)
+            eta = random.randint(30, 180) 
+            await broadcast_alert({"msg_type": "INCOMING_BRIDGE_TSUNAMI", "source": src, "destination": dst, "asset": ast, "usd_value": val, "eta_seconds": eta, "status": "IN TRANSIT"})
+
+async def detect_vesting_dumps():
+    assets = ["0xAI_Protocol_Token", "0xGameFi_Governance", "0xDeFi_Yield_Token", "0xLayer2_Native_Coin"]
+    while True:
+        await asyncio.sleep(random.randint(20, 45))
+        if connected_clients:
+            val = random.uniform(250000, 3500000)
+            await broadcast_alert({"msg_type": "VESTING_DUMP_ALERT", "network": random.choice(["ARC", "BASE"]), "tx_hash": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)]), "token_addr": random.choice(assets), "dev_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]), "usd_value": val, "status": "IMMINENT DUMP"})
 
 async def update_price_oracle():
     pyth_ws_url = "wss://hermes.pyth.network/ws"
@@ -435,20 +437,25 @@ async def execute_bribe_optimizer(target_hash, original_gas_gwei, network_name):
 
 async def ws_handler(websocket):
     global OVERLORD_STATE
+    global OVERLORD_STRATEGY
     connected_clients.add(websocket)
     await send_history_to_client(websocket)
-    await websocket.send(json.dumps({"msg_type": "OVERLORD_STATUS", "data": OVERLORD_STATE}))
+    await websocket.send(json.dumps({"msg_type": "OVERLORD_STATUS", "data": {"state": OVERLORD_STATE, "strategy": OVERLORD_STRATEGY}}))
     try:
         async for message in websocket:
             try:
                 payload = json.loads(message)
                 if payload.get("action") == "ORACLE_QUERY":
                     await process_oracle_query(payload, websocket)
+                elif payload.get("action") == "SAVE_STRATEGY":
+                    OVERLORD_STRATEGY.clear()
+                    OVERLORD_STRATEGY.extend(payload.get("data", []))
+                    await broadcast_alert({"msg_type": "OVERLORD_STATUS", "data": {"state": OVERLORD_STATE, "strategy": OVERLORD_STRATEGY}})
                 elif payload.get("action") == "TOGGLE_OVERLORD":
                     OVERLORD_STATE["active"] = payload["data"].get("active", False)
                     OVERLORD_STATE["max_spend"] = payload["data"].get("max_spend", 50000.0)
                     OVERLORD_STATE["min_profit"] = payload["data"].get("min_profit", 500.0)
-                    await broadcast_alert({"msg_type": "OVERLORD_STATUS", "data": OVERLORD_STATE})
+                    await broadcast_alert({"msg_type": "OVERLORD_STATUS", "data": {"state": OVERLORD_STATE, "strategy": OVERLORD_STRATEGY}})
                 elif payload.get("action") == "BACKUP":
                     async with aiosqlite.connect("asmo.db") as db:
                         db.row_factory = aiosqlite.Row
@@ -501,9 +508,6 @@ async def ws_handler(websocket):
             except Exception: pass
     finally:
         connected_clients.remove(websocket)
-
-async def broadcast_alert(data):
-    if connected_clients: await asyncio.gather(*(client.send(json.dumps(data)) for client in connected_clients), return_exceptions=True)
 
 async def true_mempool_worker(wss_url, network_name, w3):
     if not wss_url: return
