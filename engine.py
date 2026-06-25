@@ -101,6 +101,42 @@ def decipher_payload(input_data):
     name, risk = SIG_DB.get(method_id, ("UNKNOWN_CUSTOM_METHOD", "MEDIUM"))
     return {"method": method_id, "name": name, "risk": risk, "raw_length": len(input_data)}
 
+async def run_chronos_simulation(websocket, payload):
+    target = payload.get("target", "0x0000000000000000000000000000000000000000")
+    block_num = payload.get("block", "14300000")
+    
+    await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "INIT", "desc": f"Establishing temporal link to Block #{block_num}...", "color": "#0ea5e9"}}))
+    await asyncio.sleep(1.5)
+    
+    await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "SYNC", "desc": f"State matrix synchronized. Asset {target[:8]} isolated in historical mempool.", "color": "#3fb950"}}))
+    await asyncio.sleep(2.0)
+    
+    sim_type = random.choice(["RUG_PULL", "FLASHLOAN", "VESTING_DUMP"])
+    
+    if sim_type == "RUG_PULL":
+        await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "THREAT", "desc": f"CRITICAL: Dev wallet submitted removeLiquidity() transaction.", "color": "#f85149"}}))
+        await asyncio.sleep(1.2)
+        await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "ACTION", "desc": f"A.S.M.O. Overlord simulated Front-Run with 2x Gas (145 Gwei).", "color": "#d946ef"}}))
+        await asyncio.sleep(1.5)
+        await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "RESULT", "desc": f"SUCCESS: Capital extracted 12ms before liquidity pool drained. Saved: $84,500.", "color": "#10b981"}}))
+    
+    elif sim_type == "FLASHLOAN":
+        await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "THREAT", "desc": f"DETECTED: AAVE V3 Flashloan initiation of 5,000 ETH targeted at {target[:8]}.", "color": "#eab308"}}))
+        await asyncio.sleep(1.2)
+        await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "ACTION", "desc": f"A.S.M.O. Atomic Router calculated counter-arbitrage vector across L0.", "color": "#0ea5e9"}}))
+        await asyncio.sleep(1.5)
+        await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "RESULT", "desc": f"SUCCESS: MEV Sandwich executed prior to flashloan settlement. Profit: $12,340.", "color": "#10b981"}}))
+        
+    else:
+        await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "THREAT", "desc": f"WARNING: TimeLock contract unlocked 4M tokens to insider cabal.", "color": "#f85149"}}))
+        await asyncio.sleep(1.2)
+        await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "ACTION", "desc": f"A.S.M.O. executed pre-emptive SHORT position at $1.45 entry.", "color": "#d946ef"}}))
+        await asyncio.sleep(1.5)
+        await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "RESULT", "desc": f"SUCCESS: Asset dumped 45%. Short position covered at $0.80. Net Yield: $24,600.", "color": "#10b981"}}))
+
+    await asyncio.sleep(1.0)
+    await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "COMPLETE", "desc": "Temporal simulation concluded. Returning to live global state.", "color": "#8b949e"}}))
+
 async def process_oracle_query(payload, websocket):
     query = payload.get("query", "")
     target = payload.get("target", "GLOBAL_STATE")
@@ -447,6 +483,8 @@ async def ws_handler(websocket):
                 payload = json.loads(message)
                 if payload.get("action") == "ORACLE_QUERY":
                     await process_oracle_query(payload, websocket)
+                elif payload.get("action") == "CHRONOS_SIMULATE":
+                    asyncio.create_task(run_chronos_simulation(websocket, payload["data"]))
                 elif payload.get("action") == "SAVE_STRATEGY":
                     OVERLORD_STRATEGY.clear()
                     OVERLORD_STRATEGY.extend(payload.get("data", []))
@@ -508,6 +546,9 @@ async def ws_handler(websocket):
             except Exception: pass
     finally:
         connected_clients.remove(websocket)
+
+async def broadcast_alert(data):
+    if connected_clients: await asyncio.gather(*(client.send(json.dumps(data)) for client in connected_clients), return_exceptions=True)
 
 async def true_mempool_worker(wss_url, network_name, w3):
     if not wss_url: return
