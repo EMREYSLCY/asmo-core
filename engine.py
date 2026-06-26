@@ -59,19 +59,6 @@ OVERLORD_STATE = {
 
 OVERLORD_STRATEGY = []
 
-AI_TASKS = [
-    "Dataset Analysis & Classification", "Smart Contract Security Scan", 
-    "Cross-Chain Liquidity Optimization", "Predictive Price Modeling", 
-    "On-Chain Wallet Behavior Analysis", "High-Frequency Trading (HFT) Simulation", 
-    "Autonomous Reporting & Summarization", "Arbitrage Route Calculation"
-]
-
-SOCIAL_NARRATIVES = [
-    "Autonomous AI Agent Launch", "ZK-Rollup Stealth Adoption",
-    "L2 Liquidity Vampire Attack", "GameFi / Metaverse Expansion",
-    "Prediction Market Oracle Hype", "High-Frequency Arbitrage Meme"
-]
-
 def safe_get_input(tx):
     try:
         inp = tx.get('input', '0x')
@@ -104,38 +91,92 @@ def decipher_payload(input_data):
 async def run_chronos_simulation(websocket, payload):
     target = payload.get("target", "0x0000000000000000000000000000000000000000")
     block_num = payload.get("block", "14300000")
-    
     await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "INIT", "desc": f"Establishing temporal link to Block #{block_num}...", "color": "#0ea5e9"}}))
     await asyncio.sleep(1.5)
-    
     await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "SYNC", "desc": f"State matrix synchronized. Asset {target[:8]} isolated in historical mempool.", "color": "#3fb950"}}))
     await asyncio.sleep(2.0)
-    
     sim_type = random.choice(["RUG_PULL", "FLASHLOAN", "VESTING_DUMP"])
-    
     if sim_type == "RUG_PULL":
         await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "THREAT", "desc": f"CRITICAL: Dev wallet submitted removeLiquidity() transaction.", "color": "#f85149"}}))
         await asyncio.sleep(1.2)
         await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "ACTION", "desc": f"A.S.M.O. Overlord simulated Front-Run with 2x Gas (145 Gwei).", "color": "#d946ef"}}))
         await asyncio.sleep(1.5)
         await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "RESULT", "desc": f"SUCCESS: Capital extracted 12ms before liquidity pool drained. Saved: $84,500.", "color": "#10b981"}}))
-    
     elif sim_type == "FLASHLOAN":
         await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "THREAT", "desc": f"DETECTED: AAVE V3 Flashloan initiation of 5,000 ETH targeted at {target[:8]}.", "color": "#eab308"}}))
         await asyncio.sleep(1.2)
         await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "ACTION", "desc": f"A.S.M.O. Atomic Router calculated counter-arbitrage vector across L0.", "color": "#0ea5e9"}}))
         await asyncio.sleep(1.5)
         await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "RESULT", "desc": f"SUCCESS: MEV Sandwich executed prior to flashloan settlement. Profit: $12,340.", "color": "#10b981"}}))
-        
     else:
         await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "THREAT", "desc": f"WARNING: TimeLock contract unlocked 4M tokens to insider cabal.", "color": "#f85149"}}))
         await asyncio.sleep(1.2)
         await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "ACTION", "desc": f"A.S.M.O. executed pre-emptive SHORT position at $1.45 entry.", "color": "#d946ef"}}))
         await asyncio.sleep(1.5)
         await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "RESULT", "desc": f"SUCCESS: Asset dumped 45%. Short position covered at $0.80. Net Yield: $24,600.", "color": "#10b981"}}))
-
     await asyncio.sleep(1.0)
     await websocket.send(json.dumps({"msg_type": "CHRONOS_EVENT", "data": {"type": "COMPLETE", "desc": "Temporal simulation concluded. Returning to live global state.", "color": "#8b949e"}}))
+
+async def perform_forensic_autopsy(tx_hash, network_name):
+    await asyncio.sleep(1.5)
+    random.seed(int(tx_hash[-8:], 16) if tx_hash else 42)
+    tree = {
+        "id": "root",
+        "name": f"Transaction: {tx_hash[:8]}...",
+        "type": "ENTRY",
+        "color": "#d946ef",
+        "children": []
+    }
+    
+    is_mev = random.choice([True, False])
+    if is_mev:
+        tree["children"].append({
+            "id": "node1", "name": "AAVE V3 Flashloan (2000 ETH)", "type": "FLASHLOAN", "color": "#eab308",
+            "children": [
+                {
+                    "id": "node2", "name": "Uniswap V3 Swap (ETH -> USDC)", "type": "DEX", "color": "#db2777",
+                    "children": [
+                        {"id": "node3", "name": "Slippage Exploit (Victim TX)", "type": "VICTIM", "color": "#f85149"}
+                    ]
+                },
+                {
+                    "id": "node4", "name": "Curve Swap (USDC -> ETH)", "type": "DEX", "color": "#db2777",
+                    "children": []
+                },
+                {
+                    "id": "node5", "name": "Flashloan Repayment + Fee", "type": "REPAY", "color": "#10b981",
+                    "children": []
+                }
+            ]
+        })
+        tree["children"].append({"id": "node6", "name": "Miner Bribe (Flashbots) - 0.5 ETH", "type": "BRIBE", "color": "#ea580c"})
+        tree["children"].append({"id": "node7", "name": "Net Profit Extraction - 2.4 ETH", "type": "PROFIT", "color": "#3fb950"})
+    else:
+        tree["children"].append({
+            "id": "node1", "name": "Tornado Cash Withdrawal (100 ETH)", "type": "MIXER", "color": "#f85149",
+            "children": [
+                {
+                    "id": "node2", "name": "Intermediate Hop Wallet", "type": "HOP", "color": "#64748b",
+                    "children": [
+                        {"id": "node3", "name": "DEX Swap (ETH -> Token)", "type": "DEX", "color": "#db2777"}
+                    ]
+                },
+                {
+                    "id": "node4", "name": "OTC Over-The-Counter Transfer", "type": "OTC", "color": "#0ea5e9",
+                    "children": []
+                }
+            ]
+        })
+        
+    stats = {
+        "total_gas_usd": round(random.uniform(150, 800), 2),
+        "bribe_paid_usd": round(random.uniform(500, 3000), 2) if is_mev else 0,
+        "net_profit_usd": round(random.uniform(4000, 15000), 2) if is_mev else 0,
+        "complexity_score": random.randint(70, 99),
+        "classification": "MEV Sandwich Attack" if is_mev else "Laundering Flow"
+    }
+    
+    return {"tx_hash": tx_hash, "network": network_name, "stats": stats, "tree": tree}
 
 async def process_oracle_query(payload, websocket):
     query = payload.get("query", "")
@@ -485,6 +526,9 @@ async def ws_handler(websocket):
                     await process_oracle_query(payload, websocket)
                 elif payload.get("action") == "CHRONOS_SIMULATE":
                     asyncio.create_task(run_chronos_simulation(websocket, payload["data"]))
+                elif payload.get("action") == "FORENSIC_AUTOPSY":
+                    result = await perform_forensic_autopsy(payload.get("tx_hash"), payload.get("network"))
+                    await websocket.send(json.dumps({"msg_type": "FORENSIC_RESULT", "data": result}))
                 elif payload.get("action") == "SAVE_STRATEGY":
                     OVERLORD_STRATEGY.clear()
                     OVERLORD_STRATEGY.extend(payload.get("data", []))
