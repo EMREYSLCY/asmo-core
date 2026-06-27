@@ -121,61 +121,16 @@ async def perform_forensic_autopsy(tx_hash, network_name):
     await asyncio.sleep(1.5)
     random.seed(int(tx_hash[-8:], 16) if tx_hash else 42)
     tree = {
-        "id": "root",
-        "name": f"Transaction: {tx_hash[:8]}...",
-        "type": "ENTRY",
-        "color": "#d946ef",
-        "children": []
+        "id": "root", "name": f"Transaction: {tx_hash[:8]}...", "type": "ENTRY", "color": "#d946ef", "children": []
     }
-    
     is_mev = random.choice([True, False])
     if is_mev:
-        tree["children"].append({
-            "id": "node1", "name": "AAVE V3 Flashloan (2000 ETH)", "type": "FLASHLOAN", "color": "#eab308",
-            "children": [
-                {
-                    "id": "node2", "name": "Uniswap V3 Swap (ETH -> USDC)", "type": "DEX", "color": "#db2777",
-                    "children": [
-                        {"id": "node3", "name": "Slippage Exploit (Victim TX)", "type": "VICTIM", "color": "#f85149"}
-                    ]
-                },
-                {
-                    "id": "node4", "name": "Curve Swap (USDC -> ETH)", "type": "DEX", "color": "#db2777",
-                    "children": []
-                },
-                {
-                    "id": "node5", "name": "Flashloan Repayment + Fee", "type": "REPAY", "color": "#10b981",
-                    "children": []
-                }
-            ]
-        })
+        tree["children"].append({"id": "node1", "name": "AAVE V3 Flashloan (2000 ETH)", "type": "FLASHLOAN", "color": "#eab308", "children": [{"id": "node2", "name": "Uniswap V3 Swap (ETH -> USDC)", "type": "DEX", "color": "#db2777", "children": [{"id": "node3", "name": "Slippage Exploit (Victim TX)", "type": "VICTIM", "color": "#f85149"}]}, {"id": "node4", "name": "Curve Swap (USDC -> ETH)", "type": "DEX", "color": "#db2777", "children": []}, {"id": "node5", "name": "Flashloan Repayment + Fee", "type": "REPAY", "color": "#10b981", "children": []}]})
         tree["children"].append({"id": "node6", "name": "Miner Bribe (Flashbots) - 0.5 ETH", "type": "BRIBE", "color": "#ea580c"})
         tree["children"].append({"id": "node7", "name": "Net Profit Extraction - 2.4 ETH", "type": "PROFIT", "color": "#3fb950"})
     else:
-        tree["children"].append({
-            "id": "node1", "name": "Tornado Cash Withdrawal (100 ETH)", "type": "MIXER", "color": "#f85149",
-            "children": [
-                {
-                    "id": "node2", "name": "Intermediate Hop Wallet", "type": "HOP", "color": "#64748b",
-                    "children": [
-                        {"id": "node3", "name": "DEX Swap (ETH -> Token)", "type": "DEX", "color": "#db2777"}
-                    ]
-                },
-                {
-                    "id": "node4", "name": "OTC Over-The-Counter Transfer", "type": "OTC", "color": "#0ea5e9",
-                    "children": []
-                }
-            ]
-        })
-        
-    stats = {
-        "total_gas_usd": round(random.uniform(150, 800), 2),
-        "bribe_paid_usd": round(random.uniform(500, 3000), 2) if is_mev else 0,
-        "net_profit_usd": round(random.uniform(4000, 15000), 2) if is_mev else 0,
-        "complexity_score": random.randint(70, 99),
-        "classification": "MEV Sandwich Attack" if is_mev else "Laundering Flow"
-    }
-    
+        tree["children"].append({"id": "node1", "name": "Tornado Cash Withdrawal (100 ETH)", "type": "MIXER", "color": "#f85149", "children": [{"id": "node2", "name": "Intermediate Hop Wallet", "type": "HOP", "color": "#64748b", "children": [{"id": "node3", "name": "DEX Swap (ETH -> Token)", "type": "DEX", "color": "#db2777"}]}, {"id": "node4", "name": "OTC Over-The-Counter Transfer", "type": "OTC", "color": "#0ea5e9", "children": []}]})
+    stats = {"total_gas_usd": round(random.uniform(150, 800), 2), "bribe_paid_usd": round(random.uniform(500, 3000), 2) if is_mev else 0, "net_profit_usd": round(random.uniform(4000, 15000), 2) if is_mev else 0, "complexity_score": random.randint(70, 99), "classification": "MEV Sandwich Attack" if is_mev else "Laundering Flow"}
     return {"tx_hash": tx_hash, "network": network_name, "stats": stats, "tree": tree}
 
 async def process_oracle_query(payload, websocket):
@@ -511,6 +466,39 @@ async def execute_bribe_optimizer(target_hash, original_gas_gwei, network_name):
     optimized_bid = rival_bid + 1.5
     cost_saved = (original_gas_gwei * 2) - optimized_bid
     await broadcast_alert({"msg_type": "GAS_WAR_ALERT", "network": network_name, "target_hash": target_hash, "rival_bot": "0xFlashbot_" + "".join([str(random.randint(0,9)) for _ in range(4)]), "rival_bid": round(rival_bid, 2), "asmo_bid": round(optimized_bid, 2), "saved_capital": round(cost_saved, 2), "status": "OUTBID - TX SECURED"})
+
+async def simulate_l2_sequencer_feed():
+    await asyncio.sleep(5)
+    while True:
+        await asyncio.sleep(random.uniform(0.5, 2.5))
+        if not connected_clients: continue
+        
+        tx_val_usd = random.uniform(500, 150000)
+        action_type = random.choice(["SWAP", "SWAP", "TRANSFER", "CONTRACT_CALL", "APPROVE"])
+        risk = "LOW"
+        if tx_val_usd > 50000:
+            risk = "HIGH"
+            action_type = "WHALE_SWAP"
+        elif action_type == "CONTRACT_CALL" and random.random() > 0.8:
+            risk = "CRITICAL"
+            action_type = "POTENTIAL_EXPLOIT"
+            
+        l2_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+        commit_eta = round(random.uniform(1.2, 3.8), 2)
+        
+        alert = {
+            "msg_type": "SEQUENCER_ALERT",
+            "data": {
+                "tx_hash": l2_hash,
+                "from_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]),
+                "to_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]),
+                "usd_value": tx_val_usd,
+                "type": action_type,
+                "risk": risk,
+                "commit_eta": commit_eta
+            }
+        }
+        await broadcast_alert(alert)
 
 async def ws_handler(websocket):
     global OVERLORD_STATE
@@ -872,6 +860,7 @@ async def main():
     asyncio.create_task(broadcast_sybil_clusters())
     asyncio.create_task(detect_incoming_bridge_tsunami())
     asyncio.create_task(detect_vesting_dumps())
+    asyncio.create_task(simulate_l2_sequencer_feed())
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC", ARC_WSS_URL))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE", BASE_WSS_URL))
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
