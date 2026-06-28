@@ -120,9 +120,7 @@ async def run_chronos_simulation(websocket, payload):
 async def perform_forensic_autopsy(tx_hash, network_name):
     await asyncio.sleep(1.5)
     random.seed(int(tx_hash[-8:], 16) if tx_hash else 42)
-    tree = {
-        "id": "root", "name": f"Transaction: {tx_hash[:8]}...", "type": "ENTRY", "color": "#d946ef", "children": []
-    }
+    tree = {"id": "root", "name": f"Transaction: {tx_hash[:8]}...", "type": "ENTRY", "color": "#d946ef", "children": []}
     is_mev = random.choice([True, False])
     if is_mev:
         tree["children"].append({"id": "node1", "name": "AAVE V3 Flashloan (2000 ETH)", "type": "FLASHLOAN", "color": "#eab308", "children": [{"id": "node2", "name": "Uniswap V3 Swap (ETH -> USDC)", "type": "DEX", "color": "#db2777", "children": [{"id": "node3", "name": "Slippage Exploit (Victim TX)", "type": "VICTIM", "color": "#f85149"}]}, {"id": "node4", "name": "Curve Swap (USDC -> ETH)", "type": "DEX", "color": "#db2777", "children": []}, {"id": "node5", "name": "Flashloan Repayment + Fee", "type": "REPAY", "color": "#10b981", "children": []}]})
@@ -423,6 +421,28 @@ async def detect_vesting_dumps():
             val = random.uniform(250000, 3500000)
             await broadcast_alert({"msg_type": "VESTING_DUMP_ALERT", "network": random.choice(["ARC", "BASE"]), "tx_hash": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(64)]), "token_addr": random.choice(assets), "dev_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]), "usd_value": val, "status": "IMMINENT DUMP"})
 
+async def detect_multisig_activity():
+    while True:
+        await asyncio.sleep(random.randint(15, 35))
+        if connected_clients:
+            req_sigs = random.choice([3, 4, 5])
+            curr_sigs = req_sigs - 1
+            safe_addr = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)])
+            target_addr = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)])
+            usd_val = random.uniform(1000000, 15000000)
+            await broadcast_alert({
+                "msg_type": "MULTISIG_ALERT",
+                "data": {
+                    "safe_address": safe_addr,
+                    "target_contract": target_addr,
+                    "current_sigs": curr_sigs,
+                    "required_sigs": req_sigs,
+                    "usd_value": usd_val,
+                    "status": "AWAITING FINAL EXECUTION",
+                    "network": random.choice(["ARC", "BASE", "ETH"])
+                }
+            })
+
 async def update_price_oracle():
     pyth_ws_url = "wss://hermes.pyth.network/ws"
     msg = {"type": "subscribe", "price_ids": ["ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace", "3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5"]}
@@ -472,7 +492,6 @@ async def simulate_l2_sequencer_feed():
     while True:
         await asyncio.sleep(random.uniform(0.5, 2.5))
         if not connected_clients: continue
-        
         tx_val_usd = random.uniform(500, 150000)
         action_type = random.choice(["SWAP", "SWAP", "TRANSFER", "CONTRACT_CALL", "APPROVE"])
         risk = "LOW"
@@ -482,22 +501,9 @@ async def simulate_l2_sequencer_feed():
         elif action_type == "CONTRACT_CALL" and random.random() > 0.8:
             risk = "CRITICAL"
             action_type = "POTENTIAL_EXPLOIT"
-            
         l2_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
         commit_eta = round(random.uniform(1.2, 3.8), 2)
-        
-        alert = {
-            "msg_type": "SEQUENCER_ALERT",
-            "data": {
-                "tx_hash": l2_hash,
-                "from_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]),
-                "to_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]),
-                "usd_value": tx_val_usd,
-                "type": action_type,
-                "risk": risk,
-                "commit_eta": commit_eta
-            }
-        }
+        alert = {"msg_type": "SEQUENCER_ALERT", "data": {"tx_hash": l2_hash, "from_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]), "to_addr": "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)]), "usd_value": tx_val_usd, "type": action_type, "risk": risk, "commit_eta": commit_eta}}
         await broadcast_alert(alert)
 
 async def ws_handler(websocket):
@@ -861,6 +867,7 @@ async def main():
     asyncio.create_task(detect_incoming_bridge_tsunami())
     asyncio.create_task(detect_vesting_dumps())
     asyncio.create_task(simulate_l2_sequencer_feed())
+    asyncio.create_task(detect_multisig_activity())
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC", ARC_WSS_URL))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE", BASE_WSS_URL))
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
