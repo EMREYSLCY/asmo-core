@@ -34,6 +34,7 @@ AAVE_BORROW_SIG = "0x" + Web3.keccak(text="Borrow(address,address,address,uint25
 AAVE_REPAY_SIG = "0x" + Web3.keccak(text="Repay(address,address,address,uint256,bool)").hex()
 AAVE_LIQ_SIG = "0x" + Web3.keccak(text="LiquidationCall(address,address,address,uint256,uint256,address,bool)").hex()
 PAIR_CREATED_SIG = "0x" + Web3.keccak(text="PairCreated(address,address,address,uint256)").hex()
+ENTRYPOINT_HANDLE_OPS_SIG = "0x1fad948c"
 
 ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]')
 TOKEN_CACHE = {}
@@ -83,7 +84,8 @@ def decipher_payload(input_data):
         "0x3593564c": ("execute(bytes32,bytes) [Proxy/Agent]", "HIGH"), "0xbaa2abde": ("removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)", "CRITICAL"),
         "0x02751cec": ("removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)", "CRITICAL"), "0xaf2979eb": ("removeLiquidityETHSupportingFeeOnTransferTokens", "CRITICAL"),
         "0x5b0d5984": ("removeLiquidityETHWithPermit", "CRITICAL"), "0x86d1a69f": ("release() [Vesting Unlock]", "HIGH"),
-        "0x3d18b912": ("unlock() [TimeLock]", "HIGH"), "0x4e71d92d": ("claim() [Vesting Claim]", "MEDIUM")
+        "0x3d18b912": ("unlock() [TimeLock]", "HIGH"), "0x4e71d92d": ("claim() [Vesting Claim]", "MEDIUM"),
+        "0x1fad948c": ("handleOps(tuple[],address) [ERC-4337]", "HIGH")
     }
     name, risk = SIG_DB.get(method_id, ("UNKNOWN_CUSTOM_METHOD", "MEDIUM"))
     return {"method": method_id, "name": name, "risk": risk, "raw_length": len(input_data)}
@@ -130,6 +132,46 @@ async def perform_forensic_autopsy(tx_hash, network_name):
         tree["children"].append({"id": "node1", "name": "Tornado Cash Withdrawal (100 ETH)", "type": "MIXER", "color": "#f85149", "children": [{"id": "node2", "name": "Intermediate Hop Wallet", "type": "HOP", "color": "#64748b", "children": [{"id": "node3", "name": "DEX Swap (ETH -> Token)", "type": "DEX", "color": "#db2777"}]}, {"id": "node4", "name": "OTC Over-The-Counter Transfer", "type": "OTC", "color": "#0ea5e9", "children": []}]})
     stats = {"total_gas_usd": round(random.uniform(150, 800), 2), "bribe_paid_usd": round(random.uniform(500, 3000), 2) if is_mev else 0, "net_profit_usd": round(random.uniform(4000, 15000), 2) if is_mev else 0, "complexity_score": random.randint(70, 99), "classification": "MEV Sandwich Attack" if is_mev else "Laundering Flow"}
     return {"tx_hash": tx_hash, "network": network_name, "stats": stats, "tree": tree}
+
+async def perform_aa_profiling(addr, network_name):
+    await asyncio.sleep(1.0)
+    seed_val = int(Web3.keccak(text=addr).hex()[-8:], 16)
+    random.seed(seed_val)
+    
+    is_sca = random.choice([True, False])
+    if not is_sca:
+        return {
+            "address": addr,
+            "network": network_name,
+            "type": "EOA",
+            "description": "Standard Externally Owned Account.",
+            "paymaster_sponsored": False,
+            "bundler_activity": 0,
+            "gas_saved": 0.0,
+            "risk_score": random.randint(10, 30)
+        }
+        
+    paymaster_addr = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)])
+    bundler_addr = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)])
+    factory_addr = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)])
+    
+    paymaster_types = ["Biconomy Paymaster", "Pimlico Verifying Paymaster", "ZeroDev Sponsoring Paymaster", "Custom Institutional Paymaster"]
+    active_paymaster = random.choice(paymaster_types)
+    
+    return {
+        "address": addr,
+        "network": network_name,
+        "type": "SCA",
+        "description": "ERC-4337 Smart Contract Account.",
+        "paymaster_sponsored": True,
+        "paymaster_entity": active_paymaster,
+        "paymaster_address": paymaster_addr,
+        "bundler_address": bundler_addr,
+        "factory_address": factory_addr,
+        "bundler_activity": random.randint(50, 5000),
+        "gas_saved": round(random.uniform(500.0, 15000.0), 2),
+        "risk_score": random.randint(60, 95)
+    }
 
 async def process_oracle_query(payload, websocket):
     query = payload.get("query", "")
@@ -432,15 +474,7 @@ async def detect_multisig_activity():
             usd_val = random.uniform(1000000, 15000000)
             await broadcast_alert({
                 "msg_type": "MULTISIG_ALERT",
-                "data": {
-                    "safe_address": safe_addr,
-                    "target_contract": target_addr,
-                    "current_sigs": curr_sigs,
-                    "required_sigs": req_sigs,
-                    "usd_value": usd_val,
-                    "status": "AWAITING FINAL EXECUTION",
-                    "network": random.choice(["ARC", "BASE", "ETH"])
-                }
+                "data": {"safe_address": safe_addr, "target_contract": target_addr, "current_sigs": curr_sigs, "required_sigs": req_sigs, "usd_value": usd_val, "status": "AWAITING FINAL EXECUTION", "network": random.choice(["ARC", "BASE", "ETH"])}
             })
 
 async def update_price_oracle():
@@ -523,6 +557,9 @@ async def ws_handler(websocket):
                 elif payload.get("action") == "FORENSIC_AUTOPSY":
                     result = await perform_forensic_autopsy(payload.get("tx_hash"), payload.get("network"))
                     await websocket.send(json.dumps({"msg_type": "FORENSIC_RESULT", "data": result}))
+                elif payload.get("action") == "AA_PROFILE":
+                    result = await perform_aa_profiling(payload.get("address"), payload.get("network", "BASE"))
+                    await websocket.send(json.dumps({"msg_type": "AA_RESULT", "data": result}))
                 elif payload.get("action") == "SAVE_STRATEGY":
                     OVERLORD_STRATEGY.clear()
                     OVERLORD_STRATEGY.extend(payload.get("data", []))
