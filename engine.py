@@ -6,6 +6,8 @@ import logging
 import aiosqlite
 import random
 import urllib.request
+import base64
+import hashlib
 from dotenv import load_dotenv
 from web3 import Web3, AsyncWeb3, AsyncHTTPProvider
 
@@ -34,7 +36,6 @@ AAVE_BORROW_SIG = "0x" + Web3.keccak(text="Borrow(address,address,address,uint25
 AAVE_REPAY_SIG = "0x" + Web3.keccak(text="Repay(address,address,address,uint256,bool)").hex()
 AAVE_LIQ_SIG = "0x" + Web3.keccak(text="LiquidationCall(address,address,address,uint256,uint256,address,bool)").hex()
 PAIR_CREATED_SIG = "0x" + Web3.keccak(text="PairCreated(address,address,address,uint256)").hex()
-ENTRYPOINT_HANDLE_OPS_SIG = "0x1fad948c"
 
 ERC20_ABI = json.loads('[{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]')
 TOKEN_CACHE = {}
@@ -55,7 +56,16 @@ RECENT_TRADES = []
 OVERLORD_STATE = {
     "active": False,
     "max_spend": 50000.0,
-    "min_profit": 500.0
+    "min_profit": 500.0,
+    "enclave_secured": False,
+    "signer_provider": "NONE"
+}
+
+ENCLAVE_STATE = {
+    "status": "UNLOCKED",
+    "provider": "NONE",
+    "key_id": "N/A",
+    "fips_compliant": False
 }
 
 OVERLORD_STRATEGY = []
@@ -137,41 +147,14 @@ async def perform_aa_profiling(addr, network_name):
     await asyncio.sleep(1.0)
     seed_val = int(Web3.keccak(text=addr).hex()[-8:], 16)
     random.seed(seed_val)
-    
     is_sca = random.choice([True, False])
     if not is_sca:
-        return {
-            "address": addr,
-            "network": network_name,
-            "type": "EOA",
-            "description": "Standard Externally Owned Account.",
-            "paymaster_sponsored": False,
-            "bundler_activity": 0,
-            "gas_saved": 0.0,
-            "risk_score": random.randint(10, 30)
-        }
-        
+        return {"address": addr, "network": network_name, "type": "EOA", "description": "Standard Externally Owned Account.", "paymaster_sponsored": False, "bundler_activity": 0, "gas_saved": 0.0, "risk_score": random.randint(10, 30)}
     paymaster_addr = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)])
     bundler_addr = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)])
     factory_addr = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)])
-    
     paymaster_types = ["Biconomy Paymaster", "Pimlico Verifying Paymaster", "ZeroDev Sponsoring Paymaster", "Custom Institutional Paymaster"]
-    active_paymaster = random.choice(paymaster_types)
-    
-    return {
-        "address": addr,
-        "network": network_name,
-        "type": "SCA",
-        "description": "ERC-4337 Smart Contract Account.",
-        "paymaster_sponsored": True,
-        "paymaster_entity": active_paymaster,
-        "paymaster_address": paymaster_addr,
-        "bundler_address": bundler_addr,
-        "factory_address": factory_addr,
-        "bundler_activity": random.randint(50, 5000),
-        "gas_saved": round(random.uniform(500.0, 15000.0), 2),
-        "risk_score": random.randint(60, 95)
-    }
+    return {"address": addr, "network": network_name, "type": "SCA", "description": "ERC-4337 Smart Contract Account.", "paymaster_sponsored": True, "paymaster_entity": random.choice(paymaster_types), "paymaster_address": paymaster_addr, "bundler_address": bundler_addr, "factory_address": factory_addr, "bundler_activity": random.randint(50, 5000), "gas_saved": round(random.uniform(500.0, 15000.0), 2), "risk_score": random.randint(60, 95)}
 
 async def process_oracle_query(payload, websocket):
     query = payload.get("query", "")
@@ -400,11 +383,11 @@ async def detect_cross_chain_arbitrage():
                     buy_price = min(p_arc, p_base)
                     sell_price = max(p_arc, p_base)
                     est_profit = (sell_price - buy_price) * OVERLORD_STATE["max_spend"]
-                    if OVERLORD_STATE["active"] and est_profit >= OVERLORD_STATE["min_profit"]:
+                    if OVERLORD_STATE["active"] and OVERLORD_STATE["enclave_secured"] and est_profit >= OVERLORD_STATE["min_profit"]:
                         src_chain = direction.split(" -> ")[0]
                         dst_chain = direction.split(" -> ")[1]
                         fake_hash_src = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
-                        tx_data_src = {"msg_type": "TRANSACTION", "network": src_chain, "type": "CROSS_CHAIN", "asset": "Flashloan & Bridge (OVERLORD)", "amount": OVERLORD_STATE["max_spend"], "price_usd": 1.0, "tx_hash": fake_hash_src, "from_addr": "0xASMO_Interchain_Core", "to_addr": "0xStargate_Router", "from_label": "OVERLORD ATOMIC ROUTER", "to_label": "L0 Bridge", "gas_used": 350000, "execution_depth": 4, "pnl": 0.0, "narrative": f"ATOMIC HOP: {src_chain} -> {dst_chain}", "sec_score": 99, "sec_label": "VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "BRIDGE_ACTIVITY", "status": "CONFIRMED"}
+                        tx_data_src = {"msg_type": "TRANSACTION", "network": src_chain, "type": "CROSS_CHAIN", "asset": "Flashloan & Bridge (OVERLORD)", "amount": OVERLORD_STATE["max_spend"], "price_usd": 1.0, "tx_hash": fake_hash_src, "from_addr": "0xASMO_Interchain_Core", "to_addr": "0xStargate_Router", "from_label": "OVERLORD ATOMIC ROUTER", "to_label": "L0 Bridge", "gas_used": 350000, "execution_depth": 4, "pnl": 0.0, "narrative": f"ATOMIC HOP (KMS SECURED): {src_chain} -> {dst_chain}", "sec_score": 99, "sec_label": "VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "BRIDGE_ACTIVITY", "status": "CONFIRMED"}
                         await broadcast_alert(tx_data_src); await save_transfer(tx_data_src, 99999999)
                         await asyncio.sleep(0.8)
                         fake_hash_dst = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
@@ -543,9 +526,11 @@ async def simulate_l2_sequencer_feed():
 async def ws_handler(websocket):
     global OVERLORD_STATE
     global OVERLORD_STRATEGY
+    global ENCLAVE_STATE
     connected_clients.add(websocket)
     await send_history_to_client(websocket)
     await websocket.send(json.dumps({"msg_type": "OVERLORD_STATUS", "data": {"state": OVERLORD_STATE, "strategy": OVERLORD_STRATEGY}}))
+    await websocket.send(json.dumps({"msg_type": "ENCLAVE_STATUS", "data": ENCLAVE_STATE}))
     try:
         async for message in websocket:
             try:
@@ -560,6 +545,28 @@ async def ws_handler(websocket):
                 elif payload.get("action") == "AA_PROFILE":
                     result = await perform_aa_profiling(payload.get("address"), payload.get("network", "BASE"))
                     await websocket.send(json.dumps({"msg_type": "AA_RESULT", "data": result}))
+                elif payload.get("action") == "CONNECT_ENCLAVE":
+                    provider = payload.get("provider", "NONE")
+                    await asyncio.sleep(1.5)
+                    key_id = "arn:aws:kms:us-east-1:123456789:key/" + "".join([str(random.randint(0,9)) for _ in range(8)]) if provider == "AWS_KMS" else "LEDGER_NANO_X_" + "".join([random.choice("0123456789ABCDEF") for _ in range(6)])
+                    ENCLAVE_STATE["status"] = "SECURED"
+                    ENCLAVE_STATE["provider"] = provider
+                    ENCLAVE_STATE["key_id"] = key_id
+                    ENCLAVE_STATE["fips_compliant"] = True
+                    OVERLORD_STATE["enclave_secured"] = True
+                    OVERLORD_STATE["signer_provider"] = provider
+                    await broadcast_alert({"msg_type": "ENCLAVE_STATUS", "data": ENCLAVE_STATE})
+                    await broadcast_alert({"msg_type": "OVERLORD_STATUS", "data": {"state": OVERLORD_STATE, "strategy": OVERLORD_STRATEGY}})
+                elif payload.get("action") == "DISCONNECT_ENCLAVE":
+                    ENCLAVE_STATE["status"] = "UNLOCKED"
+                    ENCLAVE_STATE["provider"] = "NONE"
+                    ENCLAVE_STATE["key_id"] = "N/A"
+                    ENCLAVE_STATE["fips_compliant"] = False
+                    OVERLORD_STATE["enclave_secured"] = False
+                    OVERLORD_STATE["active"] = False
+                    OVERLORD_STATE["signer_provider"] = "NONE"
+                    await broadcast_alert({"msg_type": "ENCLAVE_STATUS", "data": ENCLAVE_STATE})
+                    await broadcast_alert({"msg_type": "OVERLORD_STATUS", "data": {"state": OVERLORD_STATE, "strategy": OVERLORD_STRATEGY}})
                 elif payload.get("action") == "SAVE_STRATEGY":
                     OVERLORD_STRATEGY.clear()
                     OVERLORD_STRATEGY.extend(payload.get("data", []))
@@ -653,10 +660,11 @@ async def true_mempool_worker(wss_url, network_name, w3):
                             if "removeLiquidity" in decoded_p["name"]:
                                 base_gas = float(Web3.from_wei(tx.get("gasPrice", 0), 'gwei'))
                                 if OVERLORD_STATE["active"]:
-                                    await execute_bribe_optimizer(tx_hash, base_gas, network_name)
-                                    fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
-                                    tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_SWAP", "asset": "Rescued Capital", "amount": OVERLORD_STATE["max_spend"]/current_price, "price_usd": current_price, "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": "0xSafe_Cold_Wallet", "from_label": "OVERLORD AUTONOMOUS AI", "to_label": "Cold Storage", "gas_used": base_gas * 2 * 1000, "execution_depth": 1, "pnl": OVERLORD_STATE["max_spend"], "narrative": f"OVERLORD AUTO-EJECT | Blocked Rug: {tx_hash[:8]}", "sec_score": 99, "sec_label": "VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
-                                    await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
+                                    if OVERLORD_STATE["enclave_secured"]:
+                                        await execute_bribe_optimizer(tx_hash, base_gas, network_name)
+                                        fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
+                                        tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_SWAP", "asset": "Rescued Capital", "amount": OVERLORD_STATE["max_spend"]/current_price, "price_usd": current_price, "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": "0xSafe_Cold_Wallet", "from_label": f"OVERLORD AI ({OVERLORD_STATE['signer_provider']})", "to_label": "Cold Storage", "gas_used": base_gas * 2 * 1000, "execution_depth": 1, "pnl": OVERLORD_STATE["max_spend"], "narrative": f"SECURE AUTO-EJECT | Blocked Rug: {tx_hash[:8]}", "sec_score": 99, "sec_label": "VERIFIED SAFE", "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "ARBITRAGE_ACTIVITY", "status": "CONFIRMED"}
+                                        await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
                                 else:
                                     await broadcast_alert({"msg_type": "AUTO_EJECT_ALERT", "network": network_name, "tx_hash": tx_hash, "pool_addr": to_addr, "dev_addr": from_addr, "est_gas_gwei": base_gas, "risk": "CRITICAL RUG PULL IMMINENT"})
                                     
@@ -741,10 +749,10 @@ async def scan_block(w3, network_name, block_number):
                         creator = receipt.fromAddress
                         score, label = await analyze_contract_security(token0, network_name)
                         
-                        if OVERLORD_STATE["active"] and score >= 90:
+                        if OVERLORD_STATE["active"] and OVERLORD_STATE["enclave_secured"] and score >= 90:
                             await execute_bribe_optimizer(tx_hash_str, 35.0, network_name)
                             fake_hash = "0x" + "".join([str(random.randint(0,9)) for _ in range(64)])
-                            tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_SWAP", "asset": f"Snipe: {token0[:8]}", "amount": OVERLORD_STATE["max_spend"]/PRICE_CACHE.get(network_name, 1.0), "price_usd": PRICE_CACHE.get(network_name, 1.0), "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": pair_addr, "from_label": "OVERLORD AUTONOMOUS AI", "to_label": "Zero-Block Pool", "gas_used": 250000, "execution_depth": 1, "pnl": 0.0, "narrative": f"OVERLORD AUTO-SNIPE | Score: {score}", "sec_score": score, "sec_label": label, "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "AGENT_FLOW", "status": "CONFIRMED"}
+                            tx_data = {"msg_type": "TRANSACTION", "network": network_name, "type": "DEX_SWAP", "asset": f"Snipe: {token0[:8]}", "amount": OVERLORD_STATE["max_spend"]/PRICE_CACHE.get(network_name, 1.0), "price_usd": PRICE_CACHE.get(network_name, 1.0), "tx_hash": fake_hash, "from_addr": "0xASMO_Overlord_Core", "to_addr": pair_addr, "from_label": f"OVERLORD AI ({OVERLORD_STATE['signer_provider']})", "to_label": "Zero-Block Pool", "gas_used": 250000, "execution_depth": 1, "pnl": 0.0, "narrative": f"SECURE AUTO-SNIPE | Score: {score}", "sec_score": score, "sec_label": label, "cluster": "", "health_factor": 99.0, "price_impact": 0.0, "spread": 0.0, "agent_win_rate": 100.0, "twap": 0.0, "twap_trend": "", "mev_extracted": 0.0, "flag": "AGENT_FLOW", "status": "CONFIRMED"}
                             await broadcast_alert(tx_data); await save_transfer(tx_data, 99999999)
                         else:
                             verdict = "SNIPE (SAFE)" if score >= 80 else "CAUTION" if score >= 50 else "RUG PULL (AVOID)"
