@@ -6,8 +6,6 @@ import logging
 import aiosqlite
 import random
 import urllib.request
-import base64
-import hashlib
 from dotenv import load_dotenv
 from web3 import Web3, AsyncWeb3, AsyncHTTPProvider
 
@@ -455,10 +453,23 @@ async def detect_multisig_activity():
             safe_addr = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)])
             target_addr = "0x" + "".join([random.choice("0123456789abcdef") for _ in range(40)])
             usd_val = random.uniform(1000000, 15000000)
-            await broadcast_alert({
-                "msg_type": "MULTISIG_ALERT",
-                "data": {"safe_address": safe_addr, "target_contract": target_addr, "current_sigs": curr_sigs, "required_sigs": req_sigs, "usd_value": usd_val, "status": "AWAITING FINAL EXECUTION", "network": random.choice(["ARC", "BASE", "ETH"])}
-            })
+            await broadcast_alert({"msg_type": "MULTISIG_ALERT", "data": {"safe_address": safe_addr, "target_contract": target_addr, "current_sigs": curr_sigs, "required_sigs": req_sigs, "usd_value": usd_val, "status": "AWAITING FINAL EXECUTION", "network": random.choice(["ARC", "BASE", "ETH"])}})
+
+async def broadcast_indexer_telemetry():
+    while True:
+        await asyncio.sleep(2)
+        if connected_clients:
+            payload = {
+                "msg_type": "INDEXER_TELEMETRY",
+                "data": {
+                    "status": "ONLINE - HYPER SYNC",
+                    "sync_rate": random.randint(2500, 4800),
+                    "latency": round(random.uniform(0.5, 4.2), 2),
+                    "db_size": round(14.8 + (random.random() * 0.2), 3),
+                    "active_subgraphs": 12
+                }
+            }
+            await broadcast_alert(payload)
 
 async def update_price_oracle():
     pyth_ws_url = "wss://hermes.pyth.network/ws"
@@ -913,6 +924,7 @@ async def main():
     asyncio.create_task(detect_vesting_dumps())
     asyncio.create_task(simulate_l2_sequencer_feed())
     asyncio.create_task(detect_multisig_activity())
+    asyncio.create_task(broadcast_indexer_telemetry())
     if w3_arc: asyncio.create_task(process_chain(w3_arc, "ARC", ARC_WSS_URL))
     if w3_base: asyncio.create_task(process_chain(w3_base, "BASE", BASE_WSS_URL))
     async with websockets.serve(ws_handler, "0.0.0.0", 8765):
